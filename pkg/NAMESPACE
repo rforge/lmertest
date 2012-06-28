@@ -11,13 +11,12 @@ import(pbkrtest)
 
 
 
-
+export(Anova)
 export(rand)
 export(lsmeans)
 export(difflsmeans)
 export(step)
 
-exportMethods("anova")
 
 S3method(print, step)
 S3method(plot, step)
