@@ -1,3 +1,5 @@
+## This is just a test comment
+
 Dev <- function(rho, vec.matr, nll = FALSE) {
 ### Deviance of a LMM as a function of the variance-covariance
 ### parameters.
