@@ -1,0 +1,30 @@
+importFrom(numDeriv, hessian, grad)
+import(Matrix)
+import(nlme)
+import(lme4)
+importFrom(MASS, ginv)
+import(Hmisc)
+importFrom(gplots, barplot2)
+import(pbkrtest)
+
+
+
+
+
+
+export(rand)
+export(lsmeans)
+export(difflsmeans)
+export(step)
+
+exportMethods("anova")
+
+S3method(print, step)
+S3method(plot, step)
+S3method(print, rand)
+S3method(print, lsmeans)
+S3method(plot, lsmeans)
+S3method(print, difflsmeans)
+S3method(plot, difflsmeans)
+S3method(print, Anova)
+
