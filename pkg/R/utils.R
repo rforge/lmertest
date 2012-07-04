@@ -779,6 +779,7 @@ plotLSMEANS<-function(table, response, which.plot=c("LSMEANS", "DIFF of LSMEANS"
       inds.eff<-namesForPlot %in% un.names[i]
       split.eff <- unlist(strsplit(un.names[i],":"))
       col.bars<- lapply(table[inds.eff,][,"p-value"], calc.cols)
+      x11()
       layout(matrix(c(rep(1,3),2,rep(1,3),2), 2, 4, byrow = TRUE))
       barplot2(table[inds.eff,"Estimate"],col=unlist(col.bars), ci.l=table[inds.eff,ncol(table)-2], ci.u=table[inds.eff,ncol(table)-1], plot.ci=TRUE, names.arg=namesForLevels[inds.eff], xlab=un.names[i], ylab=response, main=paste(which.plot," and CI plot for", un.names[i]))
       plot.new()
@@ -788,6 +789,7 @@ plotLSMEANS<-function(table, response, which.plot=c("LSMEANS", "DIFF of LSMEANS"
         if(length(split.eff)==2)
         {
           #par(mfrow=c(1,1))
+          x11()
           interaction.plot(table[inds.eff,split.eff[1]], table[inds.eff,split.eff[2]], table[inds.eff,"Estimate"], xlab=split.eff[1], ylab=response, trace.label=paste(split.eff[2]), main="2-way Interaction plot", col=1:nlevels(table[inds.eff,split.eff[2]]))
         }
       }             
@@ -1594,4 +1596,3 @@ saveResultsFixModel<-function(result, model)
   result$diffs.lsmeans.table<-lsmeans.summ
   return(result)
 }
-
