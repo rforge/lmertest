@@ -12,13 +12,13 @@ ham
 \format{
 \describe{
   \item{\code{Consumer}}{
-    Numbering identifying consumers
+    factor with 81 levels: numbering identifying consumers
   }
   \item{\code{Product}}{
    factor with four levels
   }
   \item{\code{Informed.liking}}{
-    hedonic liking for the products
+    numeric: hedonic liking for the products
   }
   \item{\code{Information}}{
     factor with two levels
@@ -37,20 +37,22 @@ ham
 \examples{
 
 #import lme4 package and lmerTest package
-library(lme4)
 library(lmerTest)
 
 #import ham data from lmerTest package
 data(ham)
 
-m<-lmer(Informed.liking ~ Product*Information*Gender + (1|Product:Consumer) + 
-(1|Information:Consumer) + (1|Consumer), data=ham)
+m <- lmer(Informed.liking ~ Product*Information*Gender 
++ (1|Product:Consumer) + 
+(1|Information:Consumer) + (1|Consumer), REML=FALSE, data=ham)
 
 #anova table with p-values
-Anova(m)
+anova(m)
 
 # step function. Reduction of both random and fixed parts
 step(m)
+
+rand(m)
 }
 
 \keyword{datasets}

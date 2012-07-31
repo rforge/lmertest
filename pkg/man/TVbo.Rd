@@ -13,7 +13,7 @@ TVbo
 \format{
 \describe{
   \item{\code{Assessor}}{
-    Numbering identifying assessors
+    factor: Numbering identifying assessors
   }
   \item{\code{TVset}}{
     factor - attribute of the product
@@ -35,7 +35,6 @@ TVbo
 
 
 #import lme4 package and lmerTest package
-library(lme4)
 library(lmerTest)
 
 #import TVbo data from lmerTest package
@@ -44,7 +43,7 @@ data(TVbo)
 m <- lmer(Cutting ~ TVset*Picture+(1|Assessor)
 + (1|Assessor:Picture) + (1|Assessor:TVset), data=TVbo)
 step(m, test.effs="TVset", reduce.fixed=TRUE, reduxe.random=TRUE)
-Anova(m)
+anova(m)
 rand(m)
 lsmeans(m)
 

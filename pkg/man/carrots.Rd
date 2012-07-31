@@ -5,7 +5,7 @@
 }
 \description{
   In a consumer study 103 consumers scored their preference of 12 danish carrot types on a scale from 1 to 7. Moreover the consumers scored the degree of sweetness, bitterness and crispiness in the products. The carrots were harvested in autumn 1996 and tested in march 1997. 
-In addition to the consumer survey, the carrot products were evaluated by a trained panel of tasters, the sensory panel, with respect to a number of sensory (taste, odour and texture) properties. Since usually a high number of (correlated) properties(variables) are used, in this case 14, it is a common procedure to use a few, often 2, combined variables that contain as much of the information in the sensory variables as possible. This is achieved by extracting the first two principal components in a principal components analysis(PCA) on the product-by-property panel average data matrix. In this data set the values of the first two principal components are provided (\code{sens1} and \code{sens2}).
+In addition to the consumer survey, the carrot products were evaluated by a trained panel of tasters, the sensory panel, with respect to a number of sensory (taste, odour and texture) properties. Since usually a high number of (correlated) properties(variables) are used, in this case 14, it is a common procedure to use a few, often 2, combined variables that contain as much of the information in the sensory variables as possible. This is achieved by extracting the first two principal components in a principal components analysis(PCA) on the product-by-property panel average data matrix. In this data set the variables for the first two principal components are named (\code{sens1} and \code{sens2}).
 }
 \usage{
 carrots
@@ -13,7 +13,7 @@ carrots
 \format{
 \describe{
   \item{\code{Consumer}}{
-    Numbering identifying consumers
+    factor with 103 levels:  numbering identifying consumers
   }
   \item{\code{Frequency}}{
     factor with 5 levels; "How often do you eat carrots?"
@@ -37,7 +37,7 @@ carrots
     1: unskilled worker(no education), 2: skilled worker(with education), 3: office worker, 4: housewife (or man), 5: independent businessman/ self-employment, 6: student, 7: retired 
   }
   \item{\code{Income}}{
-   factor with 4 levels.
+   factor with 4 levels. 
    1: <150000, 2: 150000-300000, 3: 300000-500000, 4: >500000
   }
 }}
@@ -48,7 +48,6 @@ carrots
 \examples{
 
 #import lme4 package and lmerTest package
-library(lme4)
 library(lmerTest)
 
 #import carrots data from lmerTest package

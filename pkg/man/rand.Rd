@@ -15,7 +15,7 @@ rand(model, ...)
 
   \item{model}{
     
-     linear mixed effects model (lmer object from lme4 package).
+     linear mixed effects model (lmer object).
 }
 
 
@@ -52,15 +52,11 @@ If the effect has random slopes, then first the correlations between itercept an
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-\code{\link{step}}, \code{\link{Anova}}, \code{\link{lsmeans}}
+\code{\link{step}}, \code{\link{lsmeans}}, \code{\link{difflsmeans}}
 }
 \examples{
 
-#change the default contrasts to contr.SAS
-options(contrasts=c(unordered="contr.SAS", ordered="contr.poly"))
-
 #import lme4 package and lmerTest package
-library(lme4)
 library(lmerTest)
 
 #import carrots data from lmerTest package

@@ -5,15 +5,15 @@
  Calculates Least Squares Means and Confidence Intervals for the factors of a fixed part of mixed effects model of lmer object. 
 }
 \description{
- Produces a data frame which resembles to what SAS software gives in proc mixed statement. The approcimation of degrees of freedom is Satterthwate's.
+ Produces a data frame which resembles to what SAS software gives in proc mixed statement. The approximation of degrees of freedom is Satterthwate's.
 }
 \usage{
-lsmeans(model, test.effs=NULL, method.grad="Richardson",...)
+lsmeans(model, test.effs=NULL, method.grad="simple",...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{model}{
-   linear mixed effects model (lmer object from lme4 package).
+   linear mixed effects model (lmer object).
 }
 
 
@@ -23,7 +23,7 @@ lsmeans(model, test.effs=NULL, method.grad="Richardson",...)
 }
 
 \item{method.grad}{
-   approximation method for the grad function, which is used in calculation of denominator degrees of freedom. Could be "simple" or "Richardson". "Richardson" is the default one.
+   approximation method for the grad function, which is used in calculation of denominator degrees of freedom. Could be "simple" or "Richardson". "simple" is the default one (and the faster one).
 }
 
   \item{\dots}{
@@ -32,7 +32,7 @@ lsmeans(model, test.effs=NULL, method.grad="Richardson",...)
 }
 
 \value{
- Produces Least Squares Means table with p-values and Confidence intervals. 
+ Produces Least Squares Means (population means) table with p-values and Confidence intervals. 
  }
 \references{
  doBy package, gplots package
@@ -48,13 +48,12 @@ Alexandra Kuznetsova, Per Bruun Brockhoff, Rune Haubo Bojesen Christensen
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-\code{\link{step}}, \code{\link{rand}}, \code{\link{Anova}}, \code{\link{difflsmeans}}
+\code{\link{step}}, \code{\link{rand}}, \code{\link{difflsmeans}}
 }
 \examples{
 
 
 #import lme4 package and lmerTest package
-library(lme4)
 library(lmerTest)
 
 #import ham data from lmerTest package

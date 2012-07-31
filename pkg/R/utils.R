@@ -1,5 +1,3 @@
-## This is just a test comment
-
 Dev <- function(rho, vec.matr, nll = FALSE) {
 ### Deviance of a LMM as a function of the variance-covariance
 ### parameters.
@@ -132,7 +130,7 @@ rhoInit<-function(model)
    rho$X <- model@X
    chol(rho$XtX <- crossprod(model@X))       # check for full column rank
 
-   rho$REML <-  TRUE #as.logical(REML)[1]
+   rho$REML <-  model@dims['REML']
    rho$Zt <- model@Zt
    #rho$nlev <- sapply(model@flist, function(x) length(levels(factor(x))))
    rho$L <- Cholesky(tcrossprod(model@Zt), LDL = FALSE, Imult = 1, super = TRUE)
@@ -150,7 +148,7 @@ rhoInit<-function(model)
    }
    names(rho$nlev)<-	nlev.names 
    
-    rho$s<-summary(model)
+    rho$s<-summary(model,"lme4")
    
    rho$fixEffs<-fixef(model)
 
@@ -249,7 +247,7 @@ calcSatterth<-function(Lc, rho, method.grad)
 ###########################################################################
 # function to calculate F stat and pvalues for a given term
 ###########################################################################
-calcFpvalue<-function(term, L, model, rho, ddf, method.grad="Richardson")
+calcFpvalue<-function(term, L, model, rho, ddf, method.grad="simple")
 {
 
   #L<-calcGeneralSetForHypothesis(DesignMat, rho)
@@ -345,10 +343,11 @@ return(X.design)
 ###############################################################################
 initAnovaTable<-function(model, isFixReduce)
 {
-  anm<-anova(model)
+  anm<-anova(model, ddf="lme4")
   NumDF<-anm[,1]
   p.value<-DenDF<-F.value<-as.numeric(rep("",length(NumDF)))
   anova.table<-cbind(NumDF,DenDF,F.value,p.value)
+  colnames(anova.table)<-c("NumDF","DenDF","F.value","Pr(>F)")
   rownames(anova.table)<-rownames(anm)
   if(isFixReduce)
   {
@@ -356,13 +355,13 @@ initAnovaTable<-function(model, isFixReduce)
     {
       anova.table<-c(anova.table[,1:3],0,anova.table[,4])
       anova.table<-matrix(anova.table, nrow=1, ncol=length(anova.table))
-      colnames(anova.table)<-c("NumDF","DenDF","F.value","elim.num","p.value")
+      colnames(anova.table)<-c("NumDF","DenDF","F.value","elim.num","Pr(>F)")
       rownames(anova.table)<-rownames(anm)
       return(anova.table)
     }
     elim.num<-rep(0,nrow(anova.table))
     anova.table<-cbind(anova.table[,1:3],elim.num,anova.table[,4])
-    colnames(anova.table)[5]<-"p.value"
+    colnames(anova.table)[5]<-"Pr(>F)"
   }
   return(anova.table)    
 }
@@ -442,10 +441,10 @@ getNSFixedTerm<-function(model, anova.table, data, alpha)
   for(tcmp in terms.compare)
   {
     ind<-which(rownames(anova.table)==tcmp)
-    if(anova.table[ind,which(colnames(anova.table)=="p.value")]>=pv.max)
+    if(anova.table[ind,which(colnames(anova.table)=="Pr(>F)")]>=pv.max)
     {
       ns.term<-tcmp
-      pv.max<-anova.table[ind,which(colnames(anova.table)=="p.value")]
+      pv.max<-anova.table[ind,which(colnames(anova.table)=="Pr(>F)")]
     }
   }  
   if(pv.max>=alpha)
@@ -458,7 +457,7 @@ getNSFixedTerm<-function(model, anova.table, data, alpha)
 ###############################################################################
 # eliminate NS effect from the model
 ############################################################################### 
-elimNSFixedTerm<-function(model, anova.table, data, alpha, elim.num)
+elimNSFixedTerm<-function(model, anova.table, data, alpha, elim.num, l)
 {
   ns.term<-getNSFixedTerm(model, anova.table, data, alpha)
   if(is.null(ns.term))
@@ -467,7 +466,11 @@ elimNSFixedTerm<-function(model, anova.table, data, alpha, elim.num)
   fm <- formula(model)
   fm[3] <- paste(fm[3], "-", ns.term)
   mf.final<- as.formula(paste(fm[2],fm[1],fm[3], sep=""))
-  model<-eval(substitute(lmer(mf.final, data=data),list(mf.final=mf.final)))
+  #if(!is.null(l))
+  #  model<-eval(substitute(lmer(mf.final, data=data, contrasts=l),list(mf.final=mf.final)))
+  #else
+  #  model<-eval(substitute(lmer(mf.final, data=data),list(mf.final=mf.final)))
+  model<-updateModel(model, mf.final, data, l)
   #model<-update(model,formula. = mf.final)
   return(list(model=model, anova.table=anova.table))
 }
@@ -779,7 +782,7 @@ plotLSMEANS<-function(table, response, which.plot=c("LSMEANS", "DIFF of LSMEANS"
       inds.eff<-namesForPlot %in% un.names[i]
       split.eff <- unlist(strsplit(un.names[i],":"))
       col.bars<- lapply(table[inds.eff,][,"p-value"], calc.cols)
-      x11()
+      windows()
       layout(matrix(c(rep(1,3),2,rep(1,3),2), 2, 4, byrow = TRUE))
       barplot2(table[inds.eff,"Estimate"],col=unlist(col.bars), ci.l=table[inds.eff,ncol(table)-2], ci.u=table[inds.eff,ncol(table)-1], plot.ci=TRUE, names.arg=namesForLevels[inds.eff], xlab=un.names[i], ylab=response, main=paste(which.plot," and CI plot for", un.names[i]))
       plot.new()
@@ -789,7 +792,7 @@ plotLSMEANS<-function(table, response, which.plot=c("LSMEANS", "DIFF of LSMEANS"
         if(length(split.eff)==2)
         {
           #par(mfrow=c(1,1))
-          x11()
+          windows()
           interaction.plot(table[inds.eff,split.eff[1]], table[inds.eff,split.eff[2]], table[inds.eff,"Estimate"], xlab=split.eff[1], ylab=response, trace.label=paste(split.eff[2]), main="2-way Interaction plot", col=1:nlevels(table[inds.eff,split.eff[2]]))
         }
       }             
@@ -1450,7 +1453,7 @@ checkIsZeroVarOrCorr<-function(model, rand.term, isCorr)
 }
 
 #### eliminate components with zero variance or correlation +-1, NaN
-elimZeroVarOrCorr<-function(model, data)
+elimZeroVarOrCorr<-function(model, data, l)
 {
   stop=FALSE
   while(!stop)
@@ -1489,7 +1492,12 @@ elimZeroVarOrCorr<-function(model, data)
           #detach(package:nlme)
           return(list(model=model, TAB.rand=NULL))
         }
-        model<-eval(substitute(lmer(mf.final, data=data),list(mf.final=mf.final)))
+        #update model
+        #if(!is.null(l))
+        #  model<-eval(substitute(lmer(mf.final, data=data, REML=model@dims[["REML"]], contrasts=l),list(mf.final=mf.final)))
+        #else
+        #  model<-eval(substitute(lmer(mf.final, data=data, REML=model@dims[["REML"]]),list(mf.final=mf.final)))
+        model<-updateModel(model, mf.final, data, l)
         elimZero<-TRUE
         break       
       }
@@ -1502,7 +1510,7 @@ elimZeroVarOrCorr<-function(model, data)
 }
 
 ### eliminate NS random terms 
-elimRandEffs<-function(model, data, alpha, reduce.random)
+elimRandEffs<-function(model, data, alpha, reduce.random, l)
 {
   isInitRand<-TRUE
   elim.num<-1
@@ -1544,8 +1552,11 @@ elimRandEffs<-function(model, data, alpha, reduce.random)
         return(compareMixVSFix(model, mf.final, data, rand.term, rand.table, alpha, elim.num, reduce.random))
         
       } 
-      
-      model.red<-eval(substitute(lmer(mf.final, data=data),list(mf.final=mf.final)))
+      #if(!is.null(l))
+      #  model.red<-eval(substitute(lmer(mf.final, data=data, contrasts=l),list(mf.final=mf.final)))
+      #else
+      #  model.red<-eval(substitute(lmer(mf.final, data=data),list(mf.final=mf.final)))
+      model.red<-updateModel(model, mf.final, data, l)
       anova.red<-anova(model, model.red)
       infoForTerms[[rand.term]]<-saveInfoForTerm(rand.term, anova.red$Chisq[2], anova.red[2,6] , anova.red$Pr[2])
             
@@ -1596,3 +1607,57 @@ saveResultsFixModel<-function(result, model)
   result$diffs.lsmeans.table<-lsmeans.summ
   return(result)
 }
+
+################# UNUSED function #########################
+#code from lme4 package
+###########################################################
+formatVC <- function(varc, digits = max(3, getOption("digits") - 2))
+### "format()" the 'VarCorr' matrix of the random effects -- for show()ing
+{
+    sc <- unname(attr(varc, "sc"))
+    recorr <- lapply(varc, attr, "correlation")
+    reStdDev <- c(lapply(varc, attr, "stddev"), list(Residual = sc))
+    reLens <- unlist(c(lapply(reStdDev, length)))
+    nr <- sum(reLens)
+    reMat <- array('', c(nr, 4),
+       list(rep.int('', nr),
+			c("Groups", "Name", "Variance", "Std.Dev.")))
+    reMat[1+cumsum(reLens)-reLens, 1] <- names(reLens)
+    reMat[,2] <- c(unlist(lapply(varc, colnames)), "")
+    reMat[,3] <- format(unlist(reStdDev)^2, digits = digits)
+    reMat[,4] <- format(unlist(reStdDev), digits = digits)
+    if (any(reLens > 1)) {
+	maxlen <- max(reLens)
+	corr <-
+	    do.call("rBind",
+		    lapply(recorr,
+			   function(x, maxlen) {
+			       x <- as(x, "matrix")
+			       cc <- format(round(x, 3), nsmall = 3)
+			       cc[!lower.tri(cc)] <- ""
+			       nr <- dim(cc)[1]
+			       if (nr >= maxlen) return(cc)
+			       cbind(cc, matrix("", nr, maxlen-nr))
+			   }, maxlen))
+	colnames(corr) <- c("Corr", rep.int("", maxlen - 1))
+	cbind(reMat, rBind(corr, rep.int("", ncol(corr))))
+    } else reMat
+}
+
+
+#update model
+updateModel<-function(model, mf.final, data, l)
+{
+  if(!is.null(l)) 
+  {
+    #l<-l[names(l) %in% strsplit(paste(mf.final[3]), split=" + ", fixed=TRUE)[[1]]]
+    #print(mf.final)
+    #print(l)
+    model<-suppressWarnings(update(model, mf.final, data=data, REML=model@dims[["REML"]], contrasts=l))
+  }
+  else
+    model<-suppressWarnings(update(model, mf.final, data=data, REML=model@dims[["REML"]]))
+  return(model)
+}
+
+

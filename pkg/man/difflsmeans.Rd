@@ -8,12 +8,12 @@
  Produces a data frame which resembles to what SAS software gives in proc mixed statement. The approximation for degrees of freedom is Satterthwaite's.
 }
 \usage{
-difflsmeans(model, test.effs=NULL, method.grad="Richardson",...)
+difflsmeans(model, test.effs=NULL, method.grad="simple",...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{model}{
-   linear mixed effects model (lmer object from lme4 package).
+   linear mixed effects model (lmer object).
 }
 
 
@@ -24,7 +24,7 @@ difflsmeans(model, test.effs=NULL, method.grad="Richardson",...)
 }
 
 \item{method.grad}{
-   approximation method for the grad function, which is used in calculation of denominator degrees of freedom. Could be "simple" or "Richardson". "Richardson" is the default one.
+   approximation method for the grad function, which is used in calculation of denominator degrees of freedom. Could be "simple" or "Richardson". "simple" is the default and the faster one.
 }
 
   \item{\dots}{
@@ -33,7 +33,7 @@ difflsmeans(model, test.effs=NULL, method.grad="Richardson",...)
 }
 
 \value{
- Produces Differences of Least Squares Means table with p-values and Confidence intervals. 
+ Produces Differences of Least Squares Means (population means) table with p-values and Confidence intervals. 
  }
 %\references{
 %% ~put references to the literature/web site here ~
@@ -46,13 +46,12 @@ Alexandra Kuznetsova, Per Bruun Brockhoff, Rune Haubo Bojesen Christensen
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-\code{\link{lsmeans}}, \code{\link{step}}, \code{\link{rand}}, \code{\link{Anova}}
+\code{\link{lsmeans}}, \code{\link{step}}, \code{\link{rand}}
 }
 \examples{
 
 
 #import lme4 package and lmerTest package
-library(lme4)
 library(lmerTest)
 
 #import ham data from lmerTest package

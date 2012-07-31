@@ -3,11 +3,12 @@
 \alias{lmerTest}
 \docType{package}
 \title{
- The package performs different kinds of tests on lmer objects(of lme4 package), such as F tests of type 3 hypothesis for the fixed part, 
-log-likelihood ratio tests for the random part, least squares means and differences of least squares means for the factors of the fixed part with corresponding plots. The package also provides with a function step, that preforms backward elimination of non-significant effects, starting from the random effects, and then fixed ones. 
+ The package performs different kinds of tests on lmer objects, such as F tests of type 3 hypothesis for the fixed part, 
+log-likelihood ratio tests for the random part, least squares means(population means) and differences of least squares means for the factors of the fixed part with corresponding plots. The package also provides with a function step, that preforms backward elimination of non-significant effects, starting from the random effects, and then fixed ones. 
 }
 \description{
- The package provides Anova function, that gives data frame similar to what gives lmer function(of lme4 package) but with p-values calculated from F statistics of type 3 hypothesis. There are two options for denominator degrees of freedom of F statistics: "Satterthwaite" and "Kenward-Roger". The calculation of Kenward-Roger's approximation is taken from pbkrtest package, the calculation of Satterthwaite's approximation is taken from SAS proc mixed theory (see reference).The type 3 hypothesis (marginal) is calculated according to SAS theory(SAS Institute Inc., 1978). The tests on random effects are performed using log-likelihood ratio tests with one degree of freedom, which means, testing one effect in a time.
+ The package provides anova function, that gives data frame similar to what gives lme4 package but with p-values calculated from F statistics of type 3 hypothesis. There are two options for denominator degrees of freedom of F statistics: "Satterthwaite" and "Kenward-Roger". The calculation of Kenward-Roger's approximation is taken from pbkrtest package, the calculation of Satterthwaite's approximation is based on SAS proc mixed theory (see reference).The type 3 hypothesis (marginal) is calculated according to SAS theory(SAS Institute Inc., 1978). The package also provides summary function, which gives similar to what lme4 package summary function but with p-values added for the t-test (based on Satterthwaite approximation for denominator degrees of freedom).
+The tests on random effects are performed using log-likelihood ratio tests with one degree of freedom, which means, testing one effect in a time.
 }
 
 \details{
@@ -19,8 +20,8 @@ Date: \tab 2012-01-10\cr
 License: \tab GPL\cr
 }
 
-The calculation of statistics for the fixed part was developed according to SAS Proc Mixed Theory(see reference). Therefore the contrasts matrix for the fixed effects should be contr.SAS. The option for the contrasts is automatically changed, and the model is updated. 
-In the elimination of the random part the models with REML=TRUE are compared, therefor if the model with REML=FALSE is specified, then it is updated automatically to REML=TRUE
+The calculation of statistics for the fixed part was developed according to SAS Proc Mixed Theory(see reference).   
+If the elimination of the random part is required, the model with REML=FALSE is updated automatically to REML=TRUE
 
 }
 \author{
@@ -39,10 +40,7 @@ Approximations to Distributions of Test Statistics in Complex Mixed Linear Model
 %%~~ \code{\link[<pkg>:<pkg>-package]{<pkg>}} ~~
 %%}
 \examples{
-options(contrasts=c(unordered="contr.SAS", ordered="contr.poly"))
-
 #import lme4 package and lmerTest package
-library(lme4)
 library(lmerTest)
 
 #import ham data from lmerTest package
@@ -56,10 +54,18 @@ data(TVbo)
 m <- lmer(Cutting ~ TVset*Picture+(1|Assessor)
 + (1|Assessor:Picture) + (1|Assessor:TVset), data=TVbo)
 
+m2 <- lmer(Cutting ~ TVset*Picture+(1|Assessor)
++ (1|Assessor:Picture) + (1|Assessor:TVset), data=TVbo, REML=FALSE)
+
+
 step(m, test.effs="TVset")
-Anova(m)
+anova(m)
+anova(m, ddf="Kenward-Roger")
+summary(m)
+summary(m, ddf="lme4")
 rand(m)
 lsmeans(m)
+anova(m2, ddf="Kenward-Roger")
 
 
 data(carrots)
@@ -67,7 +73,7 @@ m2 <- lmer(Preference~sens2+sens1+BITTER+Homesize+
 sens2:Homesize+(1+sens2|Consumer), data=carrots)
 
 rand(m2)
-an<-Anova(m2)
+an<-anova(m2)
 step(m2)
 
 }

@@ -5,12 +5,12 @@
 Performs backward elimination of non-significant effects of linear mixed effects model:
 }
 \description{
-performs automatic backward elimination of all effects of linear mixed effect model. First backward elimination of the random part is performed following by backward elimination of the fixed part. Finally LSMEANS and differences of LSMEANS for the fixed part of the model are calculated and the final model is provided. The p-values for the fixed effects are calculated from F test based on Sattethwaite's or Kenward-Roger approximation), p-values for the random effects are based on log-likelihood ratio test.  All analysis may be performed on lmer object of lme4 package. 
+performs automatic backward elimination of all effects of linear mixed effect model. First backward elimination of the random part is performed following by backward elimination of the fixed part. Finally LSMEANS(population means) and differences of LSMEANS for the fixed part of the model are calculated and the final model is provided. The p-values for the fixed effects are calculated from F test based on Sattethwaite's or Kenward-Roger approximation), p-values for the random effects are based on log-likelihood ratio test.  All analysis may be performed on lmer object of lme4 package. 
 }
 \usage{
 step(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, alpha.fixed = 0.05, 
 reduce.fixed = TRUE, reduce.random = TRUE, lsmeans.calc=TRUE,
-difflsmeans.calc=TRUE, test.effs=NULL, method.grad="Richardson", ...)
+difflsmeans.calc=TRUE, test.effs=NULL, method.grad="simple", ...)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -18,7 +18,7 @@ difflsmeans.calc=TRUE, test.effs=NULL, method.grad="Richardson", ...)
 \arguments{
   \item{model}{
     
-     linear mixed effects model (lmer object from lme4 package).
+     linear mixed effects model (lmer object).
 }
 
 \item{ddf}{
@@ -51,7 +51,7 @@ difflsmeans.calc=TRUE, test.effs=NULL, method.grad="Richardson", ...)
 }
 
 \item{lsmeans.calc}{    
-    logical for whether the calculation of LSMEANS is required
+    logical for whether the calculation of LSMEANS(population means) is required
 }
 
 \item{difflsmeans.calc}{    
@@ -64,7 +64,7 @@ difflsmeans.calc=TRUE, test.effs=NULL, method.grad="Richardson", ...)
 }
 
 \item{method.grad}{
-   approximation method for the grad function, which is used in calculation of denominator degrees of freedom. Could be "simple" or "Richardson". "Richardson" is the default one.
+   approximation method for the grad function, which is used in calculation of denominator degrees of freedom. Could be "simple" or "Richardson". "simple" is the default one.
 }
 
   \item{\dots}{
@@ -73,7 +73,7 @@ difflsmeans.calc=TRUE, test.effs=NULL, method.grad="Richardson", ...)
 }
 \details{
 Elimination of all effects is done one at a time.
-Elimination of the fixed part is done by the principle of marginality that is: the highest order interactions are tested first: if they are significant, the main effects are not tested for significance.
+Elimination of the fixed part is done by the principle of marginality that is: the highest order interactions are tested first: if they are significant, the lower order effects are not tested for significance.
 }
 \value{
 %%  ~Describe the value returned
@@ -82,7 +82,7 @@ Elimination of the fixed part is done by the principle of marginality that is: t
   \item{anova.table }{data frame with tests for whether the model fixed terms are significant (Analysis of Variance)}
   \item{lsmeans.table}{Least Squares Means data frame with p-values and Confidence intervals}
   \item{diffs.lsmeans.table}{Differences of Least Squares Means data frame with p-values and Confidence intervals}
-  \item{model}{Final model - object of class lmer or gls (after all the required reduction has been performed)}
+  \item{model}{Final model - object of merLmerTest(contains mer class) or gls (after all the required reduction has been performed)}
   }
 %% ...
 
@@ -97,11 +97,10 @@ Alexandra Kuznetsova, Per Bruun Brockhoff, Rune Haubo Bojesen Christensen
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-\code{\link{Anova}}, \code{\link{rand}}, \code{\link{lsmeans}}, \code{\link{difflsmeans}}
+\code{\link{rand}}, \code{\link{lsmeans}}, \code{\link{difflsmeans}}
 }
 \examples{
 #import lme4 package and lmerTest package
-library(lme4)
 library(lmerTest)
 
 #import carrots data from lmerTest package
