@@ -4,10 +4,10 @@
 \docType{package}
 \title{
  The package performs different kinds of tests on lmer objects, such as F tests of type 3 hypothesis for the fixed part, 
-log-likelihood ratio tests for the random part, least squares means(population means) and differences of least squares means for the factors of the fixed part with corresponding plots. The package also provides with a function step, that preforms backward elimination of non-significant effects, starting from the random effects, and then fixed ones. 
+log-likelihood ratio tests for the random part, least squares means (population means) and differences of least squares means for the factors of the fixed part with corresponding plots. The package also provides with a function step, that preforms backward elimination of non-significant effects, starting from the random effects, and then fixed ones. 
 }
 \description{
- The package provides anova function, that gives data frame similar to what gives lme4 package but with p-values calculated from F statistics of type 3 hypothesis. There are two options for denominator degrees of freedom of F statistics: "Satterthwaite" and "Kenward-Roger". The calculation of Kenward-Roger's approximation is taken from pbkrtest package, the calculation of Satterthwaite's approximation is based on SAS proc mixed theory (see reference).The type 3 hypothesis (marginal) is calculated according to SAS theory(SAS Institute Inc., 1978). The package also provides summary function, which gives similar to what lme4 package summary function but with p-values added for the t-test (based on Satterthwaite approximation for denominator degrees of freedom).
+ The package provides anova function, that gives data frame similar to what gives lme4 package but with p-values calculated from F statistics of type 3 hypothesis. There are two options for denominator degrees of freedom of F statistics: "Satterthwaite" and "Kenward-Roger". The calculation of Kenward-Roger's approximation is based on function from pbkrtest package, the calculation of Satterthwaite's approximation is based on SAS proc mixed theory (see reference).The type 3 hypothesis (marginal) is calculated according to SAS theory (SAS Institute Inc., 1978). The package also provides summary function, which gives similar to what lme4 package summary function but with p-values added for the t-test (based on Satterthwaite approximation for denominator degrees of freedom).
 The tests on random effects are performed using log-likelihood ratio tests with one degree of freedom, which means, testing one effect in a time.
 }
 
@@ -20,7 +20,7 @@ Date: \tab 2012-01-10\cr
 License: \tab GPL\cr
 }
 
-The calculation of statistics for the fixed part was developed according to SAS Proc Mixed Theory(see reference).   
+The calculation of statistics for the fixed part was developed according to SAS Proc Mixed Theory (see reference).   
 If the elimination of the random part is required, the model with REML=FALSE is updated automatically to REML=TRUE
 
 }

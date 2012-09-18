@@ -470,7 +470,7 @@ elimNSFixedTerm<-function(model, anova.table, data, alpha, elim.num, l)
   #  model<-eval(substitute(lmer(mf.final, data=data, contrasts=l),list(mf.final=mf.final)))
   #else
   #  model<-eval(substitute(lmer(mf.final, data=data),list(mf.final=mf.final)))
-  model<-updateModel(model, mf.final, data, l)
+  model<-updateModel(model, mf.final, l)
   #model<-update(model,formula. = mf.final)
   return(list(model=model, anova.table=anova.table))
 }
@@ -896,11 +896,14 @@ calcLSMEANS<-function(model, data, rho, alpha, test.effs = NULL, method.grad="Ri
 {  
  
  #library(gplots)
- fm<-getFormula(model, withRand=FALSE)
- if(fm[3]=="")
-   m<-lm(as.formula(paste(fm[2],fm[1],1, sep="")), data=data)
- else
-   m<-lm(as.formula(paste(fm[2],fm[1],fm[3], sep="")), data=data)
+ ####old code#########################
+ #fm<-getFormula(model, withRand=FALSE)
+ #if(fm[3]=="")
+ #   m<-lm(as.formula(paste(fm[2],fm[1],1, sep="")), data=data)
+ #else
+ #   m<-lm(as.formula(paste(fm[2],fm[1],fm[3], sep="")), data=data)
+ #####################################
+ m<-lm(model, data=model$data)  
  effs<-attr(terms(m),"term.labels")
  if(!is.null(test.effs))
     effs<-effs[effs %in% test.effs]
@@ -961,12 +964,14 @@ checkCorr<-function(model)
 # get dummy coefficients of the fixed part of the model
 getNumsDummyCoefs2<-function(model, data)
 {
-  fm<-getFormula(model, withRand=FALSE)
-  if(fm[3]=="")
-     m<-lm(as.formula(paste(fm[2],fm[1],1, sep="")), data=data)
-  else
-     m<-lm(as.formula(paste(fm[2],fm[1],fm[3], sep="")), data=data) 
-    
+  ###old code #############################
+  #fm<-getFormula(model, withRand=FALSE)
+  #if(fm[3]=="")
+  #   m<-lm(as.formula(paste(fm[2],fm[1],1, sep="")), data=data)
+  #else
+  #   m<-lm(as.formula(paste(fm[2],fm[1],fm[3], sep="")), data=data) 
+  m<-lm(model, data=model$data)
+  
   #get full coefficients
   dc<-dummy.coef(m)
   names.dc<-names(dc)[1]
@@ -1006,12 +1011,16 @@ getNumsDummyCoefs2<-function(model, data)
 # get dummy coefficients of the fixed part of the model
 getNumsDummyCoefs<-function(model, data)
 {
-  fm<-getFormula(model, withRand=FALSE)
-  if(fm[3]=="")
-     m<-lm(as.formula(paste(fm[2],fm[1],1, sep="")), data=data)
-  else
-     m<-lm(as.formula(paste(fm[2],fm[1],fm[3], sep="")), data=data) 
-    
+  ### old code ######################
+  #fm<-getFormula(model, withRand=FALSE)
+  #if(fm[3]=="")
+  #   m<-lm(as.formula(paste(fm[2],fm[1],1, sep="")), data=data)
+  #else
+  #   m<-lm(as.formula(paste(fm[2],fm[1],fm[3], sep="")), data=data) 
+  ####################################
+  
+  m<-lm(model, data=model$data)  
+  
   #get full coefficients
   dc<-dummy.coef(m)
   zeroCoefs<-which(unlist(dc)==0)
@@ -1318,15 +1327,17 @@ compareMixVSFix<-function(model, mf.final, data, name.term, rand.table, alpha, e
   #   mf.final<-update.formula(mf.final,mf.final)       
   # }
    
-  model.red<-gls(model = mf.final, data=data, method = "REML", na.action=na.omit)
+  #model.red<-gls(model = mf.final, data=data, method = "REML", na.action=na.omit)
+  model.red <- lm(model, data=model$data)
   
-  l.fix<--2*logLik(model)[1]
-  l.red<--2*logLik(model.red)[1]
-  p.chisq <- 1- pchisq (l.red -l.fix ,1)
-  infoForTerm<-saveInfoForTerm(name.term, l.red -l.fix, 1, p.chisq)
+  l.fix <- -2*logLik(model)[1]
+  l.red <- -2*logLik(model.red, REML=TRUE)[1]
+  
+  p.chisq <- 1 - pchisq (l.red -l.fix ,1)
+  infoForTerm <- saveInfoForTerm(name.term, l.red -l.fix, 1, p.chisq)
   #detach(package:nlme)
   
-  if(infoForTerm$pv >alpha)
+  if(infoForTerm$pv > alpha)
   {    
     rand.table<-updateRandTable(infoForTerm, rand.table, elim.num=elim.num, reduce.random=reduce.random)
     model.last<-model.red
@@ -1497,7 +1508,7 @@ elimZeroVarOrCorr<-function(model, data, l)
         #  model<-eval(substitute(lmer(mf.final, data=data, REML=model@dims[["REML"]], contrasts=l),list(mf.final=mf.final)))
         #else
         #  model<-eval(substitute(lmer(mf.final, data=data, REML=model@dims[["REML"]]),list(mf.final=mf.final)))
-        model<-updateModel(model, mf.final, data, l)
+        model<-updateModel(model, mf.final, l)
         elimZero<-TRUE
         break       
       }
@@ -1556,7 +1567,7 @@ elimRandEffs<-function(model, data, alpha, reduce.random, l)
       #  model.red<-eval(substitute(lmer(mf.final, data=data, contrasts=l),list(mf.final=mf.final)))
       #else
       #  model.red<-eval(substitute(lmer(mf.final, data=data),list(mf.final=mf.final)))
-      model.red<-updateModel(model, mf.final, data, l)
+      model.red<-updateModel(model, mf.final, l)
       anova.red<-anova(model, model.red)
       infoForTerms[[rand.term]]<-saveInfoForTerm(rand.term, anova.red$Chisq[2], anova.red[2,6] , anova.red$Pr[2])
             
@@ -1646,17 +1657,17 @@ formatVC <- function(varc, digits = max(3, getOption("digits") - 2))
 
 
 #update model
-updateModel<-function(model, mf.final, data, l)
+updateModel<-function(model, mf.final, l)
 {
   if(!is.null(l)) 
   {
     #l<-l[names(l) %in% strsplit(paste(mf.final[3]), split=" + ", fixed=TRUE)[[1]]]
     #print(mf.final)
     #print(l)
-    model<-suppressWarnings(update(model, mf.final, data=data, REML=model@dims[["REML"]], contrasts=l))
+    model<-suppressWarnings(update(model, mf.final, REML=model@dims[["REML"]], contrasts=l))
   }
   else
-    model<-suppressWarnings(update(model, mf.final, data=data, REML=model@dims[["REML"]]))
+    model<-suppressWarnings(update(model, mf.final, REML=model@dims[["REML"]]))
   return(model)
 }
 

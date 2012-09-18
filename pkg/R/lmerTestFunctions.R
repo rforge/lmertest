@@ -17,7 +17,7 @@ totalAnovaRandLsmeans<-function(model, ddf="Satterthwaite", type=3, alpha.random
   #contrasts
   l<-NULL
   #update model to mer class
-  model<-updateModel(model, .~., data, l)
+  model<-updateModel(model, .~., l)
   
   ### change contrasts for F tests calculations
   #list of contrasts for factors
@@ -31,7 +31,7 @@ totalAnovaRandLsmeans<-function(model, ddf="Satterthwaite", type=3, alpha.random
       names(l)<-names(attr(mm,"contrasts"))
       #warning(" \nmodel has been refitted with contrasts=contr.SAS \n")
       #model<-update(model,.~., data=data, contrasts=l)
-      model<-updateModel(model, .~., data, l)
+      model<-updateModel(model, .~., l)
      
     }
     
@@ -68,9 +68,9 @@ totalAnovaRandLsmeans<-function(model, ddf="Satterthwaite", type=3, alpha.random
         {
   	    warning("\n model has been refitted with REML=TRUE \n")
            if(!is.null(l)) 
-              update(model,.~., data=data, REML=TRUE, contrasts=l)
+              update(model,.~., REML=TRUE, contrasts=l)
            else
-              update(model,.~., data=data, REML=TRUE)           
+              update(model,.~., REML=TRUE)           
         }
   mf.final<-update.formula(formula(model),formula(model))
   
@@ -78,19 +78,22 @@ totalAnovaRandLsmeans<-function(model, ddf="Satterthwaite", type=3, alpha.random
   
   #update data 
   #eliminate missing values
-  if(ncol(get_all_vars(mf.final, data))>ncol(data))
-  {
-     #mframe<-model.frame(mf.final, data=data, na.action=na.pass)
-     #data$response<-mframe[,1]
-     data$response<-data[,1]
-     data<-data[,-1]
-     fm<-paste(mf.final)
-     fm[2]<-"response"
-     mf.final<- as.formula(paste(fm[2],fm[1],fm[3], sep=""))
-     mf.final<-update.formula(mf.final,mf.final)
-  }
+  ### old code ############
+  #if(ncol(get_all_vars(mf.final, data))>ncol(data))
+  #{
+  #   #mframe<-model.frame(mf.final, data=data, na.action=na.pass)
+  #   #data$response<-mframe[,1]
+  #   data$response<-data[,1]
+  #   data<-data[,-1]
+  #   fm<-paste(mf.final)
+  #   fm[2]<-"response"
+  #   mf.final<- as.formula(paste(fm[2],fm[1],fm[3], sep=""))
+  #   mf.final<-update.formula(mf.final,mf.final)
+  #}
   
-  data<-get_all_vars(mf.final, data)
+  #data<-get_all_vars(mf.final, data)
+  ###############################################################
+  
   data<-data[complete.cases(data),]
   
   
@@ -105,7 +108,7 @@ totalAnovaRandLsmeans<-function(model, ddf="Satterthwaite", type=3, alpha.random
   #else
   #   model<-update(model, mf.final, data=data, REML=model@dims[["REML"]])
 
-  model<-updateModel(model, mf.final, data, l)
+  model<-updateModel(model, mf.final, l)
  
     # check if there are no fixed effects
   #if(length(attr(delete.response(terms(model)),"term.labels"))==0)
@@ -351,7 +354,7 @@ totalAnovaRandLsmeans<-function(model, ddf="Satterthwaite", type=3, alpha.random
           mf.final <- update.formula(formula(model),formula(model))
           #model <- eval(substitute(lmer(mf.final, data=data),list(mf.final=mf.final)))
           
-          model<-updateModel(model, mf.final, data, l)
+          model<-updateModel(model, mf.final, l)
          
           anova.table <- resNSelim$anova.table
           elim.num <- elim.num+1
@@ -401,7 +404,7 @@ totalAnovaRandLsmeans<-function(model, ddf="Satterthwaite", type=3, alpha.random
   #  model<-eval(substitute(lmer(mf.final, data=data, REML=model@dims[["REML"]], contrasts=l),list(mf.final=mf.final)))
   #else
   #  model<-eval(substitute(lmer(mf.final, data=data, REML=model@dims[["REML"]]),list(mf.final=mf.final)))
-  model<-updateModel(model, mf.final, data, l)
+  model<-updateModel(model, mf.final, l)
   
   #save model
   result$model <- as(model,"merLmerTest")
@@ -496,25 +499,37 @@ lmer <-
       return(as(model,"merLmerTest"))
     }
 
+
 setMethod("anova", signature(object="merLmerTest"),
-    function(object, ddf="Satterthwaite", method.grad="simple" , ...)  
+    function(object,..., ddf="Satterthwaite", method.grad="simple")  
     {
-      cnm <- callNextMethod()
-      if(!is.null(ddf)&& ddf=="lme4") 
-        return(cnm) 
+      mCall <- match.call(expand.dots = TRUE)
+      dots <- list(...)
+      modp <- if (length(dots))
+      sapply(dots, is, "merLmerTest") | sapply(dots, is, "mer") | sapply(dots, is, "lm") else logical(0)
+	    if (any(modp)) {
+	      return(callNextMethod())
+      }
       else
       {
-        table <- cnm
-        an.table <- totalAnovaRandLsmeans(model=object, ddf=ddf, type=3, isAnova=TRUE, reduce.random=FALSE, reduce.fixed=FALSE, method.grad=method.grad)$anova.table
-        rnames<-rownames(table)
-        table<-as.data.frame(cbind(table$Df, table$"Sum Sq", table$"Mean Sq", an.table[,"DenDF"], an.table[,"F.value"], an.table[,"Pr(>F)"]))
-        colnames(table) <- c("Df", "Sum Sq", "Mean Sq", "Denom", "F value", "Pr(>F)")
-        dimnames(table) <- list(rnames,
-              c("Df", "Sum Sq", "Mean Sq", "Denom", "F value", "Pr(>F)"))
-        attr(table, "heading") <- paste("Analysis of Variance Table with ",ddf," approximation for degrees of freedom")
-        class(table) <- c("anova", "data.frame")
-        return(table)
+        cnm <- callNextMethod()
+        if(!is.null(ddf)&& ddf=="lme4") 
+          return(cnm) 
+        else
+        {
+          table <- cnm
+          an.table <- totalAnovaRandLsmeans(model=object, ddf=ddf, type=3, isAnova=TRUE, reduce.random=FALSE, reduce.fixed=FALSE, method.grad=method.grad)$anova.table
+          rnames<-rownames(table)
+          table<-as.data.frame(cbind(table$Df, table$"Sum Sq", table$"Mean Sq", an.table[,"DenDF"], an.table[,"F.value"], an.table[,"Pr(>F)"]))
+          colnames(table) <- c("Df", "Sum Sq", "Mean Sq", "Denom", "F value", "Pr(>F)")
+          dimnames(table) <- list(rnames,
+                c("Df", "Sum Sq", "Mean Sq", "Denom", "F value", "Pr(>F)"))
+          attr(table, "heading") <- paste("Analysis of Variance Table with ",ddf," approximation for degrees of freedom")
+          class(table) <- c("anova", "data.frame")
+          return(table)
+        }  
       }
+      
     })
 setMethod("summary", signature(object = "merLmerTest"),
     function(object, ddf="Satterthwaite", ...)
