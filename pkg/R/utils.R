@@ -275,7 +275,8 @@ calcFpvalue<-function(term, L, model, rho, ddf, method.grad="simple")
       res.KR<-KRmodcomp(model,t(as.matrix(Lc)))
     else
       res.KR<-KRmodcomp(model,Lc)
-    return(list(denom = res.KR$stats["df2"], Fstat = res.KR$stats["Fstat"], pvalue =  res.KR$stats["p.value"]))
+   # return(list(denom = res.KR$stats["df2"], Fstat = res.KR$stats["Fstat"], pvalue =  res.KR$stats["p.value"]))
+    return(list(denom = res.KR$test[1,"ddf"], Fstat = res.KR$test[1,"F.scaling"], pvalue =  res.KR$test[1,"p.value"]))
   }
   else
   {

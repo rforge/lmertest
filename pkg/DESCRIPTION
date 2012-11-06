@@ -6,7 +6,7 @@ Version: 1.0-3
 Date: 2012-01-09
 Author: Alexandra Kuznetsova, Per Bruun Brockhoff, Rune Haubo Bojesen Christensen 
 Maintainer: Alexandra Kuznetsova <alku@imm.dtu.dk>
-Depends: lme4, Matrix, stats
+Depends: lme4, Matrix, stats, methods
 Imports: nlme, numDeriv, MASS, Hmisc, gplots, pbkrtest
 LinkingTo: lme4, Matrix, stats
 Description: Tests comprise type 3 F tests for fixed effects, LRT tests for random effects, calculation of population means for fixed factors with confidence intervals and corresponding plots. Package also provides backward elimination of non-significant effects

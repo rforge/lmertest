@@ -248,13 +248,15 @@ totalAnovaRandLsmeans<-function(model, ddf="Satterthwaite", type=3, alpha.random
       
       if(!isposA)
       {
-        print("ERROR: asymptotic covariance matrix A is not positive!")
-        result$model<-model
-        TABs<-emptyAnovaLsmeansTAB()
-        result$anova.table<-TABs$TAB.fixed
-        result$lsmeans.table<-TABs$TAB.lsmeans
-        result$diffs.lsmeans.table<-TABs$TAB.lsmeans
-        return(result)
+        print("Asymptotic covariance matrix A is not positive!")
+        #previous code: return ERROR
+        #print("ERROR: asymptotic covariance matrix A is not positive!")
+        #result$model<-model
+        #TABs<-emptyAnovaLsmeansTAB()
+        #result$anova.table<-TABs$TAB.fixed
+        #result$lsmeans.table<-TABs$TAB.lsmeans
+        #result$diffs.lsmeans.table<-TABs$TAB.lsmeans
+        #return(result)
       }
       
       
@@ -434,8 +436,8 @@ step <- function(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, alpha.f
 
 print.step <- function(x, ...)
 {
-  cat("Call:\n")
-  print(x$call)
+  #cat("Call:\n")
+  #print(x$call)
   
   if(!is.null(x$rand.table))
   {
@@ -496,7 +498,9 @@ lmer <-
       mc<-match.call()
       mc[[1]] <- quote(lme4::lmer)
       model<-eval.parent(mc)
-      return(as(model,"merLmerTest"))
+      model<-as(model,"merLmerTest")
+      model@t.pval<-totalAnovaRandLsmeans(model=model, ddf="Satterthwaite", isTtest=TRUE)$ttest$tpvalue
+      return(model)
     }
 
 
@@ -520,10 +524,10 @@ setMethod("anova", signature(object="merLmerTest"),
           table <- cnm
           an.table <- totalAnovaRandLsmeans(model=object, ddf=ddf, type=3, isAnova=TRUE, reduce.random=FALSE, reduce.fixed=FALSE, method.grad=method.grad)$anova.table
           rnames<-rownames(table)
-          table<-as.data.frame(cbind(table$Df, table$"Sum Sq", table$"Mean Sq", an.table[,"DenDF"], an.table[,"F.value"], an.table[,"Pr(>F)"]))
-          colnames(table) <- c("Df", "Sum Sq", "Mean Sq", "Denom", "F value", "Pr(>F)")
+          table<-as.data.frame(cbind(table$Df, table$"Sum Sq", table$"Mean Sq", an.table[,"F.value"], an.table[,"DenDF"], an.table[,"Pr(>F)"]))
+          colnames(table) <- c("Df", "Sum Sq", "Mean Sq", "F value", "Denom", "Pr(>F)")
           dimnames(table) <- list(rnames,
-                c("Df", "Sum Sq", "Mean Sq", "Denom", "F value", "Pr(>F)"))
+                c("Df", "Sum Sq", "Mean Sq", "F value", "Denom", "Pr(>F)"))
           attr(table, "heading") <- paste("Analysis of Variance Table with ",ddf," approximation for degrees of freedom")
           class(table) <- c("anova", "data.frame")
           return(table)
@@ -538,7 +542,8 @@ setMethod("summary", signature(object = "merLmerTest"),
       if(!is.null(ddf) && ddf=="lme4") return(cl)
       else
       {
-         coefs.satt <- cbind(cl@coefs,totalAnovaRandLsmeans(model=object, ddf=ddf, isTtest=TRUE)$ttest$tpvalue) 
+         #coefs.satt <- cbind(cl@coefs,totalAnovaRandLsmeans(model=object, ddf=ddf, isTtest=TRUE)$ttest$tpvalue) 
+        coefs.satt <- cbind(cl@coefs,object@t.pval) 
          cl@coefs<-coefs.satt
          
 #            coefs.satt <- cbind("df"= result$ttest$df, "p value"= result$ttest$tpvalue)
