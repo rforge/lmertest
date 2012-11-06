@@ -222,6 +222,19 @@ totalAnovaRandLsmeans<-function(model, ddf="Satterthwaite", type=3, alpha.random
                result$diffs.lsmeans.table<-lsmeans.summ
              return(result)
           }
+          if(isTtest)
+          {
+            # save lmer outcome in rho environmental variable
+            rho<-rhoInit(model)     
+            
+            # calculate asymptotic covariance matrix A
+            h <- hessian(function(x) Dev(rho,x), rho$param$vec.matr)
+            rho$A <- 2*solve(h)
+            #rho$A <- 2*ginv(h)
+            
+            tsummary<-calculateTtest(rho, diag(rep(1,nrow(rho$s@coefs))), nrow(rho$s@coefs), method.grad)
+            result$ttest<-list(df=tsummary[,"df"], tvalue=tsummary[,"t value"], tpvalue=tsummary[,"p-value"])
+          }
           result$model<-model
           result$anova.table<-anova(model, ddf="lme4")
           return(result)        
