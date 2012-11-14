@@ -1,4 +1,4 @@
-totalAnovaRandLsmeans<-function(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, alpha.fixed = 0.05, reduce.fixed = TRUE, reduce.random = TRUE, lsmeans.calc = TRUE, difflsmeans.calc=TRUE,  isTotal=FALSE, isAnova=FALSE, isRand=FALSE, isLSMEANS=FALSE, isDiffLSMEANS=FALSE, isTtest=FALSE, test.effs=NULL, method.grad="simple")
+totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, alpha.fixed = 0.05, reduce.fixed = TRUE, reduce.random = TRUE, lsmeans.calc = TRUE, difflsmeans.calc=TRUE,  isTotal=FALSE, isAnova=FALSE, isRand=FALSE, isLSMEANS=FALSE, isDiffLSMEANS=FALSE, isTtest=FALSE, test.effs=NULL, method.grad="simple")
 {
   #errors in specifying the parameters
   if(!isRand && !(ddf %in% c("Satterthwaite","Kenward-Roger")))
@@ -12,29 +12,35 @@ totalAnovaRandLsmeans<-function(model, ddf="Satterthwaite", type=3, alpha.random
     stop()
   } 
   
-  data<-summary(model,"lme4")@frame
+  data <- summary(model,"lme4")@frame
   
-  #contrasts
-  l<-NULL
-  #update model to mer class
-  model<-updateModel(model, .~., l)
   
+  
+  #update contrasts
+  mm <- model.matrix(model)
+  l <- attr(mm,"contrasts")
+  contr<-l
   ### change contrasts for F tests calculations
   #list of contrasts for factors
   if(isAnova || isTotal)
   {
-    mm<-model.matrix(model)
-    if(length(which(unlist(attr(mm,"contrasts"))!="contr.SAS"))>0)
+    
+    if(length(which(unlist(contr)!="contr.SAS"))>0)
     {
-      names.facs<-names(attr(mm,"contrasts"))
-      l<-as.list(rep("contr.SAS",length(names.facs)))
-      names(l)<-names(attr(mm,"contrasts"))
+      names.facs <- names(contr)
+      l <- as.list(rep("contr.SAS",length(names.facs)))
+      names(l) <- names(contr)
       #warning(" \nmodel has been refitted with contrasts=contr.SAS \n")
       #model<-update(model,.~., data=data, contrasts=l)
-      model<-updateModel(model, .~., l)
+      model <- updateModel(model, .~., model@dims[["REML"]], l)
      
     }
     
+  }
+  else
+  {
+    #update model to mer class
+    model <- updateModel(model, .~.,model@dims[["REML"]], l)
   }
   
   
@@ -67,10 +73,7 @@ totalAnovaRandLsmeans<-function(model, ddf="Satterthwaite", type=3, alpha.random
         else
         {
   	    warning("\n model has been refitted with REML=TRUE \n")
-           if(!is.null(l)) 
-              update(model,.~., REML=TRUE, contrasts=l)
-           else
-              update(model,.~., REML=TRUE)           
+           updateModel(model,.~., reml=TRUE, l)
         }
   mf.final<-update.formula(formula(model),formula(model))
   
@@ -108,7 +111,7 @@ totalAnovaRandLsmeans<-function(model, ddf="Satterthwaite", type=3, alpha.random
   #else
   #   model<-update(model, mf.final, data=data, REML=model@dims[["REML"]])
 
-  model<-updateModel(model, mf.final, l)
+  model<-updateModel(model, mf.final, model@dims[["REML"]], l)
  
     # check if there are no fixed effects
   #if(length(attr(delete.response(terms(model)),"term.labels"))==0)
@@ -278,7 +281,8 @@ totalAnovaRandLsmeans<-function(model, ddf="Satterthwaite", type=3, alpha.random
       {
         tsummary<-calculateTtest(rho, diag(rep(1,nrow(rho$s@coefs))), nrow(rho$s@coefs), method.grad)
         result$ttest<-list(df=tsummary[,"df"], tvalue=tsummary[,"t value"], tpvalue=tsummary[,"p-value"])
-        return(result)
+        if(!isTotal)
+          return(result)
       }
         
       
@@ -369,7 +373,7 @@ totalAnovaRandLsmeans<-function(model, ddf="Satterthwaite", type=3, alpha.random
           mf.final <- update.formula(formula(model),formula(model))
           #model <- eval(substitute(lmer(mf.final, data=data),list(mf.final=mf.final)))
           
-          model<-updateModel(model, mf.final, l)
+          model<-updateModel(model, mf.final, model@dims[["REML"]], l)
          
           anova.table <- resNSelim$anova.table
           elim.num <- elim.num+1
@@ -419,10 +423,12 @@ totalAnovaRandLsmeans<-function(model, ddf="Satterthwaite", type=3, alpha.random
   #  model<-eval(substitute(lmer(mf.final, data=data, REML=model@dims[["REML"]], contrasts=l),list(mf.final=mf.final)))
   #else
   #  model<-eval(substitute(lmer(mf.final, data=data, REML=model@dims[["REML"]]),list(mf.final=mf.final)))
-  model<-updateModel(model, mf.final, l)
+  model<-updateModel(model, mf.final, model@dims[["REML"]], contr)
   
   #save model
-  result$model <- as(model,"merLmerTest")
+  model <- as(model,"merLmerTest")
+  model@t.pval<-result$ttest$tpvalue
+  result$model<-model
   return(result)
 }
 
@@ -433,7 +439,7 @@ totalAnovaRandLsmeans<-function(model, ddf="Satterthwaite", type=3, alpha.random
 
 step <- function(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, alpha.fixed = 0.05, reduce.fixed = TRUE, reduce.random = TRUE, lsmeans.calc=TRUE, difflsmeans.calc=TRUE, test.effs=NULL, method.grad="simple",...)
 {  
-  result <- totalAnovaRandLsmeans(model=model, ddf=ddf , type=type,  alpha.random=alpha.random, alpha.fixed=alpha.fixed, reduce.fixed=reduce.fixed, reduce.random=reduce.random, lsmeans.calc=lsmeans.calc, difflsmeans.calc=difflsmeans.calc, isTotal=TRUE, test.effs=test.effs, method.grad=method.grad)
+  result <- totalAnovaRandLsmeans(model=model, ddf=ddf , type=type,  alpha.random=alpha.random, alpha.fixed=alpha.fixed, reduce.fixed=reduce.fixed, reduce.random=reduce.random, lsmeans.calc=lsmeans.calc, difflsmeans.calc=difflsmeans.calc, isTotal=TRUE, isTtest=TRUE, test.effs=test.effs, method.grad=method.grad)
   class(result) <- "step"
   result
 }
