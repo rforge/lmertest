@@ -22,6 +22,8 @@
 (fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
 anova(fm1)
 summary(fm1)
+
+anova(fm2, ddf="Kenward-Roger")
 }
 \keyword{models}
 \keyword{methods}

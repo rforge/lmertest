@@ -76,4 +76,6 @@ rand(m2)
 an<-anova(m2)
 step(m2)
 
+anova(m2, ddf="Kenward-Roger")
+
 }

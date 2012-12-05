@@ -638,8 +638,15 @@ getFacCombForLSMEANS<-function(split.eff, data)
   if(length(split.eff)>=2)
     data.merge<-merge(levels(data[,split.eff[1]]),levels(data[,split.eff[2]]))
   if(length(split.eff)>=3)
+  {
     for(i in 3:length(split.eff))
-       data.merge<-merge(data.merge,as.data.frame(levels(data[,split.eff[i]])))       
+    {
+      d.split.eff_i<-as.data.frame(levels(data[,split.eff[i]]))
+      names(d.split.eff_i)<-paste("l",i)
+      data.merge<-merge(data.merge,d.split.eff_i)
+    }
+              
+  }
   names(data.merge)<-split.eff
   return(as.matrix(data.merge))
 }

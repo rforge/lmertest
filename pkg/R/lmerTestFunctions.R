@@ -199,9 +199,9 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type=3, alpha.rand
   #perform reduction of fixed effects for model with mixed effects
   stop = FALSE
   is.first.anova<-TRUE
-  is.first.sign<-TRUE
-  
+  is.first.sign<-TRUE  
    
+  
   
   while(!stop)
   {
@@ -276,13 +276,12 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type=3, alpha.rand
       }
       
       
-      #calculate ttest and p-values fr summary
+      #calculate ttest and p-values for summary
       if(isTtest)
       {
         tsummary<-calculateTtest(rho, diag(rep(1,nrow(rho$s@coefs))), nrow(rho$s@coefs), method.grad)
         result$ttest<-list(df=tsummary[,"df"], tvalue=tsummary[,"t value"], tpvalue=tsummary[,"p-value"])
-        if(!isTotal)
-          return(result)
+        return(result)
       }
         
       
@@ -417,6 +416,10 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type=3, alpha.rand
     result$diffs.lsmeans.table <- NULL
   }
   
+  tsummary<-calculateTtest(rho, diag(rep(1,nrow(rho$s@coefs))), nrow(rho$s@coefs), method.grad)
+  result$ttest<-list(df=tsummary[,"df"], tvalue=tsummary[,"t value"], tpvalue=tsummary[,"p-value"])
+  
+  
   #update final model
   mf.final <- update.formula(formula(model),formula(model))
   #if(!is.null(l))
@@ -439,7 +442,7 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type=3, alpha.rand
 
 step <- function(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, alpha.fixed = 0.05, reduce.fixed = TRUE, reduce.random = TRUE, lsmeans.calc=TRUE, difflsmeans.calc=TRUE, test.effs=NULL, method.grad="simple",...)
 {  
-  result <- totalAnovaRandLsmeans(model=model, ddf=ddf , type=type,  alpha.random=alpha.random, alpha.fixed=alpha.fixed, reduce.fixed=reduce.fixed, reduce.random=reduce.random, lsmeans.calc=lsmeans.calc, difflsmeans.calc=difflsmeans.calc, isTotal=TRUE, isTtest=TRUE, test.effs=test.effs, method.grad=method.grad)
+  result <- totalAnovaRandLsmeans(model=model, ddf=ddf , type=type,  alpha.random=alpha.random, alpha.fixed=alpha.fixed, reduce.fixed=reduce.fixed, reduce.random=reduce.random, lsmeans.calc=lsmeans.calc, difflsmeans.calc=difflsmeans.calc, isTotal=TRUE, isTtest=FALSE, test.effs=test.effs, method.grad=method.grad)
   class(result) <- "step"
   result
 }
