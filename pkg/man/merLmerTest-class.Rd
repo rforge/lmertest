@@ -23,7 +23,7 @@
 } 
  
 \section{Methods}{
-anova \code{signature(object = "merLmerTest")}: returns the data frame with F test of type 3 hypothesis for each term in formula and corresponding p-values. For multiple arguments, model comparison statistics. The definition of type 3 hypothesis comes from SAS theory proc mixed.
+anova \code{signature(object = "merLmerTest", \dots)}: returns the data frame with F test of type 3 hypothesis for each term in formula and corresponding p-values. For multiple arguments, model comparison statistics. The definition of type 3 hypothesis comes from SAS theory proc mixed. The approximations for degrees of freedom by default are Satterthwaite's. If ddf="Kenward-Roger", then the Kenward-Roger's approximations are calculated using \code{KRmodcomp} function from \code{pbkrtest} package. If ddf="lme4" then the anova table that comes from \code{lme4} package is returned. 
       \code{\link{anova}}
 }
  

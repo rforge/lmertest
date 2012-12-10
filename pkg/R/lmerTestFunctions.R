@@ -527,7 +527,7 @@ lmer <-
 
 
 setMethod("anova", signature(object="merLmerTest"),
-    function(object,..., ddf="Satterthwaite", method.grad="simple")  
+    function(object,...)  
     {
       mCall <- match.call(expand.dots = TRUE)
       dots <- list(...)
@@ -539,9 +539,18 @@ setMethod("anova", signature(object="merLmerTest"),
       else
       {
         cnm <- callNextMethod()
-        if(!is.null(ddf)&& ddf=="lme4") 
-          return(cnm) 
+        #if(!is.null(ddf)&& ddf=="lme4") 
+        #  return(cnm)
+        if(("ddf" %in% names(dots)) && dots$"ddf"=="lme4") 
+           return(cnm)
+        if("ddf" %in% names(dots))
+           ddf <- dots$"ddf"
         else
+           ddf <- "Satterthwaite"  
+        if("method.grad" %in% names(dots))
+          method.grad <- dots$"method.grad"
+        else
+          method.grad <- "simple"
         {
           table <- cnm
           an.table <- totalAnovaRandLsmeans(model=object, ddf=ddf, type=3, isAnova=TRUE, reduce.random=FALSE, reduce.fixed=FALSE, method.grad=method.grad)$anova.table

@@ -7,7 +7,7 @@ importFrom(MASS, ginv)
 import(Hmisc)
 importFrom(gplots, barplot2)
 import(pbkrtest)
-
+importFrom(lme4, anova)
 
 
 exportClasses("summary.merLmerTest")
@@ -22,7 +22,7 @@ export(lmer)
 #export("sigma")
 
 
-exportMethods("anova","summary")
+exportMethods("anova", "summary")
 
 S3method(print, step)
 S3method(plot, step)
@@ -31,5 +31,6 @@ S3method(print, lsmeans)
 S3method(plot, lsmeans)
 S3method(print, difflsmeans)
 S3method(plot, difflsmeans)
+
 
 
