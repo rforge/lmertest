@@ -1507,8 +1507,9 @@ elimZeroVarOrCorr<-function(model, data, l)
         if(!is.present.rand)
         {
           #library(nlme)
-          model=gls(model = mf.final, data=data, method = "REML", na.action=na.omit)
+          #model=gls(model = mf.final, data=data, method = "REML", na.action=na.omit)
           #detach(package:nlme)
+          model <- lm(model, data=model$data)
           return(list(model=model, TAB.rand=NULL))
         }
         #update model
