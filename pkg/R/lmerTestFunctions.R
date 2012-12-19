@@ -32,7 +32,7 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type=3, alpha.rand
       names(l) <- names(contr)
       #warning(" \nmodel has been refitted with contrasts=contr.SAS \n")
       #model<-update(model,.~., data=data, contrasts=l)
-      model <- updateModel(model, data, .~., model@dims[["REML"]], l)
+      model <- updateModel(model, .~., model@dims[["REML"]], l)
      
     }
     
@@ -40,7 +40,7 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type=3, alpha.rand
   else
   {
     #update model to mer class
-    model <- updateModel(model, data, .~.,model@dims[["REML"]], l)
+    model <- updateModel(model, .~.,model@dims[["REML"]], l)
   }
   
   
@@ -73,7 +73,7 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type=3, alpha.rand
         else
         {
   	    warning("\n model has been refitted with REML=TRUE \n")
-           updateModel(model, data,.~., reml=TRUE, l)
+           updateModel(model, .~., reml=TRUE, l)
         }
   mf.final<-update.formula(formula(model),formula(model))
   
@@ -111,7 +111,7 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type=3, alpha.rand
   #else
   #   model<-update(model, mf.final, data=data, REML=model@dims[["REML"]])
 
-  model<-updateModel(model, data, mf.final, model@dims[["REML"]], l)
+  model<-updateModel(model, mf.final, model@dims[["REML"]], l)
  
     # check if there are no fixed effects
   #if(length(attr(delete.response(terms(model)),"term.labels"))==0)
@@ -372,7 +372,7 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type=3, alpha.rand
           mf.final <- update.formula(formula(model),formula(model))
           #model <- eval(substitute(lmer(mf.final, data=data),list(mf.final=mf.final)))
           
-          model<-updateModel(model, data, mf.final, model@dims[["REML"]], l)
+          model<-updateModel(model, mf.final, model@dims[["REML"]], l)
          
           anova.table <- resNSelim$anova.table
           elim.num <- elim.num+1
@@ -426,7 +426,7 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type=3, alpha.rand
   #  model<-eval(substitute(lmer(mf.final, data=data, REML=model@dims[["REML"]], contrasts=l),list(mf.final=mf.final)))
   #else
   #  model<-eval(substitute(lmer(mf.final, data=data, REML=model@dims[["REML"]]),list(mf.final=mf.final)))
-  model<-updateModel(model, data, mf.final, model@dims[["REML"]], contr)
+  model<-updateModel(model, mf.final, model@dims[["REML"]], contr)
   
   #save model
   model <- as(model,"merLmerTest")
@@ -505,9 +505,9 @@ print.step <- function(x, ...)
 
 plot.step<-function(x, ...)
 {
-  if(!is.null(x$lsmeans.table))
+  if(!is.null(x$lsmeans.table) && nrow(x$lsmeans.table)>0)
     plotLSMEANS(x$lsmeans.table, x$response, "LSMEANS")     
-  if(!is.null(x$diffs.lsmeans.table))
+  if(!is.null(x$diffs.lsmeans.table) && nrow(x$diffs.lsmeans.table)>0)
     plotLSMEANS(x$diffs.lsmeans.table, x$response, "DIFF of LSMEANS")
 }
 
@@ -521,7 +521,16 @@ lmer <-
       mc[[1]] <- quote(lme4::lmer)
       model<-eval.parent(mc)
       model<-as(model,"merLmerTest")
-      model@t.pval<-totalAnovaRandLsmeans(model=model, ddf="Satterthwaite", isTtest=TRUE)$ttest$tpvalue
+      #tryCatch(  { result = glm( y~x , family = binomial( link = "logit" ) ) } , error = function(e) { print("test") } )
+      t.pval <- tryCatch( {totalAnovaRandLsmeans(model=model, ddf="Satterthwaite", isTtest=TRUE)$ttest$tpvalue}, error = function(e) { NULL })
+      if(!is.null(t.pval))
+      {
+        model@t.pval <-t.pval
+      }
+      else
+      {
+        model<-as(model,"mer")
+      }
       return(model)
     }
 
@@ -553,13 +562,22 @@ setMethod("anova", signature(object="merLmerTest"),
           method.grad <- "simple"
         {
           table <- cnm
-          an.table <- totalAnovaRandLsmeans(model=object, ddf=ddf, type=3, isAnova=TRUE, reduce.random=FALSE, reduce.fixed=FALSE, method.grad=method.grad)$anova.table
-          rnames<-rownames(table)
-          table<-as.data.frame(cbind(table$Df, table$"Sum Sq", table$"Mean Sq", an.table[,"F.value"], an.table[,"DenDF"], an.table[,"Pr(>F)"]))
-          colnames(table) <- c("Df", "Sum Sq", "Mean Sq", "F value", "Denom", "Pr(>F)")
-          dimnames(table) <- list(rnames,
-                c("Df", "Sum Sq", "Mean Sq", "F value", "Denom", "Pr(>F)"))
-          attr(table, "heading") <- paste("Analysis of Variance Table with ",ddf," approximation for degrees of freedom")
+          an.table <- tryCatch({totalAnovaRandLsmeans(model=object, ddf=ddf, type=3, isAnova=TRUE, reduce.random=FALSE, reduce.fixed=FALSE, method.grad=method.grad)$anova.table}, error = function(e) { NULL })
+          if(!is.null(an.table))
+          {
+            rnames<-rownames(table)
+            if(nrow(an.table)>0)
+            {
+              table<-as.data.frame(cbind(table$Df, table$"Sum Sq", table$"Mean Sq", an.table[,"F.value"], an.table[,"DenDF"], an.table[,"Pr(>F)"]))
+              colnames(table) <- c("Df", "Sum Sq", "Mean Sq", "F value", "Denom", "Pr(>F)")
+              dimnames(table) <- list(rnames,
+                                      c("Df", "Sum Sq", "Mean Sq", "F value", "Denom", "Pr(>F)"))
+            }
+            else
+              table<-an.table
+            attr(table, "heading") <- paste("Analysis of Variance Table with ",ddf," approximation for degrees of freedom")
+          }
+          
           class(table) <- c("anova", "data.frame")
           return(table)
         }  
@@ -791,7 +809,8 @@ plot.lsmeans <- function(x, ...)
 {
     
     #plots for LSMEANS
-    plotLSMEANS(x$lsmeans.table, x$response, "LSMEANS")     
+    if(!is.null(x$lsmeans.table) && nrow(x$lsmeans.table)>0)
+      plotLSMEANS(x$lsmeans.table, x$response, "LSMEANS")     
 }
 
 difflsmeans <- function(model, test.effs=NULL, method.grad="simple", ...)
@@ -814,7 +833,8 @@ plot.difflsmeans <- function(x, ...)
 {
     
     #plots for DIFF of LSMEANS
-    plotLSMEANS(x$diffs.lsmeans.table, x$response, "DIFF of LSMEANS")   
+    if(!is.null(x$diffs.lsmeans.table) && nrow(x$diffs.lsmeans.table)>0)
+      plotLSMEANS(x$diffs.lsmeans.table, x$response, "DIFF of LSMEANS")   
 }
 
 

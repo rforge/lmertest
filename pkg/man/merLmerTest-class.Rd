@@ -23,7 +23,7 @@
 } 
  
 \section{Methods}{
-anova \code{signature(object = "merLmerTest", \dots)}: returns the data frame with F test of type 3 hypothesis for each term in formula and corresponding p-values. For multiple arguments, model comparison statistics. The definition of type 3 hypothesis comes from SAS theory proc mixed. The approximations for degrees of freedom by default are Satterthwaite's. If ddf="Kenward-Roger", then the Kenward-Roger's approximations are calculated using \code{KRmodcomp} function from \code{pbkrtest} package. If ddf="lme4" then the anova table that comes from \code{lme4} package is returned. 
+anova \code{signature(object = "merLmerTest", \dots)}: returns the data frame with F test of type 3 hypothesis for each term in formula and corresponding p-values. For multiple arguments, model comparison statistics. The definition of type 3 hypothesis comes from SAS theory proc mixed. The approximations for degrees of freedom by default are Satterthwaite's (ddf="Satterthwaite"). If ddf="Kenward-Roger", then the Kenward-Roger's approximations are calculated using \code{KRmodcomp} function from \code{pbkrtest} package. If ddf="lme4" then the anova table that comes from \code{lme4} package is returned. 
       \code{\link{anova}}
 }
  
@@ -33,9 +33,19 @@ anova \code{signature(object = "merLmerTest", \dots)}: returns the data frame wi
 \examples{
 (m <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject),
              data = sleepstudy))
-print(m, digits = 10, corr = FALSE) # more precision; no 
+# anova table with additional F statistics and denominator degrees of freedom
+# calculated based on Satterthwaite's approximation
 anova(m)
+
+# anova table with additional F statistics and denominator degrees of freedom
+# calculated based on Kenward-Roger's approximation
 anova(m, ddf="Kenward-Roger")
+
+# anova table, that is returned by lme4 package
 anova(m, ddf="lme4")
+
+# summary of merLmerTest object. Returns the same as mer object but with an #additional column of p values for the t test. 
+summary(m)
+
 }
 \keyword{classes}

@@ -471,7 +471,7 @@ elimNSFixedTerm<-function(model, anova.table, data, alpha, elim.num, l)
   #  model<-eval(substitute(lmer(mf.final, data=data, contrasts=l),list(mf.final=mf.final)))
   #else
   #  model<-eval(substitute(lmer(mf.final, data=data),list(mf.final=mf.final)))
-  model<-updateModel(model, data=data, mf.final, model@dims[["REML"]], l)
+  model<-updateModel(model, mf.final, model@dims[["REML"]], l)
   #model<-update(model,formula. = mf.final)
   return(list(model=model, anova.table=anova.table))
 }
@@ -791,6 +791,8 @@ plotLSMEANS<-function(table, response, which.plot=c("LSMEANS", "DIFF of LSMEANS"
       split.eff <- unlist(strsplit(un.names[i],":"))
       col.bars<- lapply(table[inds.eff,][,"p-value"], calc.cols)
       #windows()
+      #par(mfrow=c(1,1))
+      x11()
       layout(matrix(c(rep(1,3),2,rep(1,3),2), 2, 4, byrow = TRUE))
       barplot2(table[inds.eff,"Estimate"],col=unlist(col.bars), ci.l=table[inds.eff,ncol(table)-2], ci.u=table[inds.eff,ncol(table)-1], plot.ci=TRUE, names.arg=namesForLevels[inds.eff], xlab=un.names[i], ylab=response, main=paste(which.plot," and CI plot for", un.names[i]))
       plot.new()
@@ -1517,7 +1519,7 @@ elimZeroVarOrCorr<-function(model, data, l)
         #  model<-eval(substitute(lmer(mf.final, data=data, REML=model@dims[["REML"]], contrasts=l),list(mf.final=mf.final)))
         #else
         #  model<-eval(substitute(lmer(mf.final, data=data, REML=model@dims[["REML"]]),list(mf.final=mf.final)))
-        model<-updateModel(model, data, mf.final, model@dims[["REML"]], l)
+        model<-updateModel(model, mf.final, model@dims[["REML"]], l)
         elimZero<-TRUE
         break       
       }
@@ -1576,7 +1578,7 @@ elimRandEffs<-function(model, data, alpha, reduce.random, l)
       #  model.red<-eval(substitute(lmer(mf.final, data=data, contrasts=l),list(mf.final=mf.final)))
       #else
       #  model.red<-eval(substitute(lmer(mf.final, data=data),list(mf.final=mf.final)))
-      model.red<-updateModel(model, data, mf.final, model@dims[["REML"]], l)
+      model.red<-updateModel(model, mf.final, model@dims[["REML"]], l)
       anova.red<-anova(model, model.red)
       infoForTerms[[rand.term]]<-saveInfoForTerm(rand.term, anova.red$Chisq[2], anova.red[2,6] , anova.red$Pr[2])
             
@@ -1666,9 +1668,9 @@ formatVC <- function(varc, digits = max(3, getOption("digits") - 2))
 
 
 #update model
-updateModel<-function(model,data, mf.final, reml, l)
+updateModel<-function(model, mf.final, reml, l)
 {
-  return(suppressWarnings(update(object=model, data=data, formula.=mf.final, REML=reml, contrasts=l)))
+  return(suppressWarnings(update(object=model, formula.=mf.final, REML=reml, contrasts=l)))
   
   
 #   if(!is.null(l)) 

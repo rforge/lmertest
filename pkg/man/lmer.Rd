@@ -20,9 +20,14 @@
 ## linear mixed models
 (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 (fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
+
+#anova table the same as of class mer but with additional F statistics and p #values calculated based on Satterthwaite's approximations
 anova(fm1)
+
+#gives summary of merLmerTest class. The same as of class summary.mer but with #additional p-values calculated based on Satterthwate's approximations
 summary(fm1)
 
+#anova table the same as of class mer but with additional F statistics and p #values calculated based on Kenward-Roger's approximations
 anova(fm2, ddf="Kenward-Roger")
 }
 \keyword{models}

@@ -7,7 +7,7 @@
 log-likelihood ratio tests for the random part, least squares means (population means) and differences of least squares means for the factors of the fixed part with corresponding plots. The package also provides with a function step, that preforms backward elimination of non-significant effects, starting from the random effects, and then fixed ones. 
 }
 \description{
- The package provides anova function, that gives data frame similar to what gives lme4 package but with p-values calculated from F statistics of type 3 hypothesis. There are two options for denominator degrees of freedom of F statistics: "Satterthwaite" and "Kenward-Roger". The calculation of Kenward-Roger's approximation is based on function from pbkrtest package, the calculation of Satterthwaite's approximation is based on SAS proc mixed theory (see reference).The type 3 hypothesis (marginal) is calculated according to SAS theory (SAS Institute Inc., 1978). The package also provides summary function, which gives similar to what lme4 package summary function but with p-values added for the t-test (based on Satterthwaite approximation for denominator degrees of freedom).
+ The package provides anova function, that gives data frame similar to what gives lme4 package but with p-values calculated from F statistics of type 3 hypothesis. There are two options for denominator degrees of freedom of F statistics: "Satterthwaite" and "Kenward-Roger". The calculation of Kenward-Roger's approximation is based on function from pbkrtest package, the calculation of Satterthwaite's approximation is based on SAS proc mixed theory (see reference).The type 3 hypothesis (marginal) is calculated according to SAS theory (SAS Institute Inc., 1978). The package also provides summary function, which gives the same as lme4 package summary function but with p-values added for the t-test (based on Satterthwaite approximation for denominator degrees of freedom).
 The tests on random effects are performed using log-likelihood ratio tests with one degree of freedom, which means, testing one effect in a time.
 }
 
@@ -46,36 +46,57 @@ library(lmerTest)
 #import ham data from lmerTest package
 data(ham)
 
-
+# an object of class merLmerTest
 m <- lmer(Informed.liking ~ Gender*Information*Product +(1|Consumer), data=ham)
+
+# gives summary of merLmerTest class. The same as of class summary.mer but with #additional p-values calculated based on Satterthwate's approximations
+summary(m)
+
+# anova table the same as of class mer but with additional F statistics and p #values calculated based on Satterthwaite's approximations
+anova(m)
+
+# anova table the same as of class mer but with additional F statistics and p #values calculated based on Kenward-Roger's approximations
+anova(m, ddf="Kenward-Roger")
+
+# anova table the same as of class mer 
+anova(m, ddf="lme4")
+
+
+# backward elimination of non-significant effects
 step(m)
+
 
 data(TVbo)
 m <- lmer(Cutting ~ TVset*Picture+(1|Assessor)
 + (1|Assessor:Picture) + (1|Assessor:TVset), data=TVbo)
 
-m2 <- lmer(Cutting ~ TVset*Picture+(1|Assessor)
-+ (1|Assessor:Picture) + (1|Assessor:TVset), data=TVbo, REML=FALSE)
+
+# finds the best by principle of parsimony model
+# and plots the post-hoc analysis
+plot(step(m))
 
 
-step(m, test.effs="TVset")
-anova(m)
-anova(m, ddf="Kenward-Roger")
-summary(m)
-summary(m, ddf="lme4")
-rand(m)
-lsmeans(m)
-anova(m2, ddf="Kenward-Roger")
+#finds least sqares means of model m and plots them
+plot(lsmeans(m))
 
+model<-lmer(log(Coloursaturation)~TVset*Picture+
+(1|Assessor)+(1|Assessor:TVset), data=TVbo)
+
+anova(model)
 
 data(carrots)
 m2 <- lmer(Preference~sens2+sens1+BITTER+Homesize+
 sens2:Homesize+(1+sens2|Consumer), data=carrots)
 
+#analyze the random part of model m2 by using LRT test
 rand(m2)
-an<-anova(m2)
+
+#backward elimination of non-significant effects of model m2
 step(m2)
 
-anova(m2, ddf="Kenward-Roger")
+
+
+
 
 }
+
