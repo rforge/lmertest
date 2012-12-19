@@ -44,7 +44,8 @@ anova(m, ddf="Kenward-Roger")
 # anova table, that is returned by lme4 package
 anova(m, ddf="lme4")
 
-# summary of merLmerTest object. Returns the same as mer object but with an #additional column of p values for the t test. 
+# summary of merLmerTest object. Returns the same as mer object but with an 
+#additional column of p values for the t test. 
 summary(m)
 
 }

@@ -49,13 +49,16 @@ data(ham)
 # an object of class merLmerTest
 m <- lmer(Informed.liking ~ Gender*Information*Product +(1|Consumer), data=ham)
 
-# gives summary of merLmerTest class. The same as of class summary.mer but with #additional p-values calculated based on Satterthwate's approximations
+# gives summary of merLmerTest class. The same as of class summary.mer but with 
+# additional p-values calculated based on Satterthwate's approximations
 summary(m)
 
-# anova table the same as of class mer but with additional F statistics and p #values calculated based on Satterthwaite's approximations
+# anova table the same as of class mer but with additional F statistics and 
+# p-values calculated based on Satterthwaite's approximations
 anova(m)
 
-# anova table the same as of class mer but with additional F statistics and p #values calculated based on Kenward-Roger's approximations
+# anova table the same as of class mer but with additional F statistics and  
+# p-values calculated based on Kenward-Roger's approximations
 anova(m, ddf="Kenward-Roger")
 
 # anova table the same as of class mer 
