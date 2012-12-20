@@ -6,7 +6,7 @@ importFrom(MASS, ginv)
 import(Hmisc)
 importFrom(gplots, barplot2)
 import(pbkrtest)
-importFrom(lme4, anova)
+
 
 
 exportClasses("summary.merLmerTest")
