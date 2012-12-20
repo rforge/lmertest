@@ -2,7 +2,7 @@ Package: lmerTest
 Type: Package
 Title: Tests for random and fixed effects for linear mixed effect
         models (lmer objects of lme4 package).
-Version: 1.0-3
+Version: 1.0-4
 Date: 2012-01-09
 Author: Alexandra Kuznetsova, Per Bruun Brockhoff, Rune Haubo Bojesen Christensen 
 Maintainer: Alexandra Kuznetsova <alku@imm.dtu.dk>
