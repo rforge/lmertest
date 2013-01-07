@@ -1,7 +1,6 @@
 #useDynLib(lme4, .registration=TRUE)
 importFrom(numDeriv, hessian, grad)
 import(Matrix)
-import(lme4)
 importFrom(MASS, ginv)
 import(Hmisc)
 importFrom(gplots, barplot2)
