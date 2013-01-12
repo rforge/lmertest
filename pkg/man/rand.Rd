@@ -64,7 +64,7 @@ data(carrots)
 
 #lmer model with correlation between intercept and slopes
 #in the random part
-m <- lmer(Preference ~ sens2+Homesize+(1+sens2|Consumer), data=carrots)
+m <- lmer(Preference~sens1+sens2+Homesize+(1+sens2+sens1|Consumer), data=carrots)
 
 # table with  p-values for the random effects
 rand(m)

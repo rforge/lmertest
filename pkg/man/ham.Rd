@@ -43,17 +43,17 @@ library(lmerTest)
 data(ham)
 
 m <- lmer(Informed.liking ~ Product*Information*Gender 
-+ (1|Product:Consumer) , REML=FALSE, data=ham)
++ (1|Product:Consumer) + 
+(1|Information:Consumer) + (1|Consumer), REML=FALSE, data=ham)
 
 #anova table with p-values with Satterthwaite's approximation for denominator 
 #degrees of freedom
 anova(m)
 
-#analysis of random and fixed parts and post hoc 
-#analysis of Product and Information effects
-step(m, reduce.random=FALSE, reduce.fixed=FALSE,
-test.effs=c("Product", "Information"))
+# step function. Reduction of both random and fixed parts
+step(m)
 
+rand(m)
 }
 
 \keyword{datasets}

@@ -53,8 +53,12 @@ library(lmerTest)
 #import carrots data from lmerTest package
 data(carrots)
 
-m <- lmer(Preference ~ sens2 + Homesize
-+(1+sens2|Consumer), data=carrots)
+m <- lmer(Preference ~ sens1+sens2+Homesize + Homesize:sens1+Homesize:sens2
++(1+sens1+sens2|Consumer), data=carrots)
+
+#step function
+#automatic elimination of random and fixed parts
+step(m)
 
 # only elimination of the random part is required. 
 #approximation of ddf is Kenward-Roger

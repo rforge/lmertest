@@ -47,9 +47,9 @@ library(lmerTest)
 data(ham)
 
 # an object of class merLmerTest
-m <- lmer(Informed.liking ~ Gender+Information+Product +(1|Consumer), data=ham)
+m <- lmer(Informed.liking ~ Gender*Information*Product +(1|Consumer), data=ham)
 
-# gives summary of lmer object. The same as of class summary.mer but with 
+# gives summary of merLmerTest class. The same as of class summary.mer but with 
 # additional p-values calculated based on Satterthwate's approximations
 summary(m)
 
@@ -64,10 +64,42 @@ anova(m, ddf="Kenward-Roger")
 # anova table the same as of class mer 
 anova(m, ddf="lme4")
 
-# backward elimination of non-significant effects of model m
-st<-step(m)
 
-plot(st)
+# backward elimination of non-significant effects
+step(m)
+
+
+data(TVbo)
+m <- lmer(Cutting ~ TVset*Picture+(1|Assessor)
++ (1|Assessor:Picture) + (1|Assessor:TVset), data=TVbo)
+
+
+# finds the best by principle of parsimony model
+# and plots the post-hoc analysis
+plot(step(m))
+
+
+#finds least sqares means of model m and plots them
+plot(lsmeans(m))
+
+model<-lmer(log(Coloursaturation)~TVset*Picture+
+(1|Assessor)+(1|Assessor:TVset), data=TVbo)
+
+anova(model)
+
+data(carrots)
+m2 <- lmer(Preference~sens2+sens1+BITTER+Homesize+
+sens2:Homesize+(1+sens2|Consumer), data=carrots)
+
+#analyze the random part of model m2 by using LRT test
+rand(m2)
+
+#backward elimination of non-significant effects of model m2
+step(m2)
+
+
+
+
 
 }
 
