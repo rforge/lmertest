@@ -37,23 +37,23 @@ ham
 \examples{
 
 #import lme4 package and lmerTest package
-library(lmerTest)
+#library(lmerTest)
 
 #import ham data from lmerTest package
-data(ham)
+#data(ham)
 
-m <- lmer(Informed.liking ~ Product*Information*Gender 
-+ (1|Product:Consumer) + 
-(1|Information:Consumer) + (1|Consumer), REML=FALSE, data=ham)
+#m <- lmer(Informed.liking ~ Product*Information*Gender 
+#+ (1|Product:Consumer) + 
+#(1|Information:Consumer) + (1|Consumer), REML=FALSE, data=ham)
 
 #anova table with p-values with Satterthwaite's approximation for denominator 
 #degrees of freedom
-anova(m)
+#anova(m)
 
 # step function. Reduction of both random and fixed parts
-step(m)
+#step(m)
 
-rand(m)
+#rand(m)
 }
 
 \keyword{datasets}

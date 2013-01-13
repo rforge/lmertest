@@ -52,23 +52,23 @@ Alexandra Kuznetsova, Per Bruun Brockhoff, Rune Haubo Bojesen Christensen
 
 
 #import lme4 package and lmerTest package
-library(lmerTest)
+#library(lmerTest)
 
 #import ham data from lmerTest package
-data(ham)
+#data(ham)
 
 #specify lmer model
-m1 <- lmer(Informed.liking ~ Gender*Information +(1|Consumer), data=ham)
+#m1 <- lmer(Informed.liking ~ Gender*Information +(1|Consumer), data=ham)
 
 #calculate least squares means for interaction Gender:Information
-difflsmeans(m1, test.effs="Gender:Information")
+#difflsmeans(m1, test.effs="Gender:Information")
 
 #import TVbo data from lmerTest package
-data(TVbo) 
+#data(TVbo) 
 
-m <- lmer(Coloursaturation ~ TVset*Picture + (1|Assessor), data=TVbo)
-plot(difflsmeans(m))
-difflsmeans(m, test.effs="TVset")
+#m <- lmer(Coloursaturation ~ TVset*Picture + (1|Assessor), data=TVbo)
+#plot(difflsmeans(m))
+#difflsmeans(m, test.effs="TVset")
 }
 % R documentation directory.
 %%\keyword{ ~kwd1 }

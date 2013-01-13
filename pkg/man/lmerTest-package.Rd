@@ -41,61 +41,61 @@ Approximations to Distributions of Test Statistics in Complex Mixed Linear Model
 %%}
 \examples{
 #import lme4 package and lmerTest package
-library(lmerTest)
+#library(lmerTest)
 
 #import ham data from lmerTest package
-data(ham)
+#data(ham)
 
 # an object of class merLmerTest
-m <- lmer(Informed.liking ~ Gender*Information*Product +(1|Consumer), data=ham)
+#m <- lmer(Informed.liking ~ Gender*Information*Product +(1|Consumer), data=ham)
 
 # gives summary of merLmerTest class. The same as of class summary.mer but with 
 # additional p-values calculated based on Satterthwate's approximations
-summary(m)
+#summary(m)
 
 # anova table the same as of class mer but with additional F statistics and 
 # p-values calculated based on Satterthwaite's approximations
-anova(m)
+#anova(m)
 
 # anova table the same as of class mer but with additional F statistics and  
 # p-values calculated based on Kenward-Roger's approximations
-anova(m, ddf="Kenward-Roger")
+#anova(m, ddf="Kenward-Roger")
 
 # anova table the same as of class mer 
-anova(m, ddf="lme4")
+#anova(m, ddf="lme4")
 
 
 # backward elimination of non-significant effects
-step(m)
+#step(m)
 
 
-data(TVbo)
-m <- lmer(Cutting ~ TVset*Picture+(1|Assessor)
-+ (1|Assessor:Picture) + (1|Assessor:TVset), data=TVbo)
+#data(TVbo)
+#m <- lmer(Cutting ~ TVset*Picture+(1|Assessor)
+#+ (1|Assessor:Picture) + (1|Assessor:TVset), data=TVbo)
 
 
 # finds the best by principle of parsimony model
 # and plots the post-hoc analysis
-plot(step(m))
+#plot(step(m))
 
 
 #finds least sqares means of model m and plots them
-plot(lsmeans(m))
+#plot(lsmeans(m))
 
-model<-lmer(log(Coloursaturation)~TVset*Picture+
-(1|Assessor)+(1|Assessor:TVset), data=TVbo)
+#model<-lmer(log(Coloursaturation)~TVset*Picture+
+#(1|Assessor)+(1|Assessor:TVset), data=TVbo)
 
-anova(model)
+#anova(model)
 
-data(carrots)
-m2 <- lmer(Preference~sens2+sens1+BITTER+Homesize+
-sens2:Homesize+(1+sens2|Consumer), data=carrots)
+#data(carrots)
+#m2 <- lmer(Preference~sens2+sens1+BITTER+Homesize+
+#sens2:Homesize+(1+sens2|Consumer), data=carrots)
 
 #analyze the random part of model m2 by using LRT test
-rand(m2)
+#rand(m2)
 
 #backward elimination of non-significant effects of model m2
-step(m2)
+#step(m2)
 
 
 
