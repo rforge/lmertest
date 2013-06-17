@@ -101,23 +101,21 @@ Alexandra Kuznetsova, Per Bruun Brockhoff, Rune Haubo Bojesen Christensen
 }
 \examples{
 #import lme4 package and lmerTest package
-#library(lmerTest)
+library(lmerTest)
 
 #import carrots data from lmerTest package
-#data(carrots)
+data(ham)
 
 
-#construction of lmer model, 
-#with correlation between slope and
-#intercept
-#m2 <- lmer(Preference~sens2+sens1 + BITTER + Homesize + Age+sens1:Homesize
-#+ sens2:Homesize + sens2:sens1 + Homesize:Age+sens2:Homesize:Age
-#+ sens1:Homesize:Age + (1+sens2|Consumer), data=carrots)
+m <- lmer(Informed.liking ~ Product + Information 
++ Gender+ (1|Consumer) + (1|Product:Consumer), data=ham)
 
 
-#reduction only of the random part
-#s<-step(m2, reduce.fixed=FALSE, ddf="Kenward-Roger")
-#plot(s)
+#elimination of non-significant effects
+s <- step(m)
+
+#plot of post-hoc analysis of the final model
+plot(s)
 
 
 

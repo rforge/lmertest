@@ -35,17 +35,16 @@ TVbo
 
 
 #import lme4 package and lmerTest package
-#library(lmerTest)
+library(lmerTest)
 
 #import TVbo data from lmerTest package
-#data(TVbo)
+data(TVbo)
 
-#m <- lmer(Cutting ~ TVset*Picture+(1|Assessor)
-#+ (1|Assessor:Picture) + (1|Assessor:TVset), data=TVbo)
-#step(m, test.effs="TVset", reduce.fixed=TRUE, reduxe.random=TRUE)
-#anova(m)
-#rand(m)
-#lsmeans(m)
+
+m <- lmer(log(Coloursaturation)~TVset*Picture+
+(1|Assessor)+(1|Assessor:TVset), data=TVbo)
+
+step(m, test.effs="TVset", reduce.fixed=TRUE, reduce.random=TRUE)
 
 }
 

@@ -57,17 +57,17 @@ If the effect has random slopes, then first the correlations between itercept an
 \examples{
 
 #import lme4 package and lmerTest package
-#library(lmerTest)
+library(lmerTest)
 
 #import carrots data from lmerTest package
-#data(carrots)
+data(carrots)
 
 #lmer model with correlation between intercept and slopes
 #in the random part
-#m <- lmer(Preference~sens1+sens2+Homesize+(1+sens2+sens1|Consumer), data=carrots)
+m <- lmer(Preference ~ sens2+Homesize+(1+sens2|Consumer), data=carrots)
 
 # table with  p-values for the random effects
-#rand(m)
+rand(m)
 % R documentation directory.
 %%\keyword{ ~kwd1 }
 %%\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
