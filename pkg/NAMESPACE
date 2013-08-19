@@ -8,7 +8,7 @@ import(pbkrtest)
 
 
 
-exportClasses("summary.merLmerTest")
+#exportClasses("summary.merLmerTest")
 exportClasses("merLmerTest")
 
 export(rand)
@@ -19,8 +19,8 @@ export(lmer)
 
 #export("sigma")
 
-
-exportMethods("anova", "summary")
+exportMethods("anova")
+#exportMethods("anova", "summary")
 
 S3method(print, step)
 S3method(plot, step)

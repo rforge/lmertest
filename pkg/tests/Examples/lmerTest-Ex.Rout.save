@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2013-06-13 r62952) -- "Unsuffered Consequences"
+R version 3.0.1 (2013-05-16) -- "Good Sport"
 Copyright (C) 2013 The R Foundation for Statistical Computing
 Platform: i386-w64-mingw32/i386 (32-bit)
 
@@ -21,17 +21,6 @@ Type 'q()' to quit R.
 > source(file.path(R.home("share"), "R", "examples-header.R"))
 > options(warn = 1)
 > options(pager = "console")
-> base::assign(".ExTimings", "lmerTest-Ex.timings", pos = 'CheckExEnv')
-> base::cat("name\tuser\tsystem\telapsed\n", file=base::get(".ExTimings", pos = 'CheckExEnv'))
-> base::assign(".format_ptime",
-+ function(x) {
-+   if(!is.na(x[4L])) x[1L] <- x[1L] + x[4L]
-+   if(!is.na(x[5L])) x[2L] <- x[2L] + x[5L]
-+   format(x[1L:3L], digits = 7L)
-+ },
-+ pos = 'CheckExEnv')
-> 
-> ### * </HEADER>
 > library('lmerTest')
 Loading required package: Matrix
 Loading required package: lattice
@@ -62,7 +51,6 @@ The following object is masked from 'package:stats':
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: TVbo
 > ### Title: TV dataset
 > ### Aliases: TVbo
@@ -77,7 +65,6 @@ The following object is masked from 'package:stats':
 > 
 > #import TVbo data from lmerTest package
 > data(TVbo)
-> 
 > 
 > m <- lmer(log(Coloursaturation)~TVset*Picture+
 + (1|Assessor)+(1|Assessor:TVset), data=TVbo)
@@ -95,10 +82,10 @@ Random effects:
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 Fixed effects:
-              NumDF DenDF F.value elim.num Pr(>F)    
-TVset             2    21   13.56        0  2e-04 ***
-Picture           3   159    3.03        0   0.03 *  
-TVset:Picture     6   159    2.62        0   0.02 *  
+              Sum Sq Mean Sq NumDF DenDF F.value elim.num Pr(>F)    
+TVset            3.1     1.6     2    21   13.56        0  2e-04 ***
+Picture          0.1     0.0     3   159    3.03        0   0.03 *  
+TVset:Picture    0.2     0.0     6   159    2.62        0   0.02 *  
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -134,15 +121,12 @@ lme4::lmer(formula = log(Coloursaturation) ~ TVset + Picture +
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("TVbo", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 > nameEx("carrots")
 > ### * carrots
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: carrots
 > ### Title: Consumer preference mapping of carrots
 > ### Aliases: carrots
@@ -163,26 +147,6 @@ lme4::lmer(formula = log(Coloursaturation) ~ TVset + Picture +
 > # only elimination of the random part is required. 
 > #approximation of ddf is Kenward-Roger
 > step(m, reduce.random=TRUE, reduce.fixed=FALSE, ddf="Kenward-Roger")
-Warning in `$.data.frame`(anova.red, Pr) :
-  Name partially matched in data frame
-Warning in `$.data.frame`(anova.red, Pr) :
-  Name partially matched in data frame
-Warning in `$.data.frame`(anova.red, Pr) :
-  Name partially matched in data frame
-Warning in `$.data.frame`(anova.red, Pr) :
-  Name partially matched in data frame
-Warning in `$.data.frame`(anova.red, Pr) :
-  Name partially matched in data frame
-Warning in `$.data.frame`(anova.red, Pr) :
-  Name partially matched in data frame
-Warning in `$.data.frame`(anova.red, Pr) :
-  Name partially matched in data frame
-Warning in `$.data.frame`(anova.red, Pr) :
-  Name partially matched in data frame
-Warning in `$.data.frame`(anova.red, Pr) :
-  Name partially matched in data frame
-Warning in `$.data.frame`(anova.red, Pr) :
-  Name partially matched in data frame
 
 Random effects:
                              Chi.sq Chi.DF elim.num p.value    
@@ -193,9 +157,9 @@ Random effects:
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 Fixed effects:
-         NumDF DenDF F.value Pr(>F)    
-sens2        1   102   54.82  4e-11 ***
-Homesize     1   101    5.16   0.03 *  
+         Sum Sq Mean Sq NumDF DenDF F.value Pr(>F)    
+sens2      83.4    83.4     1   102   54.82  4e-11 ***
+Homesize   17.6    17.6     1   101    5.16   0.03 *  
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -222,15 +186,12 @@ lme4::lmer(formula = Preference ~ sens2 + Homesize + (sens2 +
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("carrots", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 > nameEx("difflsmeans")
 > ### * difflsmeans
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: difflsmeans
 > ### Title: Calculates Differences of Least Squares Means and Confidence
 > ###   Intervals for the factors of a fixed part of mixed effects model of
@@ -277,15 +238,12 @@ Gender:Information  1 2- 2 2    0.949     0.3
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("difflsmeans", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 > nameEx("ham")
 > ### * ham
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: ham
 > ### Title: Conjoint study of dry cured ham
 > ### Aliases: ham
@@ -307,14 +265,14 @@ Gender:Information  1 2- 2 2    0.949     0.3
 > #degrees of freedom
 > anova(m)
 Analysis of Variance Table with  Satterthwaite  approximation for degrees of freedom
-                           Df  Sum Sq Mean Sq F value  Denom  Pr(>F)  
-Product                     3 17.3807  5.7936  3.5887 323.98 0.01405 *
-Information                 1  6.5201  6.5201  3.9681 323.97 0.04721 *
-Gender                      1  1.8299  1.8299  1.1272 323.98 0.28917  
-Product:Information         3 10.3873  3.4624  2.1420 323.97 0.09482 .
-Product:Gender              3  1.5943  0.5314  0.3273 323.98 0.80560  
-Information:Gender          1  1.4075  1.4075  0.8666 323.97 0.35258  
-Product:Information:Gender  3  5.9915  1.9972  1.2297 323.97 0.29888  
+                           Df Sum Sq Mean Sq F value  Denom  Pr(>F)  
+Product                     3 92.322 30.7741  3.5887 323.98 0.01405 *
+Information                 1  6.444  6.4445  3.9681 323.97 0.04721 *
+Gender                      1  9.666  9.6658  1.1272 323.98 0.28917  
+Product:Information         3 10.436  3.4787  2.1420 323.97 0.09482 .
+Product:Gender              3  8.421  2.8071  0.3273 323.98 0.80560  
+Information:Gender          1  1.407  1.4075  0.8666 323.97 0.35258  
+Product:Information:Gender  3  5.992  1.9972  1.2297 323.97 0.29888  
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > 
@@ -334,14 +292,14 @@ Random effects:
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 Fixed effects:
-                           NumDF DenDF F.value Pr(>F)  
-Product                        3   316   3.500   0.02 *
-Information                    1   316   3.870   0.05 .
-Gender                         1   316   1.099   0.30  
-Product:Information            3   316   2.089   0.10  
-Product:Gender                 3   316   0.319   0.81  
-Information:Gender             1   316   0.845   0.36  
-Product:Information:Gender     3   316   1.199   0.31  
+                           Sum Sq Mean Sq NumDF DenDF F.value Pr(>F)  
+Product                      92.3    30.8     3   316   3.500   0.02 *
+Information                   6.4     6.4     1   316   3.870   0.05 .
+Gender                        9.7     9.7     1   316   1.099   0.30  
+Product:Information          10.4     3.5     3   316   2.089   0.10  
+Product:Gender                8.4     2.8     3   316   0.319   0.81  
+Information:Gender            1.4     1.4     1   316   0.845   0.36  
+Product:Information:Gender    6.0     2.0     3   316   1.199   0.31  
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -392,15 +350,12 @@ lme4::lmer(formula = Informed.liking ~ Product + Information +
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("ham", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 > nameEx("lmer")
 > ### * lmer
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: lmer
 > ### Title: Fit Linear Mixed-Effects Models
 > ### Aliases: lmer
@@ -420,7 +375,7 @@ lme4::lmer(formula = Informed.liking ~ Product + Information +
 > anova(fm1)
 Analysis of Variance Table with  Satterthwaite  approximation for degrees of freedom
      Df Sum Sq Mean Sq F value  Denom    Pr(>F)    
-Days  1  29987   29987  45.853 16.995 3.269e-06 ***
+Days  1 162703  162703  45.853 16.995 3.269e-06 ***
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > 
@@ -459,15 +414,12 @@ Days -0.138
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("lmer", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 > nameEx("lmerTest-package")
 > ### * lmerTest-package
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: lmerTest-package
 > ### Title: The package performs different kinds of tests on lmer objects,
 > ###   such as F tests of type 3 hypothesis for the fixed part,
@@ -528,7 +480,7 @@ Product4    -0.472  0.000  0.000  0.500  0.500
 > anova(m)
 Analysis of Variance Table with  Satterthwaite  approximation for degrees of freedom
             Df Sum Sq Mean Sq F value  Denom    Pr(>F)    
-Gender       1  3.843  3.8429  0.8789  78.98 0.3513507    
+Gender       1  9.666  9.6658  0.8789  78.98 0.3513507    
 Information  1  6.520  6.5201  1.4910 562.97 0.2225800    
 Product      3 91.807 30.6024  6.9979 562.97 0.0001256 ***
 ---
@@ -539,7 +491,7 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > anova(m, ddf="Kenward-Roger")
 Analysis of Variance Table with  Kenward-Roger  approximation for degrees of freedom
             Df Sum Sq Mean Sq F value  Denom    Pr(>F)    
-Gender       1  3.843  3.8429  0.8790  79.02 0.3513189    
+Gender       1  9.666  9.6658  0.8790  79.02 0.3513189    
 Information  1  6.520  6.5201  1.4910 563.00 0.2225799    
 Product      3 91.807 30.6024  6.9979 563.00 0.0001256 ***
 ---
@@ -575,15 +527,12 @@ Warning in model.matrix.default(mt, mf, contrasts) :
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("lmerTest-package", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 > nameEx("lsmeans")
 > ### * lsmeans
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: lsmeans
 > ### Title: Calculates Least Squares Means and Confidence Intervals for the
 > ###   factors of a fixed part of mixed effects model of lmer object.
@@ -638,15 +587,12 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("lsmeans", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 > nameEx("merLmerTest-class")
 > ### * merLmerTest-class
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: merLmerTest-class
 > ### Title: Mixed Model Representations
 > ### Aliases: merLmerTest-class summary.merLmerTest-class
@@ -687,7 +633,7 @@ Days -0.184
 > anova(m)
 Analysis of Variance Table with  Satterthwaite  approximation for degrees of freedom
      Df Sum Sq Mean Sq F value  Denom  Pr(>F)    
-Days  1  29018   29018  45.046 18.148 2.6e-06 ***
+Days  1 162703  162703  45.046 18.148 2.6e-06 ***
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > 
@@ -696,7 +642,7 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > anova(m, ddf="Kenward-Roger")
 Analysis of Variance Table with  Kenward-Roger  approximation for degrees of freedom
      Df Sum Sq Mean Sq F value  Denom    Pr(>F)    
-Days  1  29018   29018  45.052 18.194 2.564e-06 ***
+Days  1 162703  162703  45.052 18.194 2.564e-06 ***
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > 
@@ -735,15 +681,12 @@ Days -0.184
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("merLmerTest-class", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 > nameEx("rand")
 > ### * rand
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: rand
 > ### Title: Performs log-likelihood ratio test on random effects of linear
 > ###   mixed effects model.
@@ -764,25 +707,18 @@ Days -0.184
 > 
 > # table with  p-values for the random effects
 > rand(m)
-Warning in `$.data.frame`(anova.red, Pr) :
-  Name partially matched in data frame
-Warning in `$.data.frame`(anova.red, Pr) :
-  Name partially matched in data frame
 Analysis of Random effects Table:
                        Chi.sq Chi.DF p.value
 (1 + sens2 | Consumer)  0.707      1     0.4
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("rand", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 > nameEx("step")
 > ### * step
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: step
 > ### Title: Performs backward elimination of non-significant effects of
 > ###   linear mixed effects model:
@@ -803,18 +739,6 @@ Analysis of Random effects Table:
 > 
 > #elimination of non-significant effects
 > s <- step(m)
-Warning in `$.data.frame`(anova.red, Pr) :
-  Name partially matched in data frame
-Warning in `$.data.frame`(anova.red, Pr) :
-  Name partially matched in data frame
-Warning in `$.data.frame`(anova.red, Pr) :
-  Name partially matched in data frame
-Warning in `$.data.frame`(anova.red, Pr) :
-  Name partially matched in data frame
-Warning in `$.data.frame`(anova.red, Pr) :
-  Name partially matched in data frame
-Warning in `$.data.frame`(anova.red, Pr) :
-  Name partially matched in data frame
 Warning in model.matrix.default(mt, mf, contrasts) :
   variable 'Gender' is absent, its contrast will be ignored
 Warning in model.matrix.default(mt, mf, contrasts) :
@@ -830,13 +754,11 @@ Warning in model.matrix.default(mt, mf, contrasts) :
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("step", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > ### * <FOOTER>
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  27.81 0.32 28.22 NA NA 
+Time elapsed:  29.39 0.42 30.27 NA NA 
 > grDevices::dev.off()
 pdf 
   2 

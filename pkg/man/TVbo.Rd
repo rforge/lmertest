@@ -40,7 +40,6 @@ library(lmerTest)
 #import TVbo data from lmerTest package
 data(TVbo)
 
-
 m <- lmer(log(Coloursaturation)~TVset*Picture+
 (1|Assessor)+(1|Assessor:TVset), data=TVbo)
 

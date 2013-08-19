@@ -58,7 +58,7 @@ m <- lmer(Preference ~ sens2 + Homesize
 
 # only elimination of the random part is required. 
 #approximation of ddf is Kenward-Roger
-step(m, reduce.random=TRUE, reduce.fixed=FALSE, ddf="Kenward-Roger")
+step(m, reduce.random=TRUE, reduce.fixed=TRUE, ddf="Kenward-Roger")
 }
 
 \keyword{datasets}
