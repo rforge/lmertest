@@ -4,13 +4,13 @@
 % Classes
 \alias{merLmerTest-class}
 %\alias{coef.mer-class}
-\alias{summary.merLmerTest-class}
+%\alias{summary.merLmerTest-class}
 %\alias{ranef.mer-class}
 % Methods
-\alias{anova,merLmerTest-method}
+%\alias{anova,merLmerTest-method}
 
-\alias{summary,merLmerTest-method}
-\alias{summary,summary.merLmerTest-method}
+%\alias{summary,merLmerTest-method}
+%\alias{summary,summary.merLmerTest-method}
 
 \description{The \code{merLmerTest} \emph{contains} mer class of lme4 package and overloads \code{anova} and \code{summary} functions.  The \code{summary.merLmerTest} class represents the summary of objects of class \code{merLmerTest}.
 
@@ -22,11 +22,11 @@
   \code{\link{lmer}}  functions.
 } 
  
-\section{Methods}{
-anova \code{signature(object = "merLmerTest", \dots)}: returns the data frame with F test for each term in formula and corresponding p-values. For multiple arguments, model comparison statistics. type=c(1,3) (type=3 is the default one) constructs corresponding hypothesis F test and calculates  p-values, sum of squares and means squares. The definition of the types of hypotheses comes from SAS theory proc mixed. The approximations for degrees of freedom by default are Satterthwaite's (ddf="Satterthwaite"). If ddf="Kenward-Roger", then the Kenward-Roger's approximations are calculated using \code{KRmodcomp} function from \code{pbkrtest} package. If ddf="lme4" then the anova table that comes from \code{lme4} package is returned. 
-method.grad  is an argument for the approximation method for the grad function, which is used in calculation of denominator degrees of freedom. method.grad could be "simple" or "Richardson". method.grad="simple" is the default one and the fastest one, method.grad="Richardson" gives more accurate results.
-      \code{\link{anova}}
-}
+%\section{Methods}{
+%anova \code{signature(object = "merLmerTest", \dots)}: returns the data frame with F test for each term in formula and corresponding p-values. For multiple arguments, model comparison statistics. type=c(1,3) (type=3 is the default one) constructs corresponding hypothesis F test and calculates  p-values, sum of squares and means squares. The definition of the types of hypotheses comes from SAS theory proc mixed. The approximations for degrees of freedom by default are Satterthwaite's (ddf="Satterthwaite"). If ddf="Kenward-Roger", then the Kenward-Roger's approximations are calculated using \code{KRmodcomp} function from \code{pbkrtest} package. If ddf="lme4" then the anova table that comes from \code{lme4} package is returned. 
+%method.grad  is an argument for the approximation method for the grad function, which is used in calculation of denominator degrees of freedom. method.grad could be "simple" or "Richardson". method.grad="simple" is the default one and the fastest one, method.grad="Richardson" gives more accurate results.
+%      \code{\link{anova}}
+%}
  
 \seealso{
   \code{\link{lmer}()}

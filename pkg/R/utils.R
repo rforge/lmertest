@@ -118,6 +118,38 @@ isbalanced <- function(data)
 }
 
 ##########################################################################
+getY <- function(model)
+{
+  if(class(model)=="lmerMod" || class(model)=="merModLmerTest")
+    return(getME(model, "y"))
+  else if(class(model)=="mer" || class(model)=="merLmerTest")
+    return(model@y)
+}
+getX <- function(model)
+{
+  if(class(model)=="lmerMod" || class(model)=="merModLmerTest")
+    return(getME(model, "X"))
+  else if(class(model)=="mer" || class(model)=="merLmerTest")
+    return(model@X)
+}
+getZt <- function(model)
+{
+  if(class(model)=="lmerMod" || class(model)=="merModLmerTest")
+  {
+    Ztlist <- getME(model, "Ztlist")#model@Zt
+    library(Matrix)
+    return(do.call(rBind,Ztlist))
+  }
+  else if(class(model)=="mer" || class(model)=="merLmerTest")
+    return(model@Zt)
+}
+getST <- function(model)
+{
+  if(class(model)=="lmerMod" || class(model)=="merModLmerTest")
+    return(getME(model, "ST"))
+  else if(class(model)=="mer" || class(model)=="merLmerTest")
+    return(model@ST)
+}
 
 ##########################################################################
 # Create rho environmental variable of mixed model ####################### 
@@ -126,14 +158,12 @@ rhoInit <- function(model)
 {
    # creating rho
    rho <- new.env(parent = emptyenv()) # create an empty environment
-   rho$y <- getME(model, "y") #model@y                   # store arguments and derived values
-   rho$X <- getME(model, "X") #model@X
+   rho$y <- getY(model) #model@y                   # store arguments and derived values
+   rho$X <- getX(model) #model@X
    chol(rho$XtX <- crossprod(rho$X))       # check for full column rank
 
-   rho$REML <-  getME(model, "is_REML")#model@dims['REML']
-   Ztlist <- getME(model, "Ztlist")#model@Zt
-   library(Matrix)
-   rho$Zt <- do.call(rBind,Ztlist)
+   rho$REML <-  getREML(model)#model@dims['REML']
+   rho$Zt <- getZt(model)
    #rho$nlev <- sapply(model@flist, function(x) length(levels(factor(x))))
    rho$L <- Cholesky(tcrossprod(rho$Zt), LDL = FALSE, Imult = 1, super = TRUE)
    ls.str(rho)
@@ -168,7 +198,7 @@ rhoInit <- function(model)
 
    param$STdim <- NULL
    
-   modelST <- getME(model, "ST")
+   modelST <- getST(model)
    for(i in 1:length(modelST)) 
    {
           
@@ -332,7 +362,7 @@ calcFpvalueMAIN <- function(term, L, X.design, fullCoefs, model, rho, ddf, metho
     {
       
       find.term <- which(colnames(X.design) == term)
-      Lc <- U[find.term[which(find.term %in% rho$nums.Coefs)],]            
+      Lc <- L[find.term[which(find.term %in% rho$nums.Coefs)],]            
       result.fstat <- calcFpvalueSS(term, Lc, fullCoefs, X.design, model, rho, ddf, method.grad=method.grad, type)      
     } 
    
@@ -673,18 +703,23 @@ makeContrastType3SAS <- function(model, term, L)
 ############################################################################
 #get formula for model 
 ############################################################################
-getFormula <- function(model, withRand=TRUE)
+getFormula<-function(model, withRand=TRUE)
 {
-  fmodel  <-  formula(model)
-  terms.fm  <-  attr(terms(fmodel),"term.labels")
-  ind.rand.terms <- which(unlist(lapply(terms.fm,function(x) substring.location(x, "|")$first))!=0)
-  terms.fm[ind.rand.terms] <- unlist(lapply(terms.fm[ind.rand.terms],function(x) paste("(",x,")",sep="")))
-  fm <- paste(fmodel)
+  fmodel<-formula(model)
+  terms.fm<-attr(terms.formula(fmodel),"term.labels")
+  ind.rand.terms<-which(unlist(lapply(terms.fm,function(x) substring.location(x, "|")$first))!=0)
+  terms.fm[ind.rand.terms]<-unlist(lapply(terms.fm[ind.rand.terms],function(x) paste("(",x,")",sep="")))
+  fm<-paste(fmodel)
   if(withRand)
-    fm[3] <- paste(terms.fm,collapse=" + ")
+    fm[3]<-paste(terms.fm,collapse=" + ")
   else
-    fm[3] <- paste(terms.fm[-ind.rand.terms],collapse=" + ")
-  return(fm)
+    fm[3]<-paste(terms.fm[-ind.rand.terms],collapse=" + ")
+  
+  if(fm[3]=="")
+    fo <- as.formula(paste(fm[2],fm[1],1, sep=""))
+  else
+    fo <- as.formula(paste(fm[2],fm[1],fm[3], sep=""))
+  return(fo)
 }
 
 
@@ -1026,7 +1061,7 @@ calcLSMEANS <- function(model, data, rho, alpha, test.effs = NULL, method.grad="
 checkCorr <- function(model)
 {
    corr.intsl <- FALSE
-   modelST <- getME(model,"ST")
+   modelST <- getST(model)
    lnST <- length(modelST)
    for(i in 1:lnST)
    {    
@@ -1736,6 +1771,14 @@ formatVC <- function(varc, digits = max(3, getOption("digits") - 2))
 }
 
 
+
+getREML <- function(model)
+{
+  if(class(model)=="lmerMod" || class(model)=="merModLmerTest")
+     return(getME(model, "is_REML"))
+  else if(class(model)=="mer" || class(model)=="merLmerTest")
+    return(model@dims[["REML"]])
+}
 #update model
 updateModel <- function(model, mf.final, reml, l)
 {
@@ -1801,8 +1844,10 @@ doolittle <- function(x, eps = 1e-6) {
 
 
 model.frame.fixed <- function(model) {
-  varsFixed <- all.vars(formula(model, fixed.only=TRUE))
-  varsAll <- all.vars(formula(model, fixed.only=FALSE))
+  fo.fixed <- getFormula(model, withRand=FALSE)
+  fo.rand <- getFormula(model, withRand=TRUE)
+  varsFixed <- all.vars(fo.fixed)
+  varsAll <- all.vars(fo.rand)
   model.frame(model)[varsAll %in% varsFixed]
 }
 
@@ -1819,9 +1864,10 @@ refitLM <- function(obj, l="contr.SAS") {
 #   m$offset <- offset
 #   m$call <- cl
 #   m
+  
   mm <- model.frame.fixed(obj)
   colnames(mm)[1] <- "y"
-  fo <- formula(obj,fixed.only=TRUE)  
+  fo <- getFormula(obj, withRand=FALSE)# formula(obj,fixed.only=TRUE)  
   fo <- update(fo, y ~ .)
   lm(fo, data=mm, contrasts = l)
 }
@@ -1842,3 +1888,51 @@ fillAnovaTable <- function(result, anova.table)
   }
   anova.table
 }
+
+#######################################################
+### Rhune's hessian function
+#######################################################
+myhess <- function(fun, x, fx=NULL, delta=1e-4, ...) {
+  nx <- length(x)
+  fx <- if(!is.null(fx)) fx else fun(x, ...)
+  H <- array(NA, dim=c(nx, nx))
+  for(j in 1:nx) {
+    ## Diagonal elements:
+    xadd <- xsub <- x
+    xadd[j] <- x[j] + delta
+    xsub[j] <- x[j] - delta
+    H[j, j] <- (fun(xadd, ...) - 2 * fx +
+                  fun(xsub, ...)) / delta^2
+    ## Upper triangular (off diagonal) elements:
+    for(i in 1:nx) {
+      if(i >= j) break
+      xaa <- xas <- xsa <- xss <- x
+      xaa[c(i, j)] <- x[c(i, j)] + c(delta, delta)
+      xas[c(i, j)] <- x[c(i, j)] + c(delta, -delta)
+      xsa[c(i, j)] <- x[c(i, j)] + c(-delta, delta)
+      xss[c(i, j)] <- x[c(i, j)] - c(delta, delta)
+      H[i, j] <- (fun(xaa, ...) - fun(xas, ...) -
+                    fun(xsa, ...) + fun(xss, ...)) /
+        (4 * delta^2)
+    }
+  }
+  ## Fill in lower triangle:
+  H[lower.tri(H)] <- t(H)[lower.tri(H)]
+  H
+}
+
+getFirstinSearchlme4 <- function()
+{
+  s <- search()
+  lme4.0.num <- which(s == "package:lme4.0")
+  lme4.num <- which(s == "package:lme4")
+  if (length(lme4.0.num)>0 && length(lme4.num)>0 && (lme4.0.num < lme4.num))
+  {
+    return("lme4.0")
+  }
+  if(length(lme4.0.num)==0)
+    return("lme4")
+  if(length(lme4.0.num)>0 && length(lme4.num)>0 && (lme4.0.num > lme4.num))
+    return("lme4")
+}
+

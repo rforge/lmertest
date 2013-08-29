@@ -9,7 +9,14 @@ import(pbkrtest)
 
 
 #exportClasses("summary.merLmerTest")
-exportClasses("merLmerTest")
+if(packageVersion("lme4")<="0.999999-3")
+{
+  exportClasses("summary.merLmerTest")
+  exportClasses("merLmerTest")
+}
+if(packageVersion("lme4")>"0.999999-3")
+  exportClasses("merModLmerTest")
+
 
 export(rand)
 export(lsmeans)
@@ -17,10 +24,12 @@ export(difflsmeans)
 export(step)
 export(lmer)
 
-#export("sigma")
 
-exportMethods("anova")
-#exportMethods("anova", "summary")
+
+#if(packageVersion("lme4")<="0.999999-3")
+  exportMethods("anova", "summary")
+#if(packageVersion("lme4")>"0.999999-3")
+#  exportMethods("anova")
 
 S3method(print, step)
 S3method(plot, step)

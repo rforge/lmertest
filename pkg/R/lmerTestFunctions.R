@@ -30,13 +30,13 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3, alpha.ra
       names(l) <- names(contr)
       #warning(" \nmodel has been refitted with contrasts=contr.SAS \n")
       #model<-update(model,.~., data=data, contrasts=l)
-      model <- updateModel(model, .~., getME(model, "is_REML"), l)     
+	    model <- updateModel(model, .~., getREML(model), l) 
     }    
   }
   else
   {
     #update model to mer class
-    model <- updateModel(model, .~., getME(model, "is_REML"), l)
+	model <- updateModel(model, .~., getREML(model), l)
   }
   
   
@@ -59,15 +59,18 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3, alpha.ra
   
   #model<-update(model, REML=TRUE)
   if( isRand || isTotal || (ddf=="Kenward-Roger" && (isTotal || isAnova)) )
-    model<-
-    if (getME(model, "is_REML") == 1)
+  {
+    
+	model<-
+    if (getREML(model) == 1)
     {
       model
     }
-  else
-  {
-    warning("\n model has been refitted with REML=TRUE \n")
-    updateModel(model, .~., reml=TRUE, l)
+    else
+    {
+      warning("\n model has been refitted with REML=TRUE \n")
+      updateModel(model, .~., reml=TRUE, l)
+    }
   }
   
   mf.final <- update.formula(formula(model),formula(model)) 
@@ -103,7 +106,7 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3, alpha.ra
   #else
   #   model<-update(model, mf.final, data=data, REML=model@dims[["REML"]])
   
-  model <- updateModel(model, mf.final, getME(model, "is_REML"), l)
+  model <- updateModel(model, mf.final, getREML(model), l)
   
   # check if there are no fixed effects
   #if(length(attr(delete.response(terms(model)),"term.labels"))==0)
@@ -200,7 +203,6 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3, alpha.ra
     {
       if(is.null(anova.table))
       {
-        
         if(isLSMEANS || isDiffLSMEANS)
         {
           lsmeans.summ <-  matrix(ncol=7,nrow=0)
@@ -238,7 +240,8 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3, alpha.ra
     rho <- rhoInit(model)     
     
     # calculate asymptotic covariance matrix A
-    h  <-  hessian(function(x) Dev(rho,x), rho$param$vec.matr)
+    #h  <-  hessian(function(x) Dev(rho,x), rho$param$vec.matr)
+    h  <-  myhess(function(x) Dev(rho,x), rho$param$vec.matr)
     rho$A  <-  2*solve(h)
     #rho$A  <-  2*ginv(h)
     
@@ -355,7 +358,7 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3, alpha.ra
         mf.final <- update.formula(formula(model),formula(model))
         #model <- eval(substitute(lmer(mf.final, data=data),list(mf.final=mf.final)))
         
-        model <- updateModel(model, mf.final, getME(model, "is_REML"), l)
+        model <- updateModel(model, mf.final, getREML(model), l)
         
         anova.table <- resNSelim$anova.table
         elim.num <- elim.num+1
@@ -408,11 +411,15 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3, alpha.ra
   #  model<-eval(substitute(lmer(mf.final, data=data, REML=model@dims[["REML"]], contrasts=l),list(mf.final=mf.final)))
   #else
   #  model<-eval(substitute(lmer(mf.final, data=data, REML=model@dims[["REML"]]),list(mf.final=mf.final)))
-  model <- updateModel(model, mf.final, getME(model, "is_REML"), contr)
+  model <- updateModel(model, mf.final, getREML(model), contr)
   
   #save model
-  model <- as(model,"merLmerTest")
-  model@t.pval <- result$ttest$tpvalue
+  if(class(model)=="mer")
+    model <- as(model,"merLmerTest")
+  else if(class(model)=="lmerMod")
+    model <- as(model, "merModLmerTest")
+  if(class(model)=="merLmerTest")
+    model@t.pval <- result$ttest$tpvalue
   result$model <- model
   return(result)
 }
@@ -500,9 +507,21 @@ lmer <-
            model = TRUE, x = TRUE, ...)
   {
     mc <- match.call()
+    #lme4.name <- getFirstinSearchlme4()
+    #if(lme4.name == "lme4")
+    #  mc[[1]] <- quote(lme4::lmer)
+    #else
+    #  mc[[1]] <- quote(lme4.0::lmer)
     mc[[1]] <- quote(lme4::lmer)
     model <- eval.parent(mc)
-    model <- as(model,"merLmerTest")
+    if(inherits(model, "merMod"))      
+      model <- as(model,"merModLmerTest")
+    else if (inherits(model, "mer"))
+      model <- as(model,"merLmerTest")
+    #if(class(model) == "lmerMod")
+    #  model <- as(model,"merModLmerTest")
+    #else if (class(model) == "mer")
+    #  model <- as(model,"merLmerTest")
     #tryCatch(  { result = glm( y~x , family = binomial( link = "logit" ) ) } , error = function(e) { print("test") } )
     #t.pval <- tryCatch( {totalAnovaRandLsmeans(model=model, ddf="Satterthwaite", isTtest=TRUE)$ttest$tpvalue}, error = function(e) { NULL })
     #if(!is.null(t.pval))
@@ -517,13 +536,30 @@ lmer <-
   }
 
 
-setMethod("anova", signature(object="merLmerTest"),
-          function(object,...)  
+# 
+# lmer(formula, data = NULL, REML = TRUE,
+#      control = lmerControl(), start = NULL, verbose = 0L,
+#      subset, weights, na.action, offset, contrasts = NULL,
+#      devFunOnly = FALSE, ...)
+# {
+#   mc <- match.call()
+#   mc[[1]] <- quote(lme4::lmer)
+#   model <- eval.parent(mc)
+#   if(inherits(model, "merMod"))      
+#     model <- as(model,"merModLmerTest")
+#   else if (inherits(model, "mer"))
+#     model <- as(model,"merLmerTest")
+#   return(model)
+# }
+
+setMethod("anova", signature(object="merModLmerTest"),
+          function(object,..., ddf="Satterthwaite", type=3, method.grad="simple")  
           {
+            
             mCall <- match.call(expand.dots = TRUE)
             dots <- list(...)
             modp <- if (length(dots))
-              sapply(dots, is, "merLmerTest") | sapply(dots, is, "mer") | sapply(dots, is, "lm") else logical(0)
+              sapply(dots, is, "merLmerTest") | sapply(dots, is, "merModLmerTest") | sapply(dots, is, "mer") | sapply(dots, is, "lm") else logical(0)
             if (any(modp)) {
               return(callNextMethod())
             }
@@ -532,20 +568,22 @@ setMethod("anova", signature(object="merLmerTest"),
               cnm <- callNextMethod()
               #if(!is.null(ddf)&& ddf=="lme4") 
               #  return(cnm)
-              if(("ddf" %in% names(dots)) && dots$"ddf"=="lme4") 
-                return(cnm)
-              if("ddf" %in% names(dots))
-                ddf <- dots$"ddf"
-              else
-                ddf <- "Satterthwaite"  
-              if("method.grad" %in% names(dots))
-                method.grad <- dots$"method.grad"
-              else
-                method.grad <- "simple"
-              if("type" %in% names(dots))
-                type <- dots$"type"
-              else
-                type <- 3
+              #if(("ddf" %in% names(dots)) && dots$"ddf"=="lme4") 
+              #  return(cnm)
+              #if("ddf" %in% names(dots))
+              #  ddf <- dots$"ddf"
+              #else
+              #  ddf <- "Satterthwaite" 
+              if(!is.null(ddf)&& ddf=="lme4") 
+                return(cnm)              
+              #if("method.grad" %in% names(dots))
+              #  method.grad <- dots$"method.grad"
+              #else
+              #  method.grad <- "simple"              
+              #if("type" %in% names(dots))
+              #  type <- dots$"type"
+             # else
+              #  type <- 3
 {
   table <- cnm
   an.table <- tryCatch({totalAnovaRandLsmeans(model=object, ddf=ddf, type=type, isAnova=TRUE, reduce.random=FALSE, reduce.fixed=FALSE, method.grad=method.grad)$anova.table}, error = function(e) { NULL })
@@ -570,7 +608,67 @@ setMethod("anova", signature(object="merLmerTest"),
             }
             
           })
-setMethod("summary", signature(object = "merLmerTest"),
+
+setMethod("anova", signature(object="merLmerTest"),
+          function(object,..., ddf="Satterthwaite", type=3, method.grad="simple")  
+          {
+            
+            mCall <- match.call(expand.dots = TRUE)
+            dots <- list(...)
+            modp <- if (length(dots))
+              sapply(dots, is, "merLmerTest") | sapply(dots, is, "merModLmerTest") | sapply(dots, is, "mer") | sapply(dots, is, "lm") else logical(0)
+            if (any(modp)) {
+              return(callNextMethod())
+            }
+            else
+            {
+              cnm <- callNextMethod()
+              #if(!is.null(ddf)&& ddf=="lme4") 
+              #  return(cnm)
+              #if(("ddf" %in% names(dots)) && dots$"ddf"=="lme4") 
+              #  return(cnm)
+              #if("ddf" %in% names(dots))
+              #  ddf <- dots$"ddf"
+              #else
+              #  ddf <- "Satterthwaite" 
+              if(!is.null(ddf)&& ddf=="lme4") 
+                return(cnm)              
+              #if("method.grad" %in% names(dots))
+              #  method.grad <- dots$"method.grad"
+              #else
+              #  method.grad <- "simple"              
+              #if("type" %in% names(dots))
+              #  type <- dots$"type"
+              # else
+              #  type <- 3
+            {
+                  table <- cnm
+                  an.table <- tryCatch({totalAnovaRandLsmeans(model=object, ddf=ddf, type=type, isAnova=TRUE, reduce.random=FALSE, reduce.fixed=FALSE, method.grad=method.grad)$anova.table}, error = function(e) { NULL })
+                  if(!is.null(an.table))
+                  {
+                    rnames <- rownames(table)
+                    if(nrow(an.table)>0)
+                    {
+                      table <- as.data.frame(cbind(table$Df, an.table$"Sum Sq", an.table$"Mean Sq", an.table[,"F.value"], an.table[,"DenDF"], an.table[,"Pr(>F)"]))
+                      colnames(table) <- c("Df", "Sum Sq", "Mean Sq", "F value", "Denom", "Pr(>F)")
+                      dimnames(table) <- list(rnames,
+                                              c("Df", "Sum Sq", "Mean Sq", "F value", "Denom", "Pr(>F)"))
+                    }
+                    else
+                      table <- an.table
+                    attr(table, "heading") <- paste("Analysis of Variance Table with ", ddf, " approximation for degrees of freedom")
+                  }
+                  
+                  class(table) <- c("anova", "data.frame")
+                  return(table)
+                }  
+            }
+            
+          })
+
+if(packageVersion("lme4") > "0.999999-3")
+{
+setMethod("summary", signature(object = "merModLmerTest"),
     function(object, ddf="Satterthwaite", ...)
     {
       cl <- callNextMethod()
@@ -578,18 +676,40 @@ setMethod("summary", signature(object = "merLmerTest"),
       else
       {
          #coefs.satt <- cbind(cl@coefs,totalAnovaRandLsmeans(model=object, ddf=ddf, isTtest=TRUE)$ttest$tpvalue) 
-         t.pval <- tryCatch( {totalAnovaRandLsmeans(model=object, ddf="Satterthwaite", isTtest=TRUE)$ttest$tpvalue}, error = function(e) { NULL })
-         coefs.satt <- cbind(cl$coefficients, t.pval) 
-         cl$coefficients <- coefs.satt
-         
-#            coefs.satt <- cbind("df"= result$ttest$df, "p value"= result$ttest$tpvalue)
-         colnames(cl$coefficients)[4] <- "Pr(>|t|)"
+
+		        t.pval <- tryCatch( {totalAnovaRandLsmeans(model=object, ddf="Satterthwaite", isTtest=TRUE)$ttest$tpvalue}, error = function(e) { NULL })
+            coefs.satt <- cbind(cl$coefficients, t.pval) 
+            cl$coefficients <- coefs.satt
+
+		 
       }
       return(cl)
       #return(as(cl,"summary.merLmerTest"))
     }
 ) 
+}
 
+if(packageVersion("lme4") <= "0.999999-3")
+{
+setMethod("summary", signature(object = "merLmerTest"),
+          function(object, ddf="Satterthwaite", ...)
+          {
+            cl <- callNextMethod()
+            if(!is.null(ddf) && ddf=="lme4") return(cl)
+            else
+            {
+   
+                t.pval <- tryCatch( {totalAnovaRandLsmeans(model=object, ddf="Satterthwaite", isTtest=TRUE)$ttest$tpvalue}, error = function(e) { NULL })
+                coefs.satt <- cbind(cl@coefs, t.pval) 
+                cl@coefs <- coefs.satt
+                colnames(cl@coefs)[4] <- "Pr(>|t|)"
+              
+            }
+            #return(cl)
+            return(as(cl,"summary.merLmerTest"))
+          }
+) 
+}
 
 
 #randTAB.default<-function(model, data, ...)
@@ -901,92 +1021,92 @@ plot.difflsmeans <- function(x, ...)
 # 
 # ## This is modeled a bit after  print.summary.lm :
 # ## Prints *both*  'mer' and 'merenv' - as it uses summary(x) mainly
-printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
-                        correlation = NULL, symbolic.cor = FALSE,
-                        signif.stars = getOption("show.signif.stars"), ...)
-{
-  print("asdfg")
-  return()
-  so <- summary(x)
-  cat(sprintf("%s ['%s']\n",so$methTitle, class(x)))
-  if (!is.null(f <- so$family)) {
-    cat(" Family:", f)
-    if (!(is.null(ll <- so$link))) cat(" (", ll, ")")
-    cat("\n")
-  }
-  ## FIXME: commenting out for now, restore after release?
-  ## cat("Scaled residuals:\n")
-  ## print(summary(residuals(x,type="pearson",scaled=TRUE)),digits=digits)
-  if (!is.null(cc <- so$call$formula))
-    cat("Formula:", deparse(cc),"\n")
-  ## if (!is.null(so$family)) {
-  ##     cat("Family: ",so$family,
-  ##         " (link=",so$link,")\n",
-  ##         sep="")
-  ## }
-  if (!is.null(cc <- so$call$data))
-    cat("   Data:", deparse(cc), "\n")
-  if (!is.null(cc <- so$call$subset))
-    cat(" Subset:", deparse(asOneSidedFormula(cc)[[2]]),"\n")
-  cat("\n")
-  tab <- so$AICtab
-  if (length(tab) == 1 && names(tab) == "REML")
-    cat("REML criterion at convergence:", round(tab, 4), "\n")
-  else print(round(so$AICtab, 4))
-  cat("\nRandom effects:\n")
-  print(formatVC(so$varcor, digits = digits, useScale = so$useScale),
-        quote = FALSE, digits = digits, ...)
-  
-  ngrps <- so$ngrps
-  cat(sprintf("Number of obs: %d, groups: ", so$devcomp$dims[["n"]]))
-  cat(paste(paste(names(ngrps), ngrps, sep = ", "), collapse = "; "))
-  cat("\n")
-  p <- nrow(so$coefficients)
-  if (p > 0) {
-    cat("\nFixed effects:\n")
-    printCoefmat(so$coefficients, zap.ind = 3, #, tst.ind = 4
-                 digits = digits, signif.stars = signif.stars)
-    if(!is.logical(correlation)) { # default
-      correlation <- p <= 20
-      if(!correlation) {
-        nam <- deparse(substitute(x)) # << TODO: improve if this is called from show()
-        cat(sprintf(paste("\nCorrelation matrix not shown by default, as p = %d > 20.",
-                          "Use print(%s, correlation=TRUE)  or",
-                          "    vcov(%s)	 if you need it\n", sep="\n"),
-                    p, nam, nam))
-      }
-    }
-    if(correlation) {
-      if(is.null(VC <- so$vcov)) VC <- vcov(x)
-      corF <- VC@factors$correlation
-      if (is.null(corF)) {
-        cat("\nCorrelation of Fixed Effets is not available\n")
-      }
-      else {
-        p <- ncol(corF)
-        if (p > 1) {
-          rn <- rownames(so$coefficients)
-          rns <- abbreviate(rn, minlength=11)
-          cat("\nCorrelation of Fixed Effects:\n")
-          if (is.logical(symbolic.cor) && symbolic.cor) {
-            corf <- as(corF, "matrix")
-            dimnames(corf) <- list(rns,
-                                   abbreviate(rn, minlength=1, strict=TRUE))
-            print(symnum(corf))
-          }
-          else {
-            corf <- matrix(format(round(corF@x, 3), nsmall = 3),
-                           ncol = p,
-                           dimnames = list(rns, abbreviate(rn, minlength=6)))
-            corf[!lower.tri(corf)] <- ""
-            print(corf[-1, -p, drop=FALSE], quote = FALSE)
-          }
-        }
-      }
-    }
-  }
-  invisible(x)
-}## printMerenv()
+# printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
+#                         correlation = NULL, symbolic.cor = FALSE,
+#                         signif.stars = getOption("show.signif.stars"), ...)
+# {
+#   print("asdfg")
+#   return()
+#   so <- summary(x)
+#   cat(sprintf("%s ['%s']\n",so$methTitle, class(x)))
+#   if (!is.null(f <- so$family)) {
+#     cat(" Family:", f)
+#     if (!(is.null(ll <- so$link))) cat(" (", ll, ")")
+#     cat("\n")
+#   }
+#   ## FIXME: commenting out for now, restore after release?
+#   ## cat("Scaled residuals:\n")
+#   ## print(summary(residuals(x,type="pearson",scaled=TRUE)),digits=digits)
+#   if (!is.null(cc <- so$call$formula))
+#     cat("Formula:", deparse(cc),"\n")
+#   ## if (!is.null(so$family)) {
+#   ##     cat("Family: ",so$family,
+#   ##         " (link=",so$link,")\n",
+#   ##         sep="")
+#   ## }
+#   if (!is.null(cc <- so$call$data))
+#     cat("   Data:", deparse(cc), "\n")
+#   if (!is.null(cc <- so$call$subset))
+#     cat(" Subset:", deparse(asOneSidedFormula(cc)[[2]]),"\n")
+#   cat("\n")
+#   tab <- so$AICtab
+#   if (length(tab) == 1 && names(tab) == "REML")
+#     cat("REML criterion at convergence:", round(tab, 4), "\n")
+#   else print(round(so$AICtab, 4))
+#   cat("\nRandom effects:\n")
+#   print(formatVC(so$varcor, digits = digits, useScale = so$useScale),
+#         quote = FALSE, digits = digits, ...)
+#   
+#   ngrps <- so$ngrps
+#   cat(sprintf("Number of obs: %d, groups: ", so$devcomp$dims[["n"]]))
+#   cat(paste(paste(names(ngrps), ngrps, sep = ", "), collapse = "; "))
+#   cat("\n")
+#   p <- nrow(so$coefficients)
+#   if (p > 0) {
+#     cat("\nFixed effects:\n")
+#     printCoefmat(so$coefficients, zap.ind = 3, #, tst.ind = 4
+#                  digits = digits, signif.stars = signif.stars)
+#     if(!is.logical(correlation)) { # default
+#       correlation <- p <= 20
+#       if(!correlation) {
+#         nam <- deparse(substitute(x)) # << TODO: improve if this is called from show()
+#         cat(sprintf(paste("\nCorrelation matrix not shown by default, as p = %d > 20.",
+#                           "Use print(%s, correlation=TRUE)  or",
+#                           "    vcov(%s)	 if you need it\n", sep="\n"),
+#                     p, nam, nam))
+#       }
+#     }
+#     if(correlation) {
+#       if(is.null(VC <- so$vcov)) VC <- vcov(x)
+#       corF <- VC@factors$correlation
+#       if (is.null(corF)) {
+#         cat("\nCorrelation of Fixed Effets is not available\n")
+#       }
+#       else {
+#         p <- ncol(corF)
+#         if (p > 1) {
+#           rn <- rownames(so$coefficients)
+#           rns <- abbreviate(rn, minlength=11)
+#           cat("\nCorrelation of Fixed Effects:\n")
+#           if (is.logical(symbolic.cor) && symbolic.cor) {
+#             corf <- as(corF, "matrix")
+#             dimnames(corf) <- list(rns,
+#                                    abbreviate(rn, minlength=1, strict=TRUE))
+#             print(symnum(corf))
+#           }
+#           else {
+#             corf <- matrix(format(round(corF@x, 3), nsmall = 3),
+#                            ncol = p,
+#                            dimnames = list(rns, abbreviate(rn, minlength=6)))
+#             corf[!lower.tri(corf)] <- ""
+#             print(corf[-1, -p, drop=FALSE], quote = FALSE)
+#           }
+#         }
+#       }
+#     }
+#   }
+#   invisible(x)
+# }## printMerenv()
 # 
 # ##' @importFrom stats vcov
 # ##' @S3method vcov summary.merMod
@@ -996,7 +1116,7 @@ printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
 # }
 # 
 # ##' @S3method print merMod
- print.merLmerTest <- printMerenv
+ #print.merLmerTest <- printMerenv
 # 
 # ##' @exportMethod show
 # #setMethod("show",  "merLmerTest", function(object) printMerenv(object))
