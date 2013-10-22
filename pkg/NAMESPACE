@@ -1,21 +1,15 @@
 #useDynLib(lme4, .registration=TRUE)
+import(lme4)
 importFrom(numDeriv, hessian, grad)
 import(Matrix)
+import(methods)
 importFrom(MASS, ginv)
 import(Hmisc)
 importFrom(gplots, barplot2)
 import(pbkrtest)
 
 
-
-#exportClasses("summary.merLmerTest")
-if(packageVersion("lme4")<="0.999999-3")
-{
-  exportClasses("summary.merLmerTest")
-  exportClasses("merLmerTest")
-}
-if(packageVersion("lme4")>"0.999999-3")
-  exportClasses("merModLmerTest")
+exportClasses("merModLmerTest")
 
 
 export(rand)
@@ -26,10 +20,9 @@ export(lmer)
 
 
 
-#if(packageVersion("lme4")<="0.999999-3")
-  exportMethods("anova", "summary")
-#if(packageVersion("lme4")>"0.999999-3")
-#  exportMethods("anova")
+
+exportMethods("anova", "summary")
+
 
 S3method(print, step)
 S3method(plot, step)

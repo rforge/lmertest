@@ -120,35 +120,20 @@ isbalanced <- function(data)
 ##########################################################################
 getY <- function(model)
 {
-  if(class(model)=="lmerMod" || class(model)=="merModLmerTest")
     return(getME(model, "y"))
-  else if(class(model)=="mer" || class(model)=="merLmerTest")
-    return(model@y)
 }
 getX <- function(model)
 {
-  if(class(model)=="lmerMod" || class(model)=="merModLmerTest")
     return(getME(model, "X"))
-  else if(class(model)=="mer" || class(model)=="merLmerTest")
-    return(model@X)
 }
 getZt <- function(model)
 {
-  if(class(model)=="lmerMod" || class(model)=="merModLmerTest")
-  {
     Ztlist <- getME(model, "Ztlist")#model@Zt
-    library(Matrix)
     return(do.call(rBind,Ztlist))
-  }
-  else if(class(model)=="mer" || class(model)=="merLmerTest")
-    return(model@Zt)
 }
 getST <- function(model)
 {
-  if(class(model)=="lmerMod" || class(model)=="merModLmerTest")
     return(getME(model, "ST"))
-  else if(class(model)=="mer" || class(model)=="merLmerTest")
-    return(model@ST)
 }
 
 ##########################################################################
@@ -303,8 +288,9 @@ calcFpvalueSS <- function(term, Lc, fullCoefs, X.design, model, rho, ddf, method
   if(is.null(Lc))
     return(NULL) 
   
+  ## BUG: check vases example from Per
   #calculate ss
-  ss = getSS(Lc, fullCoefs, ginv(crossprod(X.design)))
+  #ss = 1##getSS(Lc, fullCoefs, ginv(crossprod(X.design)))
  # if( type==3 )
   {
     #Lc <- makeContrastType3SAS(model, term, L)
@@ -336,12 +322,12 @@ calcFpvalueSS <- function(term, Lc, fullCoefs, X.design, model, rho, ddf, method
     #ss <- getSS(Lc, rho$fixEffs ,ginv(rho$XtX)) 
    # return(list(denom = res.KR$stats["df2"], Fstat = res.KR$stats["Fstat"], pvalue =  res.KR$stats["p.value"]))
     
-    return( list(denom = res.KR$test[1,"ddf"], Fstat = res.KR$test[1,"stat"], pvalue =  res.KR$test[1,"p.value"], ndf = res.KR$test[1,"ndf"], ss = ss ))
+    return( list(denom = res.KR$test[1,"ddf"], Fstat = res.KR$test[1,"stat"], pvalue =  res.KR$test[1,"p.value"], ndf = res.KR$test[1,"ndf"]))#, ss = ss ))
   }
   else
   {
     ## apply satterthwaite's approximation of ddf
-    return( c(calcSatterth(Lc, rho, method.grad), list(ss = ss)) )
+    return( c(calcSatterth(Lc, rho, method.grad)))#, list(ss = ss)) )
   }
 }
 
@@ -354,8 +340,12 @@ calcFpvalueMAIN <- function(term, L, X.design, fullCoefs, model, rho, ddf, metho
     if( type == 3 )
     {
       
-      Lc <- makeContrastType3SAS(model, term, L)             
-      result.fstat <- calcFpvalueSS(term, Lc, fullCoefs, X.design, model, rho, ddf, method.grad=method.grad, type)           
+      Lc <- makeContrastType3SAS(model, term, L)    
+      #non identifiable because of rank deficiency
+      if(!length(Lc))
+        result.fstat <- list(denom=0, Fstat=NA, pvalue=NA, ndf=NA)
+      else
+        result.fstat <- calcFpvalueSS(term, Lc, fullCoefs, X.design, model, rho, ddf, method.grad=method.grad, type)           
     }
     
     if( type == 1 )
@@ -434,7 +424,9 @@ initAnovaTable <- function(model, isFixReduce)
 {
   anm <- anova(model, ddf="lme4")
   NumDF <- anm[,1]
-  p.value <- DenDF <- F.value <- ss <- ms <- as.numeric(rep("",length(NumDF)))
+  ss <- anm$"Sum Sq"
+  ms <- anm$"Mean Sq"
+  p.value <- DenDF <- F.value <- as.numeric(rep("",length(NumDF)))
   anova.table <- cbind(ss, ms, NumDF, DenDF, F.value, p.value)
   colnames(anova.table) <- c("Sum Sq", "Mean Sq", "NumDF","DenDF","F.value","Pr(>F)")
   rownames(anova.table) <- rownames(anm)
@@ -703,17 +695,17 @@ makeContrastType3SAS <- function(model, term, L)
 ############################################################################
 #get formula for model 
 ############################################################################
-getFormula<-function(model, withRand=TRUE)
+getFormula <- function(model, withRand=TRUE)
 {
-  fmodel<-formula(model)
-  terms.fm<-attr(terms.formula(fmodel),"term.labels")
-  ind.rand.terms<-which(unlist(lapply(terms.fm,function(x) substring.location(x, "|")$first))!=0)
-  terms.fm[ind.rand.terms]<-unlist(lapply(terms.fm[ind.rand.terms],function(x) paste("(",x,")",sep="")))
-  fm<-paste(fmodel)
+  fmodel <- formula(model)
+  terms.fm <- attr(terms.formula(fmodel),"term.labels")
+  ind.rand.terms <- which(unlist(lapply(terms.fm,function(x) substring.location(x, "|")$first))!=0)
+  terms.fm[ind.rand.terms] <- unlist(lapply(terms.fm[ind.rand.terms],function(x) paste("(",x,")",sep="")))
+  fm <- paste(fmodel)
   if(withRand)
-    fm[3]<-paste(terms.fm,collapse=" + ")
+    fm[3] <- paste(terms.fm,collapse=" + ")
   else
-    fm[3]<-paste(terms.fm[-ind.rand.terms],collapse=" + ")
+    fm[3] <- paste(terms.fm[-ind.rand.terms],collapse=" + ")
   
   if(fm[3]=="")
     fo <- as.formula(paste(fm[2],fm[1],1, sep=""))
@@ -887,7 +879,7 @@ plotLSMEANS <- function(table, response, which.plot=c("LSMEANS", "DIFF of LSMEAN
       col.bars <-  lapply(table[inds.eff,][,"p-value"], calc.cols)
       #windows()
       #par(mfrow=c(1,1))
-      x11()
+      #x11()
       layout(matrix(c(rep(1,3),2,rep(1,3),2), 2, 4, byrow = TRUE))
       barplot2(table[inds.eff,"Estimate"],col=unlist(col.bars), ci.l=table[inds.eff,ncol(table)-2], ci.u=table[inds.eff,ncol(table)-1], plot.ci=TRUE, names.arg=namesForLevels[inds.eff], xlab=un.names[i], ylab=response, main=paste(which.plot," and CI plot for", un.names[i]))
       plot.new()
@@ -1473,6 +1465,9 @@ isCorrInt <- function(term)
     return(TRUE)
   if(substring.location(term,"+ 1 |")$last !=0)
     return(TRUE)
+  sbstr <- substr(term,substring.location(term,"(")$first + 1,substring.location(term,"|")$last - 1)
+  if(length(grep("1", sbstr))==0 && length(grep("0", sbstr))==0)
+    return(TRUE)
   return(FALSE)  
 }
 
@@ -1498,8 +1493,11 @@ changeSlopePart <- function(term, isCorr)
   
   if(isCorr)
   {
-    ind.int <- if(length(which(parts==" 1 "))!=0) which(parts==" 1 ") else which(parts=="1 ")    
-    new.terms <- c(paste("(",paste(c(parts[-ind.int], " 0 "), collapse="+"),grouppart, sep=""),paste("(1 ",grouppart,sep=""))
+    ind.int <- if(length(which(parts==" 1 "))!=0) which(parts==" 1 ") else which(parts=="1 ") 
+    if(length(ind.int) == 0)
+      new.terms <- c(paste("(",paste(c(slopepart, " 0 "), collapse="+"),grouppart, sep=""),paste("(1 ",grouppart,sep=""))
+    else
+      new.terms <- c(paste("(",paste(c(parts[-ind.int], " 0 "), collapse="+"),grouppart, sep=""),paste("(1 ",grouppart,sep=""))
   }
   else
   {
@@ -1544,10 +1542,20 @@ getGrSlrand <- function(rand.term)
   return(list(gr=gr,sl=sl))
 }
 
-### Find Index of the random term in VarCorr matrix
-findIndTerm <- function(vcr,GrSl)
+findGroupForRandomTerm <- function(vcr, randomGroup)
 {
-  indsGr <- which(names(vcr)==GrSl$gr)
+  which(names(vcr) %in% c(randomGroup, unlist(lapply(1:100, function(x) paste(randomGroup, ".", sep="",x))))==TRUE)
+}
+
+
+### Find Index of the random term in VarCorr matrix
+findIndTerm <- function(vcr, GrSl)
+{
+  #indsGr <- which(names(vcr)==GrSl$gr)
+  # for lme4 >1.0
+  indsGr <- findGroupForRandomTerm(vcr, GrSl$gr)
+  if(length(indsGr)==1)
+    return(indsGr)
   for(indGr in indsGr)
   {
     if(length(which((names(attr(vcr[[indGr]],"stddev"))==GrSl$sl)==FALSE))==0)
@@ -1560,7 +1568,7 @@ checkIsZeroVarOrCorr <- function(model, rand.term, isCorr)
 {
  
   vcr <- VarCorr(model)
-  ind.term <- findIndTerm(vcr,getGrSlrand(rand.term))
+  ind.term <- findIndTerm(vcr, getGrSlrand(rand.term))
   if(isCorr)
   {
     matcorr <- attr(vcr[[ind.term]],"correlation")
@@ -1598,12 +1606,12 @@ elimZeroVarOrCorr <- function(model, data, l)
           new.terms <- changeSlopePart(rand.term,isCorr.int)
           fm[3] <- paste(fm[3], "-", rand.term, "+" , paste(new.terms,collapse="+"))
           #print(paste("Random term",rand.term, "was eliminated because of having correlation +-1 or NaN", sep=" "))
-          warning(paste(" \n Random term", rand.term, "was eliminated because of having correlation +-1 or NaN \n", sep=" "), call. = FALSE, immediate. = TRUE)
+          message(paste("Random term", rand.term, "was eliminated because of having correlation +-1 or NaN \n", sep=" "))
         }
         else
         {
           fm[3] <- paste(fm[3], "-", rand.term)
-          warning(paste("\n Random term",rand.term, "was eliminated because of standard deviation being equal to 0 \n", sep=" "), call. = FALSE, immediate. = TRUE)
+          message(paste("Random term",rand.term, "was eliminated because of standard deviation being equal to 0 \n", sep=" "))
         }
           
         mf.final <-  as.formula(paste(fm[2],fm[1],fm[3], sep=""))
@@ -1774,15 +1782,25 @@ formatVC <- function(varc, digits = max(3, getOption("digits") - 2))
 
 getREML <- function(model)
 {
-  if(class(model)=="lmerMod" || class(model)=="merModLmerTest")
-     return(getME(model, "is_REML"))
-  else if(class(model)=="mer" || class(model)=="merLmerTest")
-    return(model@dims[["REML"]])
+#   if(class(model)=="lmerMod" || class(model)=="merModLmerTest")
+#      return(getME(model, "is_REML"))
+#   else if(class(model)=="mer" || class(model)=="merLmerTest")
+#     return(model@dims[["REML"]])
+  if(inherits(model,"merMod"))
+    return(getME(model, "is_REML"))
+
 }
+
 #update model
 updateModel <- function(model, mf.final, reml, l)
 {
-  return(suppressWarnings(update(object=model, formula.=mf.final, REML=reml, contrasts=l)))
+  if(!mf.final == as.formula(.~.))
+  {
+     inds <-  names(l) %in% attr(terms(mf.final), "term.labels")
+     #update contrast l
+     l <- l[inds]
+  }
+  return(update(object=model, formula.=mf.final, REML=reml, contrasts=l))
   
   
 #   if(!is.null(l)) 
@@ -1867,7 +1885,13 @@ refitLM <- function(obj, l="contr.SAS") {
   
   mm <- model.frame.fixed(obj)
   colnames(mm)[1] <- "y"
-  fo <- getFormula(obj, withRand=FALSE)# formula(obj,fixed.only=TRUE)  
+  fo <- getFormula(obj, withRand=FALSE)# formula(obj,fixed.only=TRUE)
+  if(fo != as.formula(.~.))
+  {
+    inds <-  names(l) %in% attr(terms(fo), "term.labels")
+    #update contrast l
+    l <- l[inds]
+  }
   fo <- update(fo, y ~ .)
   lm(fo, data=mm, contrasts = l)
 }
@@ -1882,8 +1906,8 @@ fillAnovaTable <- function(result, anova.table)
     anova.table[result[[i]]$name, 4] <- result[[i]]$denom
     anova.table[result[[i]]$name, 5] <- result[[i]]$Fstat
     anova.table[result[[i]]$name, which(colnames(anova.table)=="Pr(>F)")] <- result[[i]]$pvalue
-    anova.table[result[[i]]$name, 1] <- result[[i]]$ss
-    anova.table[result[[i]]$name, 2] <- result[[i]]$ss/result[[i]]$ndf
+    #anova.table[result[[i]]$name, 1] <- result[[i]]$ss
+    #anova.table[result[[i]]$name, 2] <- result[[i]]$ss/result[[i]]$ndf
     
   }
   anova.table
@@ -1921,6 +1945,10 @@ myhess <- function(fun, x, fx=NULL, delta=1e-4, ...) {
   H
 }
 
+
+###############################################################################
+#########   UNUSED function
+###############################################################################
 getFirstinSearchlme4 <- function()
 {
   s <- search()
@@ -1936,3 +1964,15 @@ getFirstinSearchlme4 <- function()
     return("lme4")
 }
 
+
+# format table according to elim.num column
+formatElimNumTable <- function(table)
+{
+  if("elim.num" %in% colnames(table)){
+    table[which(table[,"elim.num"]==0),"elim.num"] <- 1000
+    table <- table[with(table, order(elim.num, decreasing=FALSE)),]
+    table[,"elim.num"] <- as.character(table[,"elim.num"])
+    table[which(table[,"elim.num"]=="1000"),"elim.num"] <- "KEEP"
+  }
+  return(table)
+}

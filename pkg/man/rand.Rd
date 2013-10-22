@@ -8,7 +8,7 @@ Performs log-likelihood ratio test on random effects of linear mixed effects mod
 Returns a data frame with  values of Chi square statistics and corresponding p-values of log-likelihood ratio tests. 
 }
 \usage{
-rand(model, ...)
+rand(model, \dots)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -58,9 +58,6 @@ If the effect has random slopes, then first the correlations between itercept an
 
 #import lme4 package and lmerTest package
 library(lmerTest)
-
-#import carrots data from lmerTest package
-data(carrots)
 
 #lmer model with correlation between intercept and slopes
 #in the random part

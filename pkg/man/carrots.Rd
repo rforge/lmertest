@@ -50,15 +50,12 @@ carrots
 #import lme4 package and lmerTest package
 library(lmerTest)
 
-#import carrots data from lmerTest package
-data(carrots)
-
-m <- lmer(Preference ~ sens2 + Homesize
+m.carrots <- lmer(Preference ~ sens2 + Homesize
 +(1+sens2|Consumer), data=carrots)
 
 # only elimination of the random part is required. 
 #approximation of ddf is Kenward-Roger
-step(m, reduce.random=TRUE, reduce.fixed=TRUE, ddf="Kenward-Roger")
+step(m.carrots, ddf="Kenward-Roger")
 }
 
 \keyword{datasets}
