@@ -172,6 +172,7 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3, alpha.ra
           
           # calculate asymptotic covariance matrix A
           h  <-  hessian(function(x) Dev(rho,x), rho$param$vec.matr)
+          
           rho$A <- 2*solve(h)
           #rho$A <- 2*ginv(h)
           
@@ -246,17 +247,23 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3, alpha.ra
     X.design <- X.design.list$X.design
     names.design.withLevels <- X.design.list$names.design.withLevels
     
-
-    
     
     #save full coefficients in rho
-    nums.dummy.coefs <- getNumsDummyCoefs(model, data, l)
-    rho$nums.zeroCoefs <- nums.dummy.coefs$nums.zeroCoefs
-    rho$nums.Coefs <- nums.dummy.coefs$nums.Coefs
+    ## old code, worked with dummy.coef
+    #nums.dummy.coefs <- getNumsDummyCoefs(model, data, l)
+    #rho$nums.zeroCoefs <- nums.dummy.coefs$nums.zeroCoefs
+    #rho$nums.Coefs <- nums.dummy.coefs$nums.Coefs
+    #fullCoefs <- rep(0, ncol(X.design))
+    #fullCoefs[rho$nums.Coefs] <- rho$fixEffs
+    #fullCoefs <- setNames(fullCoefs, names.design.withLevels) 
+    ###new code with X.design matrix
     fullCoefs <- rep(0, ncol(X.design))
-    fullCoefs[rho$nums.Coefs] <- rho$fixEffs
-    
-    
+    fullCoefs <- setNames(fullCoefs, names.design.withLevels) 
+    names(fullCoefs)[1] <- "(Intercept)"
+    fullCoefs[names(rho$fixEffs)] <- rho$fixEffs
+    rho$nums.Coefs <- which(names(fullCoefs) %in% names(rho$fixEffs))
+      #unique(c(which(names(fullCoefs)=="(Intercept)"),which(names(fullCoefs) %in% names(rho$fixEffs))))
+    rho$nums.Coefs <- setNames(rho$nums.Coefs, names(fullCoefs[rho$nums.Coefs]))
     #define the terms that are to be tested
     test.terms <- attr(terms(model),"term.labels")
     
@@ -274,6 +281,7 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3, alpha.ra
     
     
     # calculate type 1 hypothesis matrices for each term
+    # TODO: fix bug with noint sens1 + Homesize
     if( type==1 )
     {
       #X <- model.matrix(model)
@@ -370,7 +378,7 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3, alpha.ra
 
 
 
-step <- function(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, alpha.fixed = 0.05, reduce.fixed = TRUE, reduce.random = TRUE, lsmeans.calc=TRUE, difflsmeans.calc=TRUE, test.effs=NULL, method.grad="simple",...)
+step <- function(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, alpha.fixed = 0.05, reduce.fixed = TRUE, reduce.random = TRUE, lsmeans.calc=TRUE, difflsmeans.calc=TRUE, test.effs=NULL, method.grad="simple", ...)
 {  
   result <- totalAnovaRandLsmeans(model=model, ddf=ddf , type=type,  alpha.random=alpha.random, alpha.fixed=alpha.fixed, reduce.fixed=reduce.fixed, reduce.random=reduce.random, lsmeans.calc=lsmeans.calc, difflsmeans.calc=difflsmeans.calc, isTotal=TRUE, isTtest=FALSE, test.effs=test.effs, method.grad=method.grad)
   class(result) <- "step"
@@ -521,7 +529,7 @@ setMethod("anova", signature(object="merModLmerTest"),
                       
                       
                       table <- an.table
-                    attr(table, "heading") <- paste("Analysis of Variance Table of type", type ,"with ", ddf, " approximation for degrees of freedom")
+                    attr(table, "heading") <- paste("Analysis of Variance Table of type", type ," with ", ddf, "\napproximation for degrees of freedom")
                   }
                   
                   

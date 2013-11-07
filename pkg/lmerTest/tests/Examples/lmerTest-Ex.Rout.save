@@ -65,13 +65,13 @@ The following object is masked from 'package:stats':
 Random effects:
                      Chi.sq Chi.DF elim.num p.value
 (1 | Assessor)         0.04      1        1  0.8416
-(1 | Assessor:TVset)  60.76      1     KEEP  <1e-07
+(1 | Assessor:TVset)  60.76      1     keep  <1e-07
 
 Fixed effects:
               Sum Sq Mean Sq NumDF  DenDF F.value elim.num Pr(>F)
-TVset         0.4100  0.2050     2  21.00 13.5584     KEEP 0.0002
-Picture       0.1374  0.0458     3 158.87  3.0296     KEEP 0.0311
-TVset:Picture 0.2378  0.0396     6 158.87  2.6214     KEEP 0.0189
+TVset         0.4100  0.2050     2  21.00 13.5584     keep 0.0002
+Picture       0.1374  0.0458     3 158.87  3.0296     keep 0.0311
+TVset:Picture 0.2378  0.0396     6 158.87  2.6214     keep 0.0189
 
 Least squares means:
            TVset Picture Estimate Standard Error DF t-value Lower CI Upper CI
@@ -134,7 +134,8 @@ lme4::lmer(formula = log(Coloursaturation) ~ TVset + Picture +
 > # type 3 anova table with  denominator degrees of freedom
 > # calculated based on Satterthwaite's approximation
 > anova(m.ham)
-Analysis of Variance Table of type 3 with  Satterthwaite  approximation for degrees of freedom
+Analysis of Variance Table of type 3  with  Satterthwaite 
+approximation for degrees of freedom
                            Df Sum Sq Mean Sq F value  Denom   Pr(>F)    
 Product                     3 91.807 30.6024  6.9865 552.97 0.000128 ***
 Information                 1  6.520  6.5201  1.4631 552.97 0.226959    
@@ -149,7 +150,8 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > # type 1 anova table with denominator degrees of freedom
 > # calculated based on Satterthwaite's approximation
 > anova(m.ham, type=1)
-Analysis of Variance Table of type 1 with  Satterthwaite  approximation for degrees of freedom
+Analysis of Variance Table of type 1  with  Satterthwaite 
+approximation for degrees of freedom
                            Df Sum Sq Mean Sq F value  Denom    Pr(>F)    
 Product                     3 91.807 30.6024  6.9476 552.97 0.0001351 ***
 Information                 1  6.520  6.5201  1.4802 552.97 0.2242580    
@@ -164,7 +166,8 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > # type3 anova table with additional F statistics and denominator degrees of freedom
 > # calculated based on Kenward-Roger's approximation
 > anova(m.ham, ddf="Kenward-Roger")
-Analysis of Variance Table of type 3 with  Kenward-Roger  approximation for degrees of freedom
+Analysis of Variance Table of type 3  with  Kenward-Roger 
+approximation for degrees of freedom
                            Df Sum Sq Mean Sq F value Denom   Pr(>F)    
 Product                     3 91.807 30.6024  6.9865   553 0.000128 ***
 Information                 1  6.520  6.5201  1.4631   553 0.226959    
@@ -187,6 +190,11 @@ Product:Information         3 10.387  3.4624  0.7861
 Product:Gender              3  8.421  2.8071  0.6373
 Information:Gender          1  1.407  1.4075  0.3195
 Product:Information:Gender  3  5.992  1.9972  0.4534
+> 
+> ## Don't show: 
+> fm2 <- lmer(Preference ~ sens2 + I(sens1^2)  +
++                            (1+sens2|Consumer), data=carrots)
+> ## End Don't show
 > 
 > 
 > 
@@ -217,13 +225,13 @@ Product:Information:Gender  3  5.992  1.9972  0.4534
 Random effects:
                              Chi.sq Chi.DF elim.num p.value
 (1 + sens2 | Consumer)         0.71      1        1  0.4003
-      (sens2 + 0 | Consumer)   5.99      1     KEEP  0.0144
-      (1 | Consumer)          82.46      1     KEEP  <1e-07
+      (sens2 + 0 | Consumer)   5.99      1     keep  0.0144
+      (1 | Consumer)          82.46      1     keep  <1e-07
 
 Fixed effects:
           Sum Sq Mean Sq NumDF  DenDF F.value elim.num Pr(>F)
-sens2    58.6879 58.6879     1 102.00 54.8233     KEEP <1e-07
-Homesize  5.5217  5.5217     1 100.99  5.1584     KEEP 0.0253
+sens2    58.6879 58.6879     1 102.00 54.8233     keep <1e-07
+Homesize  5.5217  5.5217     1 100.99  5.1584     keep 0.0253
 
 Least squares means:
             Homesize Estimate Standard Error  DF  t-value Lower CI Upper CI
@@ -320,7 +328,8 @@ Gender:Information  1 2- 2 2    0.949     0.3
 > #anova table with p-values with Satterthwaite's approximation for denominator 
 > #degrees of freedom
 > anova(m)
-Analysis of Variance Table of type 3 with  Satterthwaite  approximation for degrees of freedom
+Analysis of Variance Table of type 3  with  Satterthwaite 
+approximation for degrees of freedom
                            Df  Sum Sq Mean Sq F value  Denom  Pr(>F)  
 Product                     3 17.3868  5.7956  3.5000 315.98 0.01584 *
 Information                 1  6.5201  6.5201  3.8702 315.98 0.05003 .
@@ -421,7 +430,8 @@ lme4::lmer(formula = Informed.liking ~ Product + Information +
 > # anova table the same as of class merMod but with additional F statistics and  
 > # p-values calculated based on Satterthwaite's approximations
 > anova(fm1)
-Analysis of Variance Table of type 3 with  Satterthwaite  approximation for degrees of freedom
+Analysis of Variance Table of type 3  with  Satterthwaite 
+approximation for degrees of freedom
      Df Sum Sq Mean Sq F value  Denom    Pr(>F)    
 Days  1  30031   30031  45.853 16.995 3.269e-06 ***
 ---
@@ -433,7 +443,8 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 Note: method with signature 'sparseMatrix#ANY' chosen for function 'kronecker',
  target signature 'dgCMatrix#ngCMatrix'.
  "ANY#sparseMatrix" would also be valid
-Analysis of Variance Table of type 3 with  Kenward-Roger  approximation for degrees of freedom
+Analysis of Variance Table of type 3  with  Kenward-Roger 
+approximation for degrees of freedom
      Df Sum Sq Mean Sq F value Denom    Pr(>F)    
 Days  1  30031   30031  45.853    17 3.264e-06 ***
 ---
@@ -547,7 +558,8 @@ Product4    -0.472  0.000  0.000  0.500  0.500
 > # anova table the same as of class merMod but with additional F statistics and 
 > # p-values calculated based on Satterthwaite's approximations
 > anova(m)
-Analysis of Variance Table of type 3 with  Satterthwaite  approximation for degrees of freedom
+Analysis of Variance Table of type 3  with  Satterthwaite 
+approximation for degrees of freedom
             Df Sum Sq Mean Sq F value  Denom    Pr(>F)    
 Gender       1  3.844  3.8437  0.8790  78.98 0.3513471    
 Information  1  6.520  6.5201  1.4909 562.97 0.2225805    
@@ -558,7 +570,8 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > # anova table the same as of class merMod but with additional F statistics and  
 > # p-values calculated based on Kenward-Roger's approximations
 > anova(m, ddf="Kenward-Roger")
-Analysis of Variance Table of type 3 with  Kenward-Roger  approximation for degrees of freedom
+Analysis of Variance Table of type 3  with  Kenward-Roger 
+approximation for degrees of freedom
             Df Sum Sq Mean Sq F value Denom    Pr(>F)    
 Gender       1  3.844  3.8437  0.8790    79 0.3513465    
 Information  1  6.520  6.5201  1.4909   563 0.2225804    
@@ -672,7 +685,8 @@ Fixed Effects:
 > # type 3 anova table with  denominator degrees of freedom
 > # calculated based on Satterthwaite's approximation
 > anova(m)
-Analysis of Variance Table of type 3 with  Satterthwaite  approximation for degrees of freedom
+Analysis of Variance Table of type 3  with  Satterthwaite 
+approximation for degrees of freedom
      Df Sum Sq Mean Sq F value  Denom  Pr(>F)    
 Days  1  29442   29442  45.046 18.148 2.6e-06 ***
 ---
@@ -681,7 +695,8 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > # type 1 anova table with denominator degrees of freedom
 > # calculated based on Satterthwaite's approximation
 > anova(m, type=1)
-Analysis of Variance Table of type 1 with  Satterthwaite  approximation for degrees of freedom
+Analysis of Variance Table of type 1  with  Satterthwaite 
+approximation for degrees of freedom
      Df Sum Sq Mean Sq F value  Denom  Pr(>F)    
 Days  1  29442   29442  45.046 18.148 2.6e-06 ***
 ---
@@ -690,7 +705,8 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > # type3 anova table with additional F statistics and denominator degrees of freedom
 > # calculated based on Kenward-Roger's approximation
 > anova(m, ddf="Kenward-Roger")
-Analysis of Variance Table of type 3 with  Kenward-Roger  approximation for degrees of freedom
+Analysis of Variance Table of type 3  with  Kenward-Roger 
+approximation for degrees of freedom
      Df Sum Sq Mean Sq F value  Denom    Pr(>F)    
 Days  1  29442   29442  45.046 18.188 2.571e-06 ***
 ---
@@ -854,7 +870,7 @@ Days -0.138
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  30.52 0.11 30.69 NA NA 
+Time elapsed:  29.81 0.1 30 NA NA 
 > grDevices::dev.off()
 null device 
           1 

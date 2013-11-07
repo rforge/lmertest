@@ -57,5 +57,10 @@ anova(m.ham, ddf="Kenward-Roger")
 
 # anova table, that is returned by lme4 package
 anova(m.ham, ddf="lme4")
+
+\dontshow{
+fm2 <- lmer(Preference ~ sens2 + I(sens1^2)  +
+                           (1+sens2|Consumer), data=carrots)
+}
 }
 
