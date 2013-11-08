@@ -43,7 +43,7 @@ plotSensMixed <- function(resSensMixed)
   #######################################################################################################
   #### plots as in lmerTest  paper
   #par(mar=c(15,4,4,2))
-  x11()
+ plot.new()
   inds.rand <- grep(" | ", rownames(FChi))
   FChi.chi <- FChi[inds.rand,]
   names.random <- rownames(FChi)[inds.rand]#rev(unlist(lapply(rownames(FChi.chi), function(x) substring2(x, 4, nchar(x)-1))))
@@ -83,7 +83,7 @@ plotSensMixed <- function(resSensMixed)
   legend(locator(1), rev(c("p-value < 0.01", "p-value < 0.05", "p-value < 0.1", "p-value >= 0.1")),  col="black", density=rev(c(500, 100, 50, 10)), bty="n", cex=cex.gr)
   
   
-  x11()
+ plot.new()
   
   #######################################################################################################
   #######  Plot of fixed effects

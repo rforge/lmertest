@@ -73,6 +73,6 @@ data(ham)
 
 consmixed(response="Informed.liking", 
 Prod_effects= c("Product","Information"), 
-Cons_effects=c("Gender","Age"), Cons = "Consumer", data =ham)
+Cons_effects=c("Gender","Age"), Cons = "Consumer", data =ham, structure=1)
 
 }
