@@ -1979,7 +1979,7 @@ formatElimNumTable <- function(table)
     table[which(table[,"elim.num"]==0),"elim.num"] <- 1000
     table <- table[with(table, order(elim.num, decreasing=FALSE)),]
     table[,"elim.num"] <- as.character(table[,"elim.num"])
-    table[which(table[,"elim.num"]=="1000"),"elim.num"] <- "keep"
+    table[which(table[,"elim.num"]=="1000"),"elim.num"] <- "kept"
   }
   return(table)
 }

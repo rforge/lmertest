@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2013-09-18 r63944) -- "Unsuffered Consequences"
+R version 3.0.2 (2013-09-25) -- "Frisbee Sailing"
 Copyright (C) 2013 The R Foundation for Statistical Computing
 Platform: i386-w64-mingw32/i386 (32-bit)
 
@@ -23,8 +23,10 @@ Type 'q()' to quit R.
 > options(pager = "console")
 > library('lmerTest')
 Loading required package: Matrix
-Loading required package: lattice
 Loading required package: lme4
+Loading required package: lattice
+KernSmooth 2.23 loaded
+Copyright M. P. Wand 1997-2009
 
 Attaching package: 'lmerTest'
 
@@ -65,13 +67,13 @@ The following object is masked from 'package:stats':
 Random effects:
                      Chi.sq Chi.DF elim.num p.value
 (1 | Assessor)         0.04      1        1  0.8416
-(1 | Assessor:TVset)  60.76      1     keep  <1e-07
+(1 | Assessor:TVset)  60.76      1     kept  <1e-07
 
 Fixed effects:
               Sum Sq Mean Sq NumDF  DenDF F.value elim.num Pr(>F)
-TVset         0.4100  0.2050     2  21.00 13.5584     keep 0.0002
-Picture       0.1374  0.0458     3 158.87  3.0296     keep 0.0311
-TVset:Picture 0.2378  0.0396     6 158.87  2.6214     keep 0.0189
+TVset         0.4100  0.2050     2  21.00 13.5584     kept 0.0002
+Picture       0.1374  0.0458     3 158.87  3.0296     kept 0.0311
+TVset:Picture 0.2378  0.0396     6 158.87  2.6214     kept 0.0189
 
 Least squares means:
            TVset Picture Estimate Standard Error DF t-value Lower CI Upper CI
@@ -225,13 +227,13 @@ Product:Information:Gender  3  5.992  1.9972  0.4534
 Random effects:
                              Chi.sq Chi.DF elim.num p.value
 (1 + sens2 | Consumer)         0.71      1        1  0.4003
-      (sens2 + 0 | Consumer)   5.99      1     keep  0.0144
-      (1 | Consumer)          82.46      1     keep  <1e-07
+      (sens2 + 0 | Consumer)   5.99      1     kept  0.0144
+      (1 | Consumer)          82.46      1     kept  <1e-07
 
 Fixed effects:
           Sum Sq Mean Sq NumDF  DenDF F.value elim.num Pr(>F)
-sens2    58.6879 58.6879     1 102.00 54.8233     keep <1e-07
-Homesize  5.5217  5.5217     1 100.99  5.1584     keep 0.0253
+sens2    58.6879 58.6879     1 102.00 54.8233     kept <1e-07
+Homesize  5.5217  5.5217     1 100.99  5.1584     kept 0.0253
 
 Least squares means:
             Homesize Estimate Standard Error  DF  t-value Lower CI Upper CI
@@ -870,7 +872,7 @@ Days -0.138
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  29.81 0.1 30 NA NA 
+Time elapsed:  37.9 0.68 38.69 NA NA 
 > grDevices::dev.off()
 null device 
           1 
