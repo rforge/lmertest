@@ -475,9 +475,9 @@ Random effects:
 Number of obs: 180, groups: Subject, 18
 
 Fixed effects:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept)  251.405      6.825   36.84  < 2e-16 ***
-Days          10.467      1.546    6.77 3.27e-06 ***
+            Estimate Std. Error      df t value Pr(>|t|)    
+(Intercept)  251.405      6.825  16.998  36.838  < 2e-16 ***
+Days          10.467      1.546  16.995   6.771 3.27e-06 ***
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -539,13 +539,13 @@ Random effects:
 Number of obs: 648, groups: Consumer, 81
 
 Fixed effects:
-             Estimate Std. Error t value Pr(>|t|)    
-(Intercept)    5.8290     0.2460  23.694  < 2e-16 ***
-Gender2       -0.2443     0.2606  -0.938  0.35135    
-Information2   0.2006     0.1643   1.221  0.22258    
-Product2      -0.7037     0.2324  -3.029  0.00257 ** 
-Product3       0.2840     0.2324   1.222  0.22220    
-Product4       0.1173     0.2324   0.505  0.61392    
+             Estimate Std. Error       df t value Pr(>|t|)    
+(Intercept)    5.8290     0.2460 235.9000  23.694  < 2e-16 ***
+Gender2       -0.2443     0.2606  79.0000  -0.938  0.35135    
+Information2   0.2006     0.1643 563.0000   1.221  0.22258    
+Product2      -0.7037     0.2324 563.0000  -3.029  0.00257 ** 
+Product3       0.2840     0.2324 563.0000   1.222  0.22220    
+Product4       0.1173     0.2324 563.0000   0.505  0.61392    
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -737,9 +737,9 @@ Random effects:
 Number of obs: 180, groups: Subject, 18
 
 Fixed effects:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept)  251.405      6.885   36.51  < 2e-16 ***
-Days          10.467      1.560    6.71  2.6e-06 ***
+            Estimate Std. Error      df t value Pr(>|t|)    
+(Intercept)  251.405      6.885  18.154  36.513  < 2e-16 ***
+Days          10.467      1.560  18.148   6.712  2.6e-06 ***
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -856,11 +856,35 @@ Random effects:
 Number of obs: 180, groups: Subject, 18
 
 Fixed effects:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept)  251.405      6.825   36.84  < 2e-16 ***
-Days          10.467      1.546    6.77 3.27e-06 ***
+            Estimate Std. Error      df t value Pr(>|t|)    
+(Intercept)  251.405      6.825  16.998  36.838  < 2e-16 ***
+Days          10.467      1.546  16.995   6.771 3.27e-06 ***
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+     (Intr)
+Days -0.138
+> 
+> #will give the summary of lme4 package
+> summary(fm1, "lme4")
+Linear mixed model fit by REML ['merModLmerTest']
+Formula: Reaction ~ Days + (Days | Subject) 
+   Data: sleepstudy 
+
+REML criterion at convergence: 1743.628 
+
+Random effects:
+ Groups   Name        Variance Std.Dev. Corr
+ Subject  (Intercept) 612.10   24.741       
+          Days         35.07    5.922   0.07
+ Residual             654.94   25.592       
+Number of obs: 180, groups: Subject, 18
+
+Fixed effects:
+            Estimate Std. Error t value
+(Intercept)  251.405      6.825   36.84
+Days          10.467      1.546    6.77
 
 Correlation of Fixed Effects:
      (Intr)
@@ -872,7 +896,7 @@ Days -0.138
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  37.9 0.68 38.69 NA NA 
+Time elapsed:  37.52 0.7 38.38 NA NA 
 > grDevices::dev.off()
 null device 
           1 

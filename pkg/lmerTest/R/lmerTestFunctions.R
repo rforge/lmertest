@@ -550,12 +550,12 @@ setMethod("summary", signature(object = "merModLmerTest"),
             if(!is.null(ddf) && ddf=="lme4") return(cl)
             else
             {
-              #tsum <- tryCatch( {totalAnovaRandLsmeans(model=object, ddf="Satterthwaite", isTtest=TRUE)$ttest}, error = function(e) { NULL })
-              #coefs.satt <- cbind(cl$coefficients[,1:2], tsum$df, tsum$tvalue, tsum$tpvalue)
-                t.pval <- tryCatch( {totalAnovaRandLsmeans(model=object, ddf="Satterthwaite", isTtest=TRUE)$ttest$tpvalue}, error = function(e) { NULL })
-                coefs.satt <- cbind(cl$coefficients, t.pval) 
+              tsum <- tryCatch( {totalAnovaRandLsmeans(model=object, ddf="Satterthwaite", isTtest=TRUE)$ttest}, error = function(e) { NULL })
+              coefs.satt <- cbind(cl$coefficients[,1:2], tsum$df, tsum$tvalue, tsum$tpvalue)
+               # t.pval <- tryCatch( {totalAnovaRandLsmeans(model=object, ddf="Satterthwaite", isTtest=TRUE)$ttest$tpvalue}, error = function(e) { NULL })
+               # coefs.satt <- cbind(cl$coefficients, t.pval) 
                 cl$coefficients <- coefs.satt
-                colnames(cl$coefficients)[4] <- c("Pr(>|t|)")              
+                colnames(cl$coefficients)[3:5] <- c("df","t value","Pr(>|t|)")              
             }   
             
             return(cl)
