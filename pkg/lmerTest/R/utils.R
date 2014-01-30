@@ -481,13 +481,20 @@ getIndTermsContained <- function(allterms, ind.hoi)
   return(ind.terms.contain)
 }
 
+orderterms <- function(anova.table)
+{
+   return(unlist(lapply(rownames(anova.table), function(x) length(unlist(strsplit(x,":"))))))
+}
 ###############################################################################
 # get terms to compare in anova.table
 ###############################################################################
-getTermsToCompare <- function(model)
+#getTermsToCompare <- function(model)
+getTermsToCompare <- function(anova.table)
 {
-  order.terms <- attr(terms(model),"order")
-  allterms <- attr(terms(model),"term.labels")
+  #order.terms <- attr(terms(model),"order")
+  #allterms <- attr(terms(model),"term.labels")
+  order.terms <- orderterms(anova.table)
+  allterms <- rownames(anova.table)
   ind.hoi <- which(order.terms == max(order.terms))
   ind.terms.contain <- getIndTermsContained(allterms, ind.hoi)
   
@@ -517,10 +524,16 @@ getNSFixedTerm <- function(model, anova.table, data, alpha)
   
   pv.max <- 0
   
-  terms.compare <- getTermsToCompare(model)
+  #terms.compare <- getTermsToCompare(model)
+  if(length(which(anova.table[,"elim.num"]==0))==1)
+    terms.compare <- rownames(anova.table)[anova.table[,"elim.num"]==0]
+  else
+    terms.compare <- getTermsToCompare(anova.table[anova.table[,"elim.num"]==0,])
   
   for(tcmp in terms.compare)
   {
+    if(!tcmp %in% rownames(anova.table))
+      next
     ind <- which(rownames(anova.table)==tcmp)
     if(anova.table[ind,which(colnames(anova.table)=="Pr(>F)")]>=pv.max)
     {
@@ -808,6 +821,10 @@ convertNumsToFac <- function(data, begin, end)
 ###################################################################
 fillLSMEANStab <- function(mat, rho, summ.eff, nfacs, alpha, method.grad)
 {
+   #change mat when there are NA values in estimation of effects (XXt is rank deficient)
+   #mat <- mat[,colnames(mat) %in% names(rho$fixEffs)]
+   newcln <- colnames(mat)[colnames(mat) %in% names(rho$fixEffs)]
+   mat <- matrix(mat[,colnames(mat) %in% names(rho$fixEffs)], nrow=nrow(mat), ncol=length(newcln), dimnames=list(rownames(mat),  newcln))
    estim.lsmeans <- mat %*% rho$fixEffs
    summ.eff[,nfacs+1] <- estim.lsmeans
    ttest.res <- calculateTtest(rho, t(mat), nrow(mat), method.grad)
@@ -1325,22 +1342,22 @@ emptyAnovaLsmeansTAB <- function()
 
 
 ### initialize table for random terms
-initRandTable <- function(terms, reduce.random)
-{
-  if(reduce.random)
-  {
-    rand.table <- matrix(0,ncol=4, nrow=length(terms))
-    colnames(rand.table) <- c("Chi.sq", "Chi.DF", "elim.num", "p.value")
-    rownames(rand.table) <- terms
-  }
-  else
-  {
-    rand.table <- matrix(0,ncol=3, nrow=length(terms))
-    colnames(rand.table) <- c("Chi.sq", "Chi.DF", "p.value")
-    rownames(rand.table) <- terms
-  }
-  return(rand.table)
-}
+# initRandTable <- function(terms, reduce.random)
+# {
+#   if(reduce.random)
+#   {
+#     rand.table <- matrix(0,ncol=4, nrow=length(terms))
+#     colnames(rand.table) <- c("Chi.sq", "Chi.DF", "elim.num", "p.value")
+#     rownames(rand.table) <- terms
+#   }
+#   else
+#   {
+#     rand.table <- matrix(0,ncol=3, nrow=length(terms))
+#     colnames(rand.table) <- c("Chi.sq", "Chi.DF", "p.value")
+#     rownames(rand.table) <- terms
+#   }
+#   return(rand.table)
+# }
 
 ### get names of terms out of rownames of rand.table
 getTermsRandtable <- function(names.rand.table)
@@ -1350,67 +1367,69 @@ getTermsRandtable <- function(names.rand.table)
 
 
 ### fill a row for the random matrix
-fillRowRandTable <- function(term, rand.table, rand.terms.upd=NULL, elim.num, reduce.random)
-{
-  nrow.term <- which(getTermsRandtable(rownames(rand.table))==term$term)
-  
-  rand.table[nrow.term, "Chi.sq"] <- term$chisq
-  rand.table[nrow.term, "Chi.DF"] <- term$chisq.df
-  rand.table[nrow.term, "p.value"] <- term$pv
-  if(reduce.random)
-    rand.table[nrow.term, "elim.num"] <- elim.num 
-  if(!is.null(rand.terms.upd) && length(rand.terms.upd)!=0)
-  {     
-    rand.table.upd <- matrix(0,ncol=4, nrow=length(rand.terms.upd))
-    colnames(rand.table.upd) <- c("Chi.sq", "Chi.DF", "elim.num", "p.value")
-    #rownames(rand.table.upd) <- paste(paste(rep(" ",max(nchar(rownames(rand.table)))), collapse=""), rand.terms.upd, sep="")
-    #rownames(rand.table.upd) <- rand.terms.upd
-    nspace.term <- nchar(substring2(rownames(rand.table)[nrow.term],1,substring.location( rownames(rand.table)[nrow.term],"(")$first))
-    rownames(rand.table.upd) <- paste(paste(rep(" ", nspace.term + 5), collapse=""), rand.terms.upd, sep="")
-    if(nrow.term==nrow(rand.table))
-    {
-      rand.table <- rbind(rand.table, rand.table.upd)
-      #rownames(rand.table)[1] <- term$term
-     }
-    else
-    {
-      rnames <- c(rownames(rand.table)[1:nrow.term], rownames(rand.table.upd),rownames(rand.table)[(nrow.term+1):nrow(rand.table)])
-      rand.table <- rbind(rand.table[1:nrow.term,], rand.table.upd, rand.table[(nrow.term+1):nrow(rand.table),])  
-      rownames(rand.table) <- rnames 
-    } 
-  }
-  return(rand.table)
-}
+### fill a row for the random matrix
+# fillRowRandTable <- function(term, rand.table, rand.terms.upd=NULL, elim.num, reduce.random)
+# {
+#   nrow.term <- which(getTermsRandtable(rownames(rand.table))==term$term)
+#   
+#   rand.table[nrow.term, "Chi.sq"] <- term$chisq
+#   rand.table[nrow.term, "Chi.DF"] <- term$chisq.df
+#   rand.table[nrow.term, "p.value"] <- term$pv
+#   if(reduce.random)
+#     rand.table[nrow.term, "elim.num"] <- elim.num 
+#   if(!is.null(rand.terms.upd) && length(rand.terms.upd)!=0)
+#   {     
+#     rand.table.upd <- matrix(0,ncol=4, nrow=length(rand.terms.upd))
+#     colnames(rand.table.upd) <- c("Chi.sq", "Chi.DF", "elim.num", "p.value")
+#     #rownames(rand.table.upd) <- paste(paste(rep(" ",max(nchar(rownames(rand.table)))), collapse=""), rand.terms.upd, sep="")
+#     #rownames(rand.table.upd) <- rand.terms.upd
+#     nspace.term <- nchar(substring2(rownames(rand.table)[nrow.term],1,substring.location( rownames(rand.table)[nrow.term],"(")$first))
+#     rownames(rand.table.upd) <- paste(paste(rep(" ", nspace.term + 5), collapse=""), rand.terms.upd, sep="")
+#     if(nrow.term==nrow(rand.table))
+#     {
+#       rand.table <- rbind(rand.table, rand.table.upd)
+#       #rownames(rand.table)[1] <- term$term
+#     }
+#     else
+#     {
+#       rnames <- c(rownames(rand.table)[1:nrow.term], rownames(rand.table.upd),rownames(rand.table)[(nrow.term+1):nrow(rand.table)])
+#       rand.table <- rbind(rand.table[1:nrow.term,], rand.table.upd, rand.table[(nrow.term+1):nrow(rand.table),])  
+#       rownames(rand.table) <- rnames 
+#     } 
+#   }
+#   return(rand.table)
+# }
 
 ### update table for random terms
-updateRandTable <- function(infoForTerm, rand.table, rand.terms.upd=NULL, elim.num=0, reduce.random)
-{
-  
-  if(!is.null(infoForTerm$term))
-  {   
-    rand.table <- fillRowRandTable(infoForTerm, rand.table, rand.terms.upd, elim.num, reduce.random)    
-    return(rand.table)
-  }    
-  else
-  {
-    for(iterm in infoForTerm)
-      rand.table <- fillRowRandTable(iterm, rand.table, rand.terms.upd, elim.num, reduce.random)  
-  }    
-  return(rand.table)
-}
+# updateRandTable <- function(infoForTerm, rand.table, rand.terms.upd=NULL, elim.num=0, reduce.random)
+# {
+#   
+#   if(!is.null(infoForTerm$term))
+#   {   
+#     rand.table <- fillRowRandTable(infoForTerm, rand.table, rand.terms.upd, elim.num, reduce.random)    
+#     return(rand.table)
+#   }    
+#   else
+#   {
+#     for(iterm in infoForTerm)
+#       rand.table <- fillRowRandTable(iterm, rand.table, rand.terms.upd, elim.num, reduce.random)  
+#   }    
+#   return(rand.table)
+# }
+
 
 ############################################################################    
 #save info (pvalues, chisq val, std, var...) for term
 ############################################################################    
-saveInfoForTerm <- function(term, chisq, chisq.df, pv)
-{
-  term.info <- NULL 
-  term.info$pv <- pv
-  term.info$chisq <- chisq
-  term.info$chisq.df <- chisq.df
-  term.info$term <- term
-  return(term.info)
-}
+# saveInfoForTerm <- function(term, chisq, chisq.df, pv)
+# {
+#   term.info <- NULL 
+#   term.info$pv <- pv
+#   term.info$chisq <- chisq
+#   term.info$chisq.df <- chisq.df
+#   term.info$term <- term
+#   return(term.info)
+# }
 
 ### check if there are no random terms in the model
 checkPresRandTerms <- function(mf.final)
@@ -1435,7 +1454,7 @@ compareMixVSFix <- function(model, mf.final, data, name.term, rand.table, alpha,
   #   mf.final <-  as.formula(paste(fm[2],fm[1],fm[3], sep=""))
   #   mf.final <- update.formula(mf.final,mf.final)       
   # }
-   
+  
   #model.red <- gls(model = mf.final, data=data, method = "REML", na.action=na.omit)
   #model.red  <-  lm(formula(model,fixed.only=TRUE), data=model.frame.fixed(model))#lm(model, data=summary(model,"lme4")@frame)
   model.red <- refitLM(model)
@@ -1488,6 +1507,49 @@ isCorrSlope <- function(term)
   return(FALSE)  
 }
 
+#create reduce slopes model
+createModelRedSlopes <- function(x, term, fm, model, l)
+{
+  fm[3] <- paste(fm[3], "-", term, "+" , paste(x,collapse="+"))
+  mf.final <-  as.formula(paste(fm[2],fm[1],fm[3], sep=""))
+  mf.final <- update.formula(mf.final,mf.final)
+  model.red <- updateModel(model, mf.final, getME(model, "is_REML"), l)
+  #anova.red <- anova(model, model.red)
+  return(model.red)
+}
+
+# find the NS slope term in the model
+findNSslopesTerm <- function(term, isCorr, fm, model, l)
+{
+  redModels <- sapply(getRedSlopeTerms(term, isCorr), function(x) createModelRedSlopes(x, term, fm, model, l))
+  
+}
+
+getRedSlopeTerms <- function(term, isCorr)
+{
+  sub.loc.div <- substring.location(term," |")
+  slopepart <- substring2(term,2,sub.loc.div$first)
+  grouppart <- substring2(term,sub.loc.div$last, nchar(term))
+  parts <- unlist(strsplit(slopepart, "\\+"))
+  if(isCorr)
+  {
+    ind.int <- if(length(which(parts==" 1 "))!=0) which(parts==" 1 ") else which(parts=="1 ") 
+    if(length(ind.int) == 0)
+      new.terms <- c(paste("(",paste(c(slopepart, " 0 "), collapse="+"),grouppart, sep=""),paste("(1 ",grouppart,sep=""))
+    else
+      new.terms <-  sapply(parts[-ind.int], function(x) paste("(",paste(c("1 ", x), collapse="+"),grouppart, sep=""))
+  }
+  else
+  {
+    new.terms <- NULL
+    ind.int <- if(length(which(parts==" 0 "))!=0) which(parts==" 0 ") else which(parts=="0 ")
+    for(part in parts[-ind.int])
+      new.terms <- c(new.terms,paste("(",paste(c(part, " 0 "), collapse="+"),grouppart, sep=""))
+    new.terms <- c(new.terms,paste("(1 ",grouppart,sep=""))
+  }
+  return(new.terms) 
+}
+
 # modify (reduce) the random part when there are slopes 
 changeSlopePart <- function(term, isCorr)
 {
@@ -1515,7 +1577,7 @@ changeSlopePart <- function(term, isCorr)
   return(new.terms)      
 }
 
-### get the random terms
+# ### get the random terms
 getRandTerms <- function(fmodel)
 {
   terms.fm <- attr(terms(fmodel),"term.labels")
@@ -1527,7 +1589,7 @@ getRandTerms <- function(fmodel)
 getGrSlrand <- function(rand.term)
 {
   # find the names of variables for slope part sl and for group part gr
-  rand.term1 <- substring2(rand.term,2,nchar(rand.term)-1)
+  rand.term1 <- substring2(rand.term, 2, nchar(rand.term)-1)
   splGrSl <- unlist(strsplit(rand.term1, "|", fixed = TRUE))
   gr <- substring2(splGrSl[2],2,nchar(splGrSl[2]))
   sl <- unlist(strsplit(splGrSl[1], "+", fixed = TRUE))
@@ -1650,91 +1712,93 @@ elimZeroVarOrCorr <- function(model, data, l)
 }
 
 ### eliminate NS random terms 
-elimRandEffs <- function(model, data, alpha, reduce.random, l)
-{
-  isInitRand <- TRUE
-  elim.num <- 1
-  stop=FALSE
-  while(!stop)
-  {
-    fmodel <- formula(model)    
-    rand.terms <- getRandTerms(fmodel)
-    
-    if(isInitRand)
-    {
-      rand.table <- initRandTable(rand.terms, reduce.random)
-      isInitRand <- FALSE
-    }      
-    fm <- paste(fmodel)
-    pv.max <- 0
-    infoForTerms <- vector("list", length(rand.terms))
-    names(infoForTerms) <-   rand.terms
-    
-    for(rand.term in rand.terms)
-    {
-      fm <- paste(fmodel)
-      isCorr.int <- isCorrInt(rand.term)
-      isCorr.slope <- isCorrSlope(rand.term)
-      if(isCorr.int || (isCorr.slope && length(substring.location(rand.term,"+")$first)>1)) 
-      {
-        new.terms <- changeSlopePart(rand.term,isCorr.int)
-        fm[3] <- paste(fm[3], "-", rand.term, "+" , paste(new.terms,collapse="+"))
-      }
-      else
-        fm[3] <- paste(fm[3], "-", rand.term)
-      mf.final <-  as.formula(paste(fm[2],fm[1],fm[3], sep=""))
-      mf.final <- update.formula(mf.final,mf.final)
-      is.present.rand <- checkPresRandTerms(mf.final)
-      
-      # no more random terms in the model
-      if(!is.present.rand)
-      {
-        return(compareMixVSFix(model, mf.final, data, rand.term, rand.table, alpha, elim.num, reduce.random))
-        
-      } 
-      #if(!is.null(l))
-      #  model.red <- eval(substitute(lmer(mf.final, data=data, contrasts=l),list(mf.final=mf.final)))
-      #else
-      #  model.red <- eval(substitute(lmer(mf.final, data=data),list(mf.final=mf.final)))
-      model.red <- updateModel(model, mf.final, getME(model, "is_REML"), l)
-      anova.red <- anova(model, model.red)
-      infoForTerms[[rand.term]] <- saveInfoForTerm(rand.term, anova.red$Chisq[2], anova.red$"Chi Df"[2] , anova.red$'Pr(>Chisq)'[2])
-            
-      if((anova.red$'Pr(>Chisq)'[2] >= pv.max) && reduce.random)
-      { 
-           pv.max <- anova.red$'Pr(>Chisq)'[2]
-           infoForTermElim <- infoForTerms[[rand.term]]
-           model.final <- model.red 
-           if(anova.red$'Pr(>Chisq)'[2]==1)
-             break
-      }
-    }    
-    
-    if(!reduce.random)
-    {
-      rand.table <- updateRandTable(infoForTerms, rand.table, reduce.random=reduce.random)
-      model.last <- model
-      break
-    }
-    
-    rand.terms.upd <- getRandTerms(formula(model.final))
-    
-    if(infoForTermElim$pv > alpha)
-    {
-      rand.table <- updateRandTable(infoForTermElim, rand.table, rand.terms.upd[!rand.terms.upd %in% rand.terms] , elim.num, reduce.random)
-      elim.num=elim.num+1      
-    }
-    else
-    {
-      rand.table <- updateRandTable(infoForTerms, rand.table, reduce.random=reduce.random)
-      model.last <- model
-      break
-    }
-    
-    model <- model.final  
-  }  
-  return(list(model=model.last, TAB.rand=rand.table))
-}
+# elimRandEffs <- function(model, data, alpha, reduce.random, l)
+# {
+#   isInitRand <- TRUE
+#   elim.num <- 1
+#   stop <- FALSE
+#   while(!stop)
+#   {
+#     fmodel <- formula(model)    
+#     rand.terms <- getRandTerms(fmodel)
+#     
+#     if(isInitRand)
+#     {
+#       rand.table <- initRandTable(rand.terms, reduce.random)
+#       isInitRand <- FALSE
+#     }      
+#     fm <- paste(fmodel)
+#     pv.max <- 0
+#     infoForTerms <- vector("list", length(rand.terms))
+#     names(infoForTerms) <-   rand.terms
+#     
+#     for(rand.term in rand.terms)
+#     {
+#       fm <- paste(fmodel)
+#       isCorr.int <- isCorrInt(rand.term)
+#       isCorr.slope <- isCorrSlope(rand.term)
+#       if(isCorr.int || (isCorr.slope && length(substring.location(rand.term,"+")$first)>1)) 
+#       {
+#         new.terms <- changeSlopePart(rand.term, isCorr.int)
+#         nsTerm <- findNSslopesTerm(rand.term, isCorr.int, fm, model, l)
+#         fm[3] <- paste(fm[3], "-", rand.term, "+" , paste(new.terms,collapse="+"))
+#       }
+#       else
+#         fm[3] <- paste(fm[3], "-", rand.term)
+#       mf.final <-  as.formula(paste(fm[2],fm[1],fm[3], sep=""))
+#       mf.final <- update.formula(mf.final,mf.final)
+#       is.present.rand <- checkPresRandTerms(mf.final)
+#       
+#       # no more random terms in the model
+#       if(!is.present.rand)
+#       {
+#         return(compareMixVSFix(model, mf.final, data, rand.term, rand.table, alpha, elim.num, reduce.random))
+#         
+#       } 
+#       #if(!is.null(l))
+#       #  model.red <- eval(substitute(lmer(mf.final, data=data, contrasts=l),list(mf.final=mf.final)))
+#       #else
+#       #  model.red <- eval(substitute(lmer(mf.final, data=data),list(mf.final=mf.final)))
+#       model.red <- updateModel(model, mf.final, getME(model, "is_REML"), l)
+#       anova.red <- anova(model, model.red)
+#       infoForTerms[[rand.term]] <- saveInfoForTerm(rand.term, anova.red$Chisq[2], anova.red$"Chi Df"[2] , anova.red$'Pr(>Chisq)'[2])
+#       
+#       if((anova.red$'Pr(>Chisq)'[2] >= pv.max) && reduce.random)
+#       { 
+#         pv.max <- anova.red$'Pr(>Chisq)'[2]
+#         infoForTermElim <- infoForTerms[[rand.term]]
+#         model.final <- model.red 
+#         #if(anova.red$'Pr(>Chisq)'[2]==1)
+#         #  break
+#       }
+#     }    
+#     
+#     if(!reduce.random)
+#     {
+#       rand.table <- updateRandTable(infoForTerms, rand.table, reduce.random=reduce.random)
+#       model.last <- model
+#       break
+#     }
+#     
+#     rand.terms.upd <- getRandTerms(formula(model.final))
+#     
+#     if(infoForTermElim$pv > alpha)
+#     {
+#       rand.table <- updateRandTable(infoForTermElim, rand.table, rand.terms.upd[!rand.terms.upd %in% rand.terms] , elim.num, reduce.random)
+#       elim.num=elim.num+1      
+#     }
+#     else
+#     {
+#       rand.table <- updateRandTable(infoForTerms, rand.table, reduce.random=reduce.random)
+#       model.last <- model
+#       break
+#     }
+#     
+#     model <- model.final  
+#   }  
+#   return(list(model=model.last, TAB.rand=rand.table))
+# }
+
 
 #####save results for fixed effects for model with only fixed effects
 saveResultsFixModel <- function(result, model)
@@ -1910,6 +1974,8 @@ fillAnovaTable <- function(result, anova.table)
 {
   for (i in 1:length(result))
   {
+    if(!result[[i]]$name %in% rownames(anova.table))
+      next
     anova.table[result[[i]]$name, 4] <- result[[i]]$denom
     anova.table[result[[i]]$name, 5] <- result[[i]]$Fstat
     anova.table[result[[i]]$name, which(colnames(anova.table)=="Pr(>F)")] <- result[[i]]$pvalue

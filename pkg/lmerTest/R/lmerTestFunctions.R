@@ -316,6 +316,7 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3, alpha.ra
         model <- updateModel(model, mf.final, getREML(model), l)        
         anova.table <- resNSelim$anova.table
         elim.num <- elim.num+1
+       
       }        
     }      
     

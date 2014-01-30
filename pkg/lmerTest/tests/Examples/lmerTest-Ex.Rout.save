@@ -20,7 +20,6 @@ Type 'q()' to quit R.
 > pkgname <- "lmerTest"
 > source(file.path(R.home("share"), "R", "examples-header.R"))
 > options(warn = 1)
-> options(pager = "console")
 > library('lmerTest')
 Loading required package: Matrix
 Loading required package: lme4
