@@ -334,7 +334,7 @@ elimRandEffs <- function(model, data, alpha, reduce.random, l)
         
       } 
       model.red <- updateModel(model, mf.final, getME(model, "is_REML"), l)
-      anova.red <- anova(model, model.red)
+      anova.red <- suppressMessages(anova(model, model.red))
       infoForTerms[[names(rnm)]] <- saveInfoForTerm(rnm, anova.red$Chisq[2], anova.red$"Chi Df"[2] , anova.red$'Pr(>Chisq)'[2])
       if((anova.red$'Pr(>Chisq)'[2] >= pv.max) && reduce.random)
       { 

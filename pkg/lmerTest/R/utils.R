@@ -2,9 +2,9 @@ Dev <- function(rho, vec.matr, nll = FALSE) {
 ### Deviance of a LMM as a function of the variance-covariance
 ### parameters.
 ### nll: should the negative log-likelihood rather than the deviance
-### (= 2*nll) be returned?
+### (= 2*nll) be returned?  
   sigma <- vec.matr[[1]]
-  Lambda <- makeLambda(rho, vec.matr)
+  Lambda <- makeLambda(rho, vec.matr) 
   Ut  <-  crossprod(Lambda,rho$Zt)
   L <- Cholesky(tcrossprod(Ut), LDL = FALSE, Imult = 1)
   cu <- solve(L, solve(L, Ut %*% rho$y, sys = "P"), sys = "L")
@@ -35,8 +35,8 @@ Dev <- function(rho, vec.matr, nll = FALSE) {
 #### Rune's function ################################
 getVcov <- function(rho, vec.matr) {
 ### get the variance-covariance matrix of the fixed effects
-### parameters, beta at the values of vec.matr.
-### This implementation use a profiled formulation of the deviance.
+### parameters, beta at the values of vec.matr. 
+### This implementation use a profiled formulation of the deviance. 
   sigma <- vec.matr[[1]]
   Lambda <- makeLambda(rho, vec.matr)
   Ut  <-  crossprod(Lambda, rho$Zt)
@@ -54,7 +54,7 @@ Ct.rhbc <- function(rho, vec.matr, Lc) {
 ### of the fixed effects parameters, beta evaluated at the value of
 ### vec.matr. The gradient of this wrt. vec.matr are needed to estimate the
 ### Satterthwaite's degrees of freedom for the t-statistic.
-
+  
   vcov <- getVcov(rho, vec.matr)
   return(as.matrix(Lc %*% as.matrix(vcov) %*% t(Lc)))
 }
@@ -63,14 +63,14 @@ Ct.rhbc <- function(rho, vec.matr, Lc) {
 #calculates Lambda matrix (see lmer theory)
 ###########################################################################
 makeLambda <- function(rho,vec.matr)
-{
+{  
   #if there is correlation between intercept and slope in random term
   if(rho$corr.intsl)
   {
      Lambda <- matrix(nrow=0,ncol=0)
      for(i in 1:length(rho$nlev))
      {
-
+    
        lambda1 <- vec.matr[which(rho$param$vec.num==i)+1]
        #the correlation between intercept and slope is present
        if(length(lambda1)>1)
@@ -84,7 +84,7 @@ makeLambda <- function(rho,vec.matr)
           Lambda  <-  bdiag(Lambda,kronecker(ST, Diagonal(rho$nlev[i])))
           # a new one
           #Lambda <- bdiag(Lambda,kronecker(Diagonal(rho$nlev[i]), ST))
-
+          
        }
        else
        {
@@ -93,15 +93,15 @@ makeLambda <- function(rho,vec.matr)
      }
    }
    if(!(rho$corr.intsl))
-   {
+   { 
      Lambda <- Diagonal(x=rep.int(vec.matr[-1],rho$nlev))
    }
-
+   
    return(Lambda)
 }
 
 ##########################################################################
-# Check if the data is balanced with respect to factors in it ############
+# Check if the data is balanced with respect to factors in it ############ 
 ##########################################################################
 isbalanced <- function(data)
 {
@@ -137,7 +137,7 @@ getST <- function(model)
 }
 
 ##########################################################################
-# Create rho environmental variable of mixed model #######################
+# Create rho environmental variable of mixed model ####################### 
 ##########################################################################
 rhoInit <- function(model)
 {
@@ -152,26 +152,26 @@ rhoInit <- function(model)
    #rho$nlev <- sapply(model@flist, function(x) length(levels(factor(x))))
    rho$L <- Cholesky(tcrossprod(rho$Zt), LDL = FALSE, Imult = 1, super = TRUE)
    ls.str(rho)
-
+ 
    # change rho$nlev to suit random coefficients
    rf.model <- ranef(model)
    rho$nlev <- NULL
    nlev.names <- NULL
    for(i in 1:length(rf.model))
-   {
+   {   
        #nrow(rf.model[[i]])
        nlev.names <- c(nlev.names,rep(names(rf.model[i]),ncol(rf.model[[i]])))
-       rho$nlev <- c(rho$nlev,rep(nrow(rf.model[[i]]),ncol(rf.model[[i]])))
+       rho$nlev <- c(rho$nlev,rep(nrow(rf.model[[i]]),ncol(rf.model[[i]])))    
    }
-   names(rho$nlev) <- 	nlev.names
-
-    rho$s <- summary(model, ddf="lme4")
-
+   names(rho$nlev) <- 	nlev.names 
+   
+    rho$s <- summary(model,ddf="lme4")
+   
    rho$fixEffs <- fixef(model)
    rho$sigma <- sigma(model)
 
 
-
+   
    #correlation between intercept and slope is present
    #put all necessary info about correlation in param variable
    param <- NULL
@@ -182,28 +182,28 @@ rhoInit <- function(model)
    param$vec.num <- NULL
 
    param$STdim <- NULL
-
+   
    modelST <- getST(model)
-   for(i in 1:length(modelST))
+   for(i in 1:length(modelST)) 
    {
-
+          
      #correlation between intercept and slope is present
      if(nrow(modelST[[i]])>1)
-     {
-       S <- diag(diag(modelST[[i]]))
+     {       
+       S <- diag(diag(modelST[[i]]))       
        T <- modelST[[i]]
        T[!lower.tri(modelST[[i]])] <- 0
        diag(T) <- 1
        lambda1 <- T %*% S
        #for one random coefficient
        #param$vec.matr <- c(param$vec.matr,as.vector(lambda1)[-3])
-       #param$vec.num <- c(param$vec.num,rep(i,3))
+       #param$vec.num <- c(param$vec.num,rep(i,3))       
        # for one random coefficient
        #rho$nlev <- rho$nlev[-i]
-
+       
        # for multiple random coefficients
        param$vec.matr <- c(param$vec.matr,lambda1[lower.tri(lambda1, diag=TRUE)])
-       param$vec.num <- c(param$vec.num,rep(i,length(which(as.vector(lower.tri(lambda1, diag=TRUE))==TRUE))))
+       param$vec.num <- c(param$vec.num,rep(i,length(which(as.vector(lower.tri(lambda1, diag=TRUE))==TRUE))))       
        rho$nlev <- rho$nlev[-((i+1):(i+ncol(lambda1)-1))]
        param$STdim <- c(param$STdim,ncol(lambda1))
      }
@@ -212,20 +212,20 @@ rhoInit <- function(model)
        param$vec.matr <- c(param$vec.matr,modelST[[i]])
        param$vec.num <- c(param$vec.num,i)
        param$STdim <- c(param$STdim,1)
-     }
+     }       
    }
-
+   
    #check if there are correlations between intercepts and slopes
    rho$corr.intsl <- checkCorr(model)
-
+   
    rho$param <- param
    return(rho)
 
 }
 
-
+       
 ##############################################################################################
-# function to calculate summary of F test with Satterthwaite's approximation of denominator df
+# function to calculate summary of F test with Satterthwaite's approximation of denominator df 
 ##############################################################################################
 calcSatterth  <-  function(Lc, rho, method.grad)
 {
@@ -238,32 +238,32 @@ calcSatterth  <-  function(Lc, rho, method.grad)
   invC.theta <- solve(C.theta.optim)
   q <- qr(C.theta.optim)$rank
   F.stat <- (t(Lc %*% rho$fixEffs) %*% invC.theta %*% (Lc %*% rho$fixEffs))/q
-
-
+  
+  
   #df for F statistics for tested term
-  svdec <- eigen(C.theta.optim)
-
-
+  svdec <- eigen(C.theta.optim) 
+  
+  
   PL <- t(svdec$vectors) %*% Lc
-
+  
   nu.m <- NULL
   for( m in 1:length(svdec$values) )
-  {
+  {   
      g <- grad(function(x)  Ct.rhbc(rho,x,t(PL[m,])), rho$param$vec.matr , method = method.grad)
      nu.m <- c(nu.m, 2*(svdec$values[m])^2/(t(g) %*% rho$A %*% g))
   }
-
+  
   E <- sum( (nu.m/(nu.m-2)) * as.numeric(nu.m>2))
   nu.F <- 2*E*as.numeric(E>q)/(E-q)
-
+  
   pvalueF <- 1 - pf(F.stat,qr(Lc)$rank, nu.F)
-
+  
   # calculate ss and ms
   #ms <- F.stat * rho$sigma^2
   #ss <- ms * q
-
+  
   ## calculate ss from camp method proc glm
-  #ss <- getSS(Lc, rho$fixEffs ,ginv(rho$XtX))
+  #ss <- getSS(Lc, rho$fixEffs ,ginv(rho$XtX)) 
   return( list(denom = nu.F, Fstat = F.stat, pvalue = pvalueF, ndf=q) )
 
 }
@@ -278,50 +278,50 @@ getSS <- function(L, coef, XtX.) {
   ss
 }
 
-
+       
 ###########################################################################
 # function to calculate F stat and pvalues for a given term
 ###########################################################################
 calcFpvalueSS <- function(term, Lc, fullCoefs, X.design, model, rho, ddf, method.grad="simple", type)
 {
-
+  
   if(is.null(Lc))
-    return(NULL)
-
+    return(NULL) 
+  
   ## BUG: check vases example from Per
   #calculate ss
   #ss = 1##getSS(Lc, fullCoefs, ginv(crossprod(X.design)))
  # if( type==3 )
   {
     #Lc <- makeContrastType3SAS(model, term, L)
-
+   
     # for running rune's vcov function
     if(is.vector(Lc))
     {
       #Lc<-Lc[which(rho$s.test!=0)]
       Lc <- Lc[rho$nums.Coefs]
-    }
+    }  
     else
     {
       #Lc<-Lc[,which(rho$s.test!=0)]
       Lc <- Lc[ , rho$nums.Coefs]
     }
-  }
-
-
+  }   
+  
+   
   if( ddf=="Kenward-Roger" )
   {
     if(is.vector(Lc))
       res.KR <- KRmodcomp( model, t(as.matrix(Lc)) )
     else
       res.KR <- KRmodcomp( model, Lc )
-
+    
     ## calculate ms and ss
    # ms <- res.KR$test[1,"stat"] * rho$sigma^2
     #ss <- ms * res.KR$test[1,"ndf"]
-    #ss <- getSS(Lc, rho$fixEffs ,ginv(rho$XtX))
+    #ss <- getSS(Lc, rho$fixEffs ,ginv(rho$XtX)) 
    # return(list(denom = res.KR$stats["df2"], Fstat = res.KR$stats["Fstat"], pvalue =  res.KR$stats["p.value"]))
-
+    
     return( list(denom = res.KR$test[1,"ddf"], Fstat = res.KR$test[1,"stat"], pvalue =  res.KR$test[1,"p.value"], ndf = res.KR$test[1,"ndf"]))#, ss = ss ))
   }
   else
@@ -336,32 +336,32 @@ calcFpvalueSS <- function(term, Lc, fullCoefs, X.design, model, rho, ddf, method
 ###########################################################################
 calcFpvalueMAIN <- function(term, L, X.design, fullCoefs, model, rho, ddf, method.grad="simple", type)
 {
-
+                         
     if( type == 3 )
     {
-
-      Lc <- makeContrastType3SAS(model, term, L)
+      
+      Lc <- makeContrastType3SAS(model, term, L)    
       #non identifiable because of rank deficiency
       if(!length(Lc))
         result.fstat <- list(denom=0, Fstat=NA, pvalue=NA, ndf=NA)
       else
-        result.fstat <- calcFpvalueSS(term, Lc, fullCoefs, X.design, model, rho, ddf, method.grad=method.grad, type)
+        result.fstat <- calcFpvalueSS(term, Lc, fullCoefs, X.design, model, rho, ddf, method.grad=method.grad, type)           
     }
-
+    
     if( type == 1 )
     {
-
+      
       find.term <- which(colnames(X.design) == term)
-      Lc <- L[find.term[which(find.term %in% rho$nums.Coefs)],]
-      result.fstat <- calcFpvalueSS(term, Lc, fullCoefs, X.design, model, rho, ddf, method.grad=method.grad, type)
-    }
+      Lc <- L[find.term[which(find.term %in% rho$nums.Coefs)],]            
+      result.fstat <- calcFpvalueSS(term, Lc, fullCoefs, X.design, model, rho, ddf, method.grad=method.grad, type)      
+    } 
+   
 
-
-   c(result.fstat,list(name=term))
+   c(result.fstat,list(name=term)) 
 }
 
 ###############################################################################
-# function to calculate T test
+# function to calculate T test 
 ###############################################################################
 calculateTtest <- function(rho, Lc, nrow.res, method.grad)
 {
@@ -376,7 +376,7 @@ calculateTtest <- function(rho, Lc, nrow.res, method.grad)
   #
   for(i in 1:nrow.res)
   {
-     g <- grad(function(x) Ct.rhbc (rho, x, t(Lc[,i])) , rho$param$vec.matr, method = method.grad)
+     g <- grad(function(x) Ct.rhbc (rho, x, t(Lc[,i])) , rho$param$vec.matr, method = method.grad)   
      #denominator df
      denom <- t(g) %*% rho$A %*% g
      varcor <- Ct.rhbc(rho, rho$param$vec.matr, t(Lc[,i]))
@@ -385,14 +385,14 @@ calculateTtest <- function(rho, Lc, nrow.res, method.grad)
      #statistics
      resultTtest[i,2] <- (Lc[,i] %*%rho$fixEffs)/sqrt(varcor) #(Lc[,i] %*%rho$s@coefs[,1])/sqrt(varcor)
      resultTtest[i,3] <- 2*(1 - pt(abs(resultTtest[i,2]), df = resultTtest[i,1]))
-     resultTtest[i,4] <- sqrt(varcor)
+     resultTtest[i,4] <- sqrt(varcor) 
   }
-
+  
   return(resultTtest)
 }
 
 ###############################################################################
-# construct design matrix for F test
+# construct design matrix for F test 
 ###############################################################################
 createDesignMat <- function(model, data)
 {
@@ -406,7 +406,7 @@ for(i in 1:length(fixed.term))
    formula.term <- as.formula(paste("~", fixed.term[i], "- 1"))
    X.design <- cbind(X.design, model.matrix(formula.term, data))
    names.design <- c(names.design, rep(fixed.term[i],ncol(model.matrix(formula.term, data))))
-
+     
 }
 
 names.design.withLevels <- c("(Intercept)", colnames(X.design))
@@ -418,61 +418,71 @@ return(list(X.design=X.design, names.design.withLevels=names.design.withLevels))
 
 
 ###############################################################################
-# initialize anova table for F test
+# initialize anova table for F test 
 ###############################################################################
-initAnovaTable <- function(model, isFixReduce)
+initAnovaTable <- function(model, test.terms, isFixReduce)
 {
+  anova.table <- matrix(NA, nrow=length(test.terms), ncol=6)
+  rownames(anova.table) <- test.terms
+  colnames(anova.table) <- c("Sum Sq", "Mean Sq", "NumDF", "DenDF","F.value", 
+                             "Pr(>F)")
   anm <- anova(model, ddf="lme4")
-  NumDF <- anm[,1]
-  ss <- anm$"Sum Sq"
-  ms <- anm$"Mean Sq"
-  p.value <- DenDF <- F.value <- as.numeric(rep("",length(NumDF)))
-  anova.table <- cbind(ss, ms, NumDF, DenDF, F.value, p.value)
-  colnames(anova.table) <- c("Sum Sq", "Mean Sq", "NumDF","DenDF","F.value","Pr(>F)")
-  rownames(anova.table) <- rownames(anm)
+  colnames(anm) <- c("NumDF", "Sum Sq", "Mean Sq", "F.value")
+  
+  ## NumDF <- anm[, "Df", drop=FALSE]
+  ## ss <- anm[, "Sum Sq", drop=FALSE]
+  ## ms <- anm[, "Mean Sq", drop=FALSE]
+  ## p.value <- DenDF <- F.value <- as.numeric(rep("",length(NumDF)))
+  
+  ## anova.table <- cbind(ss, ms, NumDF, DenDF, F.value, p.value)
+  ## colnames(anova.table) <- c("Sum Sq", "Mean Sq", "NumDF","DenDF","F.value","Pr(>F)")
+  ## rownames(anova.table) <- rownames(anm)
+  anova.table[rownames(anm), c("NumDF", "Sum Sq", "Mean Sq")] <- 
+    as.matrix(anm[, c("NumDF", "Sum Sq", "Mean Sq")])
+  
   if(isFixReduce)
   {
     if(nrow(anova.table)==1)
     {
-      anova.table <- c(anova.table[,1:5],0,anova.table[,6])
+      anova.table <- c(anova.table[,1:5], 0, anova.table[,6])
       anova.table <- matrix(anova.table, nrow=1, ncol=length(anova.table))
-      colnames(anova.table) <- c("Sum Sq", "Mean Sq","NumDF","DenDF","F.value","elim.num","Pr(>F)")
+      colnames(anova.table) <- c("Sum Sq", "Mean Sq", "NumDF", "DenDF", "F.value", "elim.num"," Pr(>F)")
       rownames(anova.table) <- rownames(anm)
       return(anova.table)
     }
-    elim.num <- rep(0,nrow(anova.table))
-    anova.table <- cbind(anova.table[,1:5],elim.num,anova.table[,6])
+    elim.num <- rep(0, nrow(anova.table))
+    anova.table <- cbind(anova.table[,1:5], elim.num, anova.table[,6])
     colnames(anova.table)[7] <- "Pr(>F)"
   }
-  return(anova.table)
+  return(anova.table)    
 }
 
 
 ###############################################################################
-# get terms contained
+# get terms contained 
 ###############################################################################
 getIndTermsContained <- function(allterms, ind.hoi)
 {
-
+  
   terms.hoi.split <- strsplit(allterms[ind.hoi],":")
   ind.terms.contain <- NULL
   #check which of the terms are contained in the highest order terms
-  for(i in (1:length(allterms))[-ind.hoi])
+  for(i in (1:length(allterms))[-ind.hoi]) 
   {
     isContained<-FALSE
     for(j in 1:length(terms.hoi.split))
     {
-      #if the term is contained in some of the highest order interactions then
+      #if the term is contained in some of the highest order interactions then 
       #we cannot test it for significance
       if(length(which(unlist(strsplit(allterms[i],":")) %in% terms.hoi.split[[j]] == FALSE))==0)
       {
         isContained <- TRUE
         break
-      }
+      }                
     }
     if(isContained)
       ind.terms.contain <- c(ind.terms.contain,i)
-
+    
   }
   # if there are no terms that are contained in the maximum order effects
   # then compare all the terms between each other for the maximum p value
@@ -491,13 +501,15 @@ orderterms <- function(anova.table)
 #getTermsToCompare <- function(model)
 getTermsToCompare <- function(anova.table)
 {
+  
   #order.terms <- attr(terms(model),"order")
   #allterms <- attr(terms(model),"term.labels")
-  order.terms <- orderterms(anova.table)
-  allterms <- rownames(anova.table)
+  anova.table.upd <- anova.table[complete.cases(anova.table), , drop=FALSE]
+  order.terms <- orderterms(anova.table.upd)
+  allterms <- rownames(anova.table.upd )
   ind.hoi <- which(order.terms == max(order.terms))
   ind.terms.contain <- getIndTermsContained(allterms, ind.hoi)
-
+  
   #get the rest of the terms to compare
   allterms.rest <- allterms[-c(ind.terms.contain, ind.hoi)]
   if( length(allterms.rest)==0 )
@@ -509,9 +521,9 @@ getTermsToCompare <- function(anova.table)
     ind.hoi.rest <- which(order.rest == max(order.rest))
     gtc <- getIndTermsContained(allterms.rest, ind.hoi.rest)
     if( !is.null(gtc) )
-      terms.compare <- c(allterms[ind.hoi],allterms.rest[-getIndTermsContained(allterms.rest, ind.hoi.rest)])
+      terms.compare <- c(allterms[ind.hoi], allterms.rest[-getIndTermsContained(allterms.rest, ind.hoi.rest)])
     else
-      terms.compare <- c(allterms[ind.hoi],allterms.rest)
+      terms.compare <- c(allterms[ind.hoi], allterms.rest)
   }
   return( terms.compare )
 }
@@ -521,31 +533,35 @@ getTermsToCompare <- function(anova.table)
 ###############################################################################
 getNSFixedTerm <- function(model, anova.table, data, alpha)
 {
-
+  
   pv.max <- 0
-
+  
   #terms.compare <- getTermsToCompare(model)
   if(length(which(anova.table[,"elim.num"]==0))==1)
     terms.compare <- rownames(anova.table)[anova.table[,"elim.num"]==0]
   else
     terms.compare <- getTermsToCompare(anova.table[anova.table[,"elim.num"]==0,])
-
+  
   for(tcmp in terms.compare)
   {
-    if(!tcmp %in% rownames(anova.table))
+    if((!tcmp %in% rownames(anova.table)) || is.na(anova.table[tcmp,"Pr(>F)"]))
       next
     ind <- which(rownames(anova.table)==tcmp)
-    if(anova.table[ind,which(colnames(anova.table)=="Pr(>F)")]>=pv.max)
+    if(anova.table[ind, which(colnames(anova.table)=="Pr(>F)")]>=pv.max)
     {
       ns.term <- tcmp
       pv.max <- anova.table[ind,which(colnames(anova.table)=="Pr(>F)")]
     }
-  }
+  }  
   if(pv.max >= alpha)
-    return(ns.term)
+    return(ns.term)  
   else
-    return(NULL)
+    return(NULL)  
 }
+  
+getNAterm <- function(anova.table, terms){
+  return(terms[!terms %in% rownames(anova.table)])
+} 
 
 
 ###############################################################################
@@ -556,10 +572,15 @@ elimNSFixedTerm <- function(model, anova.table, data, alpha, elim.num, l)
   ns.term <- getNSFixedTerm(model, anova.table, data, alpha)
   if( is.null(ns.term) )
     return(NULL)
-  anova.table[ns.term,"elim.num"] <- elim.num
+  anova.table[ns.term, "elim.num"] <- elim.num
   fm <- formula(model)
-  fm[3] <- paste(fm[3], "-", ns.term)
-  mf.final<- as.formula(paste(fm[2],fm[1],fm[3], sep=""))
+  #na.terms <- getNAterm(anova.table,  attr(terms(model),"term.labels"))
+  #if(length(na.terms)==0)
+    fm[3] <- paste(fm[3], "-", ns.term)
+  #else 
+  #  fm[3] <- paste(fm[3], "-", paste(ns.term, paste(na.terms, collapse="-"), sep="-"))
+  mf.final <- as.formula(paste(fm[2], fm[1], fm[3], sep=""))
+  #mf.final<- as.formula(paste(fm[1],fm[3], sep=""))
   #if(!is.null(l))
   #  model<-eval(substitute(lmer(mf.final, data=data, contrasts=l),list(mf.final=mf.final)))
   #else
@@ -568,9 +589,9 @@ elimNSFixedTerm <- function(model, anova.table, data, alpha, elim.num, l)
   #model<-update(model,formula. = mf.final)
   return( list(model=model, anova.table=anova.table) )
 }
-
-
-
+  
+ 
+  
 #################################################################
 # find which effect contains effect term
 #################################################################
@@ -578,7 +599,7 @@ relatives <- function(classes.term, term, names, factors)
 {
   # checks if the terms have the same number of covariates (if any)
   checkCovContain <- function(term1, term2)
-  {
+  {        
     num.numeric <- which(classes.term=="numeric")
     num.numeric.term1 <- which((num.numeric %in% which(factors[,term1]!=0))==TRUE)
     num.numeric.term2 <- which((num.numeric %in% which(factors[,term2]!=0))==TRUE)
@@ -587,17 +608,17 @@ relatives <- function(classes.term, term, names, factors)
     else
        return(FALSE)
   }
-  is.relative <- function(term1, term2)
+  is.relative <- function(term1, term2) 
   {
     return(all(!(factors[,term1]&(!factors[,term2]))) && checkCovContain(term1,term2))
   }
   if(length(names) == 1) return(NULL)
   	 which.term <- which(term==names)
-	  (1:length(names))[-which.term][sapply(names[-which.term],
+	  (1:length(names))[-which.term][sapply(names[-which.term], 
 		  			function(term2) is.relative(term, term2))]
 }
 
-############################################################################
+############################################################################       
 # caclulate the General contrast matrix for the hypothesis (as in SAS)
 ############################################################################
 calcGeneralSetForHypothesis <- function(X.design, rho)
@@ -606,12 +627,12 @@ calcGeneralSetForHypothesis <- function(X.design, rho)
   #X.design2<-X.design
   #X.design2[,which(rho$s.test==0)]<-rep(0,nrow(X.design2))
   #X.design2[,rho$nums.zeroCoefs]<-rep(0,nrow(X.design2))
-
+  
   xtx <- t(X.design) %*% X.design
   #xtx2<-t(X.design2) %*% X.design2
-
+  
   g2 <- matrix(0,ncol=ncol(xtx), nrow=nrow(xtx))
-
+  
   #if(!"(Intercept)" %in% names(rho$nums.Coefs))
   #  inds <- c(which(colnames(X.design)=="(Intercept)"), rho$nums.Coefs)
  # else
@@ -619,7 +640,7 @@ calcGeneralSetForHypothesis <- function(X.design, rho)
   g2[inds,inds] <- solve(xtx[inds,inds])
   #g2<-ginv(xtx2)
   g2[abs(g2)<1e-10] <- 0
-
+  
   #check g2:
   #all.equal(xtx %*% g2 %*% xtx, xtx)
   ######all.equal(g2 %*% xtx %*% xtx, xtx)
@@ -630,23 +651,23 @@ calcGeneralSetForHypothesis <- function(X.design, rho)
   L[abs(L)<1e-6] <- 0
   return(L)
 }
-
-
-############################################################################
+     
+       
+############################################################################       
 # type 3 hypothesis SAS
 ############################################################################
 makeContrastType3SAS <- function(model, term, L)
 {
-
+  
   eps <- 1e-8
   #apply rule 1 (Goodnight 1976)
-
+  
   #find all effects that contain term effect
   model.term <- terms(model)
   fac <- attr(model.term,"factors")
   names <- attr(model.term,"term.labels")
   classes.term <- attr(model.term,"dataClasses")
-
+  
   cols.eff <- which(colnames(L)==term)
   num.relate <- relatives(classes.term,term,names,fac)
   if( length(num.relate)==0 )
@@ -656,12 +677,12 @@ makeContrastType3SAS <- function(model, term, L)
     cols.contain <- NULL
     for( i in 1:length(num.relate) )
       cols.contain <- c(cols.contain,which(colnames(L)==names[num.relate[i]]))
-    colnums <- setdiff(1:ncol(L),c(cols.eff,cols.contain))
+    colnums <- setdiff(1:ncol(L),c(cols.eff,cols.contain))   
   }
-
+    
   for(colnum in colnums)
   {
-
+    
     pivots <- which(abs(L[,colnum]) > eps)
     #pivots<-which(L[,colnum]!=0)
     if( length(pivots)>0 )
@@ -675,24 +696,24 @@ makeContrastType3SAS <- function(model, term, L)
            L[nonzero,] <- L[nonzero,]-L[nonzero,colnum]*L[pivots[1],]
          }
       }
-
+     
       L[pivots[1],] <- rep(0,ncol(L))
     }
   }
-
-  nums <- which(apply(L,1,function(y) sum(abs(y)))!=0)
+    
+  nums <- which(apply(L,1,function(y) sum(abs(y)))!=0) 
   L <- L[nums,]
-
+  
   if(is.vector(L))
     return(L)
-
+  
   #orthogonalization
   if( length(cols.eff)>1 )
       zero.rows <- which(apply(L[,cols.eff],1,function(y) sum(abs(y)))==0)
   else
       zero.rows <- which(L[,cols.eff]==0)
-
-  for(zero.row in zero.rows)
+      
+  for(zero.row in zero.rows) 
   {
     w <- L[zero.row,]
     for(i in setdiff(1:nrow(L),zero.row))
@@ -704,14 +725,14 @@ makeContrastType3SAS <- function(model, term, L)
   }
 
   L[abs(L)<1e-6] <- 0
-
-  nums <- which(apply(L,1,function(y) sum(abs(y)))!=0)
+  
+  nums <- which(apply(L,1,function(y) sum(abs(y)))!=0) 
   L <- L[nums,]
   return(L)
 }
 
 ############################################################################
-#get formula for model
+#get formula for model 
 ############################################################################
 getFormula <- function(model, withRand=TRUE)
 {
@@ -724,7 +745,7 @@ getFormula <- function(model, withRand=TRUE)
     fm[3] <- paste(terms.fm,collapse=" + ")
   else
     fm[3] <- paste(terms.fm[-ind.rand.terms],collapse=" + ")
-
+  
   if(fm[3]=="")
     fo <- as.formula(paste(fm[2],fm[1],1, sep=""))
   else
@@ -750,7 +771,7 @@ getFacCombForLSMEANS <- function(split.eff, data)
       names(d.split.eff_i) <- paste("l",i)
       data.merge <- merge(data.merge,d.split.eff_i)
     }
-
+              
   }
   names(data.merge) <- split.eff
   return(as.matrix(data.merge))
@@ -766,7 +787,7 @@ checkAllCov <- function(split.eff, data)
   {
     if(!is.factor(data[,spleff]))
     {
-      return(TRUE)
+      return(TRUE)  
     }
   }
   return(FALSE)
@@ -777,7 +798,7 @@ checkAllCov <- function(split.eff, data)
 ###################################################################
 concatLevs <- function(matr, row.names)
 {
-
+  
   if(is.vector(matr))
     levs <- paste(names(matr),matr)
   else
@@ -786,21 +807,21 @@ concatLevs <- function(matr, row.names)
     for(i in 2:ncol(matr))
     {
       levs <- paste(levs,matr[,i])
-    }
+    }    
   }
-
-
+  
+    
   return(levs)
 }
-
+    
 
 #convert facs into numeric
 convertFacsToNum <- function(data, begin, end)
 {
-
+  
  #convert vars to numeric
  for(i in begin:end)
-  data[,i] <- as.numeric(levels(data[,i])[as.integer(data[,i])])
+  data[,i] <- as.numeric(levels(data[,i])[as.integer(data[,i])]) 
 
   return(data)
 }
@@ -808,10 +829,10 @@ convertFacsToNum <- function(data, begin, end)
 #convert numeric to facs
 convertNumsToFac <- function(data, begin, end)
 {
-
+  
  #convert vars to numeric
  for(i in begin:end)
-  data[,i] <- as.factor(data[,i])
+  data[,i] <- as.factor(data[,i]) 
 
   return(data)
 }
@@ -846,7 +867,7 @@ fillLSMEANStab <- function(mat, rho, summ.eff, nfacs, alpha, method.grad)
 ###################################################################
 roundLSMEANStab <- function(summ.eff, nfacs)
 {
-   summ.eff[,nfacs+1] <- round(summ.eff[,nfacs+1],4)
+   summ.eff[,nfacs+1] <- round(summ.eff[,nfacs+1],4)  
    summ.eff[,nfacs+2] <- round(summ.eff[,nfacs+2],4)#stdErrLSMEANS(rho, std.rand, mat)
    #df
    summ.eff[,(nfacs+3)] <- round(summ.eff[,(nfacs+3)],1)
@@ -865,12 +886,12 @@ roundLSMEANStab <- function(summ.eff, nfacs)
 ############################################################################
 calc.cols <- function(x)
 {
-  if(x<0.001)
-    return("red")
-  if(x<0.01)
-    return("orange")
-  if(x<0.05)
-    return("yellow")
+  if(x<0.001) 
+    return("red") 
+  if(x<0.01) 
+    return("orange") 
+  if(x<0.05) 
+    return("yellow") 
   return("grey")
 }
 
@@ -892,8 +913,8 @@ plotLSMEANS <- function(table, response, which.plot=c("LSMEANS", "DIFF of LSMEAN
     namesForPlot <- names$namesForPlot
     namesForLevels <- names$namesForLevels
     un.names <- unique(namesForPlot)
-
-
+    
+    
     for(i in 1:length(un.names))
     {
       inds.eff <- namesForPlot %in% un.names[i]
@@ -914,7 +935,7 @@ plotLSMEANS <- function(table, response, which.plot=c("LSMEANS", "DIFF of LSMEAN
           #windows()
           interaction.plot(table[inds.eff,split.eff[1]], table[inds.eff,split.eff[2]], table[inds.eff,"Estimate"], xlab=split.eff[1], ylab=response, trace.label=paste(split.eff[2]), main="2-way Interaction plot", col=1:nlevels(table[inds.eff,split.eff[2]]))
         }
-      }
+      }             
     }
 }
 
@@ -924,9 +945,9 @@ calcDiffsForEff <- function(facs, fac.comb, split.eff, eff, effs, data, rho, alp
 {
    ###calculating diffs for 2 way interaction
    if(length(split.eff)>=1 && length(split.eff)<=2)
-   {
+   {   
      if(length(split.eff)==2)
-     {
+     {            
        fac.comb.names <- concatLevs(fac.comb)
        main.eff <- effs[effs %in% split.eff]
        ### check if the difference between one factor within another is required
@@ -935,7 +956,7 @@ calcDiffsForEff <- function(facs, fac.comb, split.eff, eff, effs, data, rho, alp
        #  levs.main.eff <- levels(data[,main.eff])
          #fac.comb[,main.eff]
          #ttt <- unlist(lapply(fac.comb[,effs[effs %in% split.eff]], function(x) which(levels(data[,effs[effs %in% split.eff]])==x)))
-       #  mat.names.diffs <- NULL
+       #  mat.names.diffs <- NULL        
        #  for(dupls in levs.main.eff)
        #  {
        #    ind.dupls <- which(fac.comb[,main.eff]==dupls)
@@ -947,14 +968,14 @@ calcDiffsForEff <- function(facs, fac.comb, split.eff, eff, effs, data, rho, alp
       # {
           mat.names.diffs <- combn(fac.comb.names,2)
           mat.nums.diffs <- apply(mat.names.diffs, c(1,2), function(x) which(fac.comb.names==x))
-      # }
+      # }     
      }
      else
      {
        mat.names.diffs <- combn(fac.comb,2)
        mat.nums.diffs <- apply(mat.names.diffs, c(1,2), function(x) which(fac.comb==x))
      }
-
+    
      mat.diffs <- matrix(0, nrow=ncol(mat.nums.diffs), ncol=ncol(mat))
      colnames(mat.diffs) <- colnames(mat)
      for(ind.diffs in 1:ncol(mat.nums.diffs))
@@ -963,21 +984,21 @@ calcDiffsForEff <- function(facs, fac.comb, split.eff, eff, effs, data, rho, alp
      }
      names.combn <- apply(mat.names.diffs, 2, function(x) paste(x[1],x[2],sep="-"))
      rownames(mat.diffs) <- paste(eff, names.combn)
-
+     
      diffs.summ <-  matrix(NA, ncol=7, nrow=nrow(mat.diffs))
      colnames(diffs.summ) <- c("Estimate","Standard Error", "DF", "t-value", "Lower CI", "Upper CI", "p-value")
      rownames(diffs.summ) <- rownames(mat.diffs)
-
+          
      diffs.summ <- as.data.frame(fillLSMEANStab(mat.diffs, rho, diffs.summ, 0, alpha, method.grad))
      return(roundLSMEANStab(diffs.summ, 0))
     }
-
+   
 }
 
 #calculate LSMEANS and STDERR for effect
 calcLsmeansForEff <- function(lsmeans.summ, fac.comb, eff, split.eff, alpha, mat, rho, facs, method.grad)
 {
-
+   
    summ.eff <- matrix(NA, ncol=ncol(lsmeans.summ), nrow=nrow(fac.comb))
    colnames(summ.eff) <- colnames(lsmeans.summ)
    #rownames(summ.eff) <- rep(eff, nrow(fac.comb))
@@ -998,13 +1019,13 @@ calcLsmeansForEff <- function(lsmeans.summ, fac.comb, eff, split.eff, alpha, mat
    # CIs
    #summ.eff[,length(facs)+5] <- round(estim.lsmeans-abs(qt(alpha/2,ttest.res[,1]))*ttest.res[,4],4)
    #summ.eff[,length(facs)+6] <- round(estim.lsmeans+abs(qt(alpha/2,ttest.res[,1]))*ttest.res[,4],4)
-
+   
    summ.eff <- roundLSMEANStab(summ.eff, length(facs))
-
+   
    #summ.eff.data <- as.data.frame(summ.eff, row.names="")
-   #summ.eff.data <- convertFacsToNum(summ.eff.data, length(facs)+1)
+   #summ.eff.data <- convertFacsToNum(summ.eff.data, length(facs)+1)   
    rownames(summ.eff) <- paste(rep(eff, nrow(fac.comb)), names.arg)
-   return(summ.eff)
+   return(summ.eff) 
 }
 
 
@@ -1012,8 +1033,8 @@ calcLsmeansForEff <- function(lsmeans.summ, fac.comb, eff, split.eff, alpha, mat
 #calculate LSMEANS DIFFS and CI for all effects
 ###################################################################
 calcLSMEANS <- function(model, data, rho, alpha, test.effs = NULL, method.grad="Richardson", lsmeansORdiff=TRUE, l)
-{
-
+{  
+ 
  #library(gplots)
  ####old code#########################
  #fm <- getFormula(model, withRand=FALSE)
@@ -1025,7 +1046,7 @@ calcLSMEANS <- function(model, data, rho, alpha, test.effs = NULL, method.grad="
  m <- refitLM(model, l)
  #m <- lm(formula(model,fixed.only=TRUE), data=model.frame.fixed(model), contrasts=l)
  #lm(model, data=model.frame.fixed(model), contrasts=l)
- #m <- lm(model, data=summary(model, ddf="lme4")@frame, contrasts=l)
+ #m <- lm(model, data=summary(model,"lme4")@frame, contrasts=l)
  #m <- lm(model, data=model$data)
  effs <- attr(terms(m),"term.labels")
  if(!is.null(test.effs))
@@ -1034,8 +1055,8 @@ calcLSMEANS <- function(model, data, rho, alpha, test.effs = NULL, method.grad="
  facs <- names(dclass[which(dclass=="factor")])
  #Get standard deviation of random parameters from model
  std.rand <- c(unlist(lapply(VarCorr(model), function(x) attr(x,"stddev"))), attr(VarCorr(model), "sc"))^2 #as.numeric(rho$s@REmat[,3])
-
-
+  
+ 
  #init lsmeans summary
  if(lsmeansORdiff)
  {
@@ -1050,16 +1071,16 @@ calcLSMEANS <- function(model, data, rho, alpha, test.effs = NULL, method.grad="
    colnames(diff.summ) <- c("Estimate","Standard Error", "DF", "t-value", "Lower CI", "Upper CI", "p-value")
    summ.data <- as.data.frame(diff.summ)
  }
-
-
+ 
+  
  for(eff in effs)
  {
-
+   
    split.eff  <-  unlist(strsplit(eff,":"))
    if(checkAllCov(split.eff, data))
      next
    mat  <-  popMatrix(m, split.eff)
-   fac.comb <- getFacCombForLSMEANS(split.eff, data)
+   fac.comb <- getFacCombForLSMEANS(split.eff, data)  
    #if(length(split.eff)>=2)
    #  par(mfrow=c(1,1))
    #fill
@@ -1078,11 +1099,11 @@ checkCorr <- function(model)
    modelST <- getST(model)
    lnST <- length(modelST)
    for(i in 1:lnST)
-   {
+   {    
       if(nrow(modelST[[i]])>1)
          corr.intsl <- TRUE
-   }
-   return(corr.intsl)
+   } 
+   return(corr.intsl) 
 }
 
 # get dummy coefficients of the fixed part of the model
@@ -1093,9 +1114,9 @@ getNumsDummyCoefs2 <- function(model, data)
   #if(fm[3]=="")
   #   m <- lm(as.formula(paste(fm[2],fm[1],1, sep="")), data=data)
   #else
-  #   m <- lm(as.formula(paste(fm[2],fm[1],fm[3], sep="")), data=data)
-  m <- lm(model, data=summary(model, ddf="lme4")@frame)
-
+  #   m <- lm(as.formula(paste(fm[2],fm[1],fm[3], sep="")), data=data) 
+  m <- lm(model, data=summary(model,ddf="lme4")@frame)
+  
   #get full coefficients
   dc <- dummy.coef.modif(m)
   names.dc <- names(dc)[1]
@@ -1114,17 +1135,17 @@ getNumsDummyCoefs2 <- function(model, data)
       is.interact <- substring.location(names(dc)[i],":")$last!=0
       if((ln.names.dc.i!=ln.names.dc.i.1) && is.interact)
       {
-        covs <- paste(effsTerm[1:(ln.names.dc.i-ln.names.dc.i.1)], collapse=":")
+        covs <- paste(effsTerm[1:(ln.names.dc.i-ln.names.dc.i.1)], collapse=":")      
         facsTerm <- unlist(lapply(strsplit(names(dc[[i]]), ":"), function(x) paste(paste(effsTerm[(ln.names.dc.i-ln.names.dc.i.1+1):ln.names.dc.i],x, sep=""),collapse=":")))
-        names.dc <- c(names.dc, unlist(lapply(facsTerm, function(x) paste(c(covs, x), collapse=":"))))
+        names.dc <- c(names.dc, unlist(lapply(facsTerm, function(x) paste(c(covs, x), collapse=":"))))    
       }
       else
       {
-        names.dc <- c(names.dc,unlist(lapply(strsplit(names(dc[[i]]), ":"), function(x) paste(paste(unlist(strsplit(names(dc)[i],":")),x, sep=""),collapse=":"))))
-      }
+        names.dc <- c(names.dc,unlist(lapply(strsplit(names(dc[[i]]), ":"), function(x) paste(paste(unlist(strsplit(names(dc)[i],":")),x, sep=""),collapse=":"))))  
+      }    
     }
   }
-
+  
   fullCoefs <- unlist(dc)
   names(fullCoefs) <- names.dc
   is.zeroCoef <- names(fullCoefs) %in% names(coef(m))
@@ -1140,15 +1161,13 @@ getNumsDummyCoefs <- function(model, data, l)
   #if(fm[3]=="")
   #   m <- lm(as.formula(paste(fm[2],fm[1],1, sep="")), data=data)
   #else
-  #   m <- lm(as.formula(paste(fm[2],fm[1],fm[3], sep="")), data=data)
+  #   m <- lm(as.formula(paste(fm[2],fm[1],fm[3], sep="")), data=data) 
   ####################################
-
+  
   m <- refitLM(model, l)
-  #m <- lm(formula(model,fixed.only=TRUE),
-  #data=model.frame.fixed(model), contrasts=l) #lm(model,
-  #data=summary(model, ddf="lme4")@frame, contrasts=l)
-  #m <- lm(model, data=model$data)
-
+  #m <- lm(formula(model,fixed.only=TRUE), data=model.frame.fixed(model), contrasts=l) #lm(model, data=summary(model,"lme4")@frame, contrasts=l)  
+  #m <- lm(model, data=model$data)  
+  
   #get full coefficients
   dc <- dummy.coef.modif(m)
   zeroCoefs <- which(unlist(dc)==0)
@@ -1177,8 +1196,8 @@ getNumsDummyCoefs <- function(model, data, l)
   rhs.class <- att$dataClass[match(rhs.terms, names(att$dataClass))]
   nums      <- rhs.terms[rhs.class=="numeric"]
 
-  ans  <- lapply(model.frame(object)[,nums, drop=FALSE], mean)
-
+  ans  <- lapply(model.frame(object)[,nums, drop=FALSE], mean) 
+  
   nn <- match(names(ans), names(at))
   nn <- nn[!is.na(nn)]
   at.num <- at[nn]
@@ -1258,13 +1277,13 @@ popMatrix <- function(object, effect=NULL, at=NULL, only.at=TRUE){
 
 #  print(ccc)
 #  print(xxx)
-
+  
 
   #print(xxx)
   if (is.null(xxx)){
     ## No 'effect' and no 'at'; just to a global average.
     newdata <- expand.grid(xlev)
-    newdata[,names(ccc)] <- ccc
+    newdata[,names(ccc)] <- ccc   
     mf  <- model.frame(Terms, newdata, xlev = .get_xlevels(object))
     X   <- model.matrix(Terms, mf, contrasts.arg = .get_contrasts(object))
     res <- apply(X,2,mean)
@@ -1280,7 +1299,7 @@ popMatrix <- function(object, effect=NULL, at=NULL, only.at=TRUE){
       xlev2 <- .set_xlevels(xlev,  at=conf)
       #cat("xlev2 (which defines the grid):\n"); str(xlev2)
       newdata <- expand.grid(xlev2)
-      newdata[,names(ccc)] <- ccc
+      newdata[,names(ccc)] <- ccc   
 
       #print(newdata)
       mm   <- .getX(object, newdata)
@@ -1301,7 +1320,7 @@ popMatrix <- function(object, effect=NULL, at=NULL, only.at=TRUE){
     attr(res,"at") <- at
   }
   class(res) <- c("popMatrix", "conMatrix", "matrix")
-  res
+  res 
 }
 
 #isWellSpecifiedModel<-function(model)
@@ -1333,11 +1352,11 @@ emptyAnovaLsmeansTAB <- function()
 #  effs <- attr(tt,"term.labels")
 #  for(nums in num.ord)
 #  {
-#    covs <- unlist(lapply(unlist(strsplit(effs[nums],":")), function(x) names(which(attr(tt,"dataClasses")[x]=="numeric"))))
+#    covs <- unlist(lapply(unlist(strsplit(effs[nums],":")), function(x) names(which(attr(tt,"dataClasses")[x]=="numeric"))))    
 #    if(length(covs)!=0)
 #    {
 #      combs.lo <- unlist(lapply(combn(unlist(strsplit(effs[nums],":")),2, simplify=FALSE), function(x) paste(x,collapse=":")))
-#      if(combs.lo %in% effs)
+#      if(combs.lo %in% effs)    
 #    }
 #  }
 #}
@@ -1373,14 +1392,14 @@ getTermsRandtable <- function(names.rand.table)
 # fillRowRandTable <- function(term, rand.table, rand.terms.upd=NULL, elim.num, reduce.random)
 # {
 #   nrow.term <- which(getTermsRandtable(rownames(rand.table))==term$term)
-#
+#   
 #   rand.table[nrow.term, "Chi.sq"] <- term$chisq
 #   rand.table[nrow.term, "Chi.DF"] <- term$chisq.df
 #   rand.table[nrow.term, "p.value"] <- term$pv
 #   if(reduce.random)
-#     rand.table[nrow.term, "elim.num"] <- elim.num
+#     rand.table[nrow.term, "elim.num"] <- elim.num 
 #   if(!is.null(rand.terms.upd) && length(rand.terms.upd)!=0)
-#   {
+#   {     
 #     rand.table.upd <- matrix(0,ncol=4, nrow=length(rand.terms.upd))
 #     colnames(rand.table.upd) <- c("Chi.sq", "Chi.DF", "elim.num", "p.value")
 #     #rownames(rand.table.upd) <- paste(paste(rep(" ",max(nchar(rownames(rand.table)))), collapse=""), rand.terms.upd, sep="")
@@ -1395,9 +1414,9 @@ getTermsRandtable <- function(names.rand.table)
 #     else
 #     {
 #       rnames <- c(rownames(rand.table)[1:nrow.term], rownames(rand.table.upd),rownames(rand.table)[(nrow.term+1):nrow(rand.table)])
-#       rand.table <- rbind(rand.table[1:nrow.term,], rand.table.upd, rand.table[(nrow.term+1):nrow(rand.table),])
-#       rownames(rand.table) <- rnames
-#     }
+#       rand.table <- rbind(rand.table[1:nrow.term,], rand.table.upd, rand.table[(nrow.term+1):nrow(rand.table),])  
+#       rownames(rand.table) <- rnames 
+#     } 
 #   }
 #   return(rand.table)
 # }
@@ -1405,27 +1424,27 @@ getTermsRandtable <- function(names.rand.table)
 ### update table for random terms
 # updateRandTable <- function(infoForTerm, rand.table, rand.terms.upd=NULL, elim.num=0, reduce.random)
 # {
-#
+#   
 #   if(!is.null(infoForTerm$term))
-#   {
-#     rand.table <- fillRowRandTable(infoForTerm, rand.table, rand.terms.upd, elim.num, reduce.random)
+#   {   
+#     rand.table <- fillRowRandTable(infoForTerm, rand.table, rand.terms.upd, elim.num, reduce.random)    
 #     return(rand.table)
-#   }
+#   }    
 #   else
 #   {
 #     for(iterm in infoForTerm)
-#       rand.table <- fillRowRandTable(iterm, rand.table, rand.terms.upd, elim.num, reduce.random)
-#   }
+#       rand.table <- fillRowRandTable(iterm, rand.table, rand.terms.upd, elim.num, reduce.random)  
+#   }    
 #   return(rand.table)
 # }
 
 
-############################################################################
+############################################################################    
 #save info (pvalues, chisq val, std, var...) for term
-############################################################################
+############################################################################    
 # saveInfoForTerm <- function(term, chisq, chisq.df, pv)
 # {
-#   term.info <- NULL
+#   term.info <- NULL 
 #   term.info$pv <- pv
 #   term.info$chisq <- chisq
 #   term.info$chisq.df <- chisq.df
@@ -1454,38 +1473,39 @@ compareMixVSFix <- function(model, mf.final, data, name.term, rand.table, alpha,
   #   fm <- paste(mf.final)
   #   fm[2] <- "response"
   #   mf.final <-  as.formula(paste(fm[2],fm[1],fm[3], sep=""))
-  #   mf.final <- update.formula(mf.final,mf.final)
+  #   mf.final <- update.formula(mf.final,mf.final)       
   # }
-
+  
   #model.red <- gls(model = mf.final, data=data, method = "REML", na.action=na.omit)
-  #model.red  <-  lm(formula(model,fixed.only=TRUE),
-  #data=model.frame.fixed(model))#lm(model, data=summary(model, ddf="lme4")@frame)
+  #model.red  <-  lm(formula(model,fixed.only=TRUE), data=model.frame.fixed(model))#lm(model, data=summary(model,"lme4")@frame)
   model.red <- refitLM(model)
-
-  l.fix <- -2*logLik(model)[1]
-  l.red <- -2*logLik(model.red, REML=TRUE)[1]
-
+  
+  l.fix <- -2*logLik(model, REML=FALSE)[1]
+  #l.red <- -2*logLik(model.red, REML=TRUE)[1]
+  l.red <- -2*logLik(model.red, REML=FALSE)[1]
+  
   p.chisq <- 1 - pchisq (l.red -l.fix ,1)
   infoForTerm <- saveInfoForTerm(name.term, l.red -l.fix, 1, p.chisq)
   #detach(package:nlme)
-
+  
   if(infoForTerm$pv > alpha)
-  {
+  {    
     rand.table <- updateRandTable(infoForTerm, rand.table, elim.num=elim.num, reduce.random=reduce.random)
-    model.last <- model.red
+    model.last <- if(reduce.random) model.red else model
+    
   }
   else
   {
     rand.table <- updateRandTable(infoForTerm, rand.table, reduce.random=reduce.random)
-    model.last <- model
+    model.last <- model    
   }
-  return(list(model=model.last, TAB.rand=rand.table))
+  return(list(model=model.last, TAB.rand=rand.table))   
 }
 
 
 ### check if the correlation between intercept and slopes is present
 isCorrInt <- function(term)
-{
+{  
   if(substring.location(term,"+ 1 +")$last !=0)
     return(TRUE)
   if(substring.location(term,"(1 +")$last !=0)
@@ -1495,19 +1515,19 @@ isCorrInt <- function(term)
   sbstr <- substr(term,substring.location(term,"(")$first + 1,substring.location(term,"|")$last - 1)
   if(length(grep("1", sbstr))==0 && length(grep("0", sbstr))==0)
     return(TRUE)
-  return(FALSE)
+  return(FALSE)  
 }
 
 ### check if the correlation between slopes is present
 isCorrSlope <- function(term)
-{
+{  
   if(substring.location(term,"+ 0 +")$last !=0)
     return(TRUE)
   if(substring.location(term,"(0 +")$last !=0)
     return(TRUE)
   if(substring.location(term,"+ 0 |")$last !=0)
     return(TRUE)
-  return(FALSE)
+  return(FALSE)  
 }
 
 #create reduce slopes model
@@ -1525,7 +1545,7 @@ createModelRedSlopes <- function(x, term, fm, model, l)
 findNSslopesTerm <- function(term, isCorr, fm, model, l)
 {
   redModels <- sapply(getRedSlopeTerms(term, isCorr), function(x) createModelRedSlopes(x, term, fm, model, l))
-
+  
 }
 
 getRedSlopeTerms <- function(term, isCorr)
@@ -1536,7 +1556,7 @@ getRedSlopeTerms <- function(term, isCorr)
   parts <- unlist(strsplit(slopepart, "\\+"))
   if(isCorr)
   {
-    ind.int <- if(length(which(parts==" 1 "))!=0) which(parts==" 1 ") else which(parts=="1 ")
+    ind.int <- if(length(which(parts==" 1 "))!=0) which(parts==" 1 ") else which(parts=="1 ") 
     if(length(ind.int) == 0)
       new.terms <- c(paste("(",paste(c(slopepart, " 0 "), collapse="+"),grouppart, sep=""),paste("(1 ",grouppart,sep=""))
     else
@@ -1550,20 +1570,20 @@ getRedSlopeTerms <- function(term, isCorr)
       new.terms <- c(new.terms,paste("(",paste(c(part, " 0 "), collapse="+"),grouppart, sep=""))
     new.terms <- c(new.terms,paste("(1 ",grouppart,sep=""))
   }
-  return(new.terms)
+  return(new.terms) 
 }
 
-# modify (reduce) the random part when there are slopes
+# modify (reduce) the random part when there are slopes 
 changeSlopePart <- function(term, isCorr)
 {
   sub.loc.div <- substring.location(term," |")
   slopepart <- substring2(term,2,sub.loc.div$first)
   grouppart <- substring2(term,sub.loc.div$last, nchar(term))
   parts <- unlist(strsplit(slopepart, "\\+"))
-
+  
   if(isCorr)
   {
-    ind.int <- if(length(which(parts==" 1 "))!=0) which(parts==" 1 ") else which(parts=="1 ")
+    ind.int <- if(length(which(parts==" 1 "))!=0) which(parts==" 1 ") else which(parts=="1 ") 
     if(length(ind.int) == 0)
       new.terms <- c(paste("(",paste(c(slopepart, " 0 "), collapse="+"),grouppart, sep=""),paste("(1 ",grouppart,sep=""))
     else
@@ -1577,7 +1597,7 @@ changeSlopePart <- function(term, isCorr)
       new.terms <- c(new.terms,paste("(",paste(c(part, " 0 "), collapse="+"),grouppart, sep=""))
     new.terms <- c(new.terms,paste("(1 ",grouppart,sep=""))
   }
-  return(new.terms)
+  return(new.terms)      
 }
 
 # ### get the random terms
@@ -1637,14 +1657,14 @@ findIndTerm <- function(vcr, GrSl)
 #### check if the term has zero variance or correlation equal to +-1
 checkIsZeroVarOrCorr <- function(model, rand.term, isCorr)
 {
-
+ 
   vcr <- VarCorr(model)
   ind.term <- findIndTerm(vcr, getGrSlrand(rand.term))
   if(isCorr)
   {
     matcorr <- attr(vcr[[ind.term]],"correlation")
     if(length(which(abs(abs(matcorr[lower.tri(matcorr)])-1)<1e-07 || matcorr[lower.tri(matcorr)]=="NaN"))!=0)
-      return(TRUE)
+      return(TRUE)      
   }
   else
   {
@@ -1661,18 +1681,18 @@ elimZeroVarOrCorr <- function(model, data, l)
   stop=FALSE
   while(!stop)
   {
-    fmodel <- formula(model)
+    fmodel <- formula(model)    
     rand.terms <- getRandTerms(fmodel)
     for(rand.term in rand.terms)
     {
-
+      
       isCorr.int <- isCorrInt(rand.term)
       isCorr.slope <- isCorrSlope(rand.term)
       if(checkIsZeroVarOrCorr(model, rand.term, isCorr.int || (isCorr.slope && length(substring.location(rand.term,"+")$first)>1)))
       {
-
+              
         fm <- paste(fmodel)
-        if(isCorr.int || (isCorr.slope && length(substring.location(rand.term,"+")$first)>1))
+        if(isCorr.int || (isCorr.slope && length(substring.location(rand.term,"+")$first)>1)) 
         {
           new.terms <- changeSlopePart(rand.term,isCorr.int)
           fm[3] <- paste(fm[3], "-", rand.term, "+" , paste(new.terms,collapse="+"))
@@ -1684,7 +1704,7 @@ elimZeroVarOrCorr <- function(model, data, l)
           fm[3] <- paste(fm[3], "-", rand.term)
           message(paste("Random term",rand.term, "was eliminated because of standard deviation being equal to 0 \n", sep=" "))
         }
-
+          
         mf.final <-  as.formula(paste(fm[2],fm[1],fm[3], sep=""))
         mf.final <- update.formula(mf.final,mf.final)
         is.present.rand <- checkPresRandTerms(mf.final)
@@ -1693,9 +1713,7 @@ elimZeroVarOrCorr <- function(model, data, l)
           #library(nlme)
           #model=gls(model = mf.final, data=data, method = "REML", na.action=na.omit)
           #detach(package:nlme)
-          #model  <-  lm(formula(model,fixed.only=TRUE),
-          #data=model.frame.fixed(model))#lm(model,
-          #data=summary(model, ddf="lme4")@frame)
+          #model  <-  lm(formula(model,fixed.only=TRUE), data=model.frame.fixed(model))#lm(model, data=summary(model,"lme4")@frame)
           model <- refitLM(model)
           return(list(model=model, TAB.rand=NULL))
         }
@@ -1706,17 +1724,17 @@ elimZeroVarOrCorr <- function(model, data, l)
         #  model <- eval(substitute(lmer(mf.final, data=data, REML=model@dims[["REML"]]),list(mf.final=mf.final)))
         model <- updateModel(model, mf.final, getME(model, "is_REML"), l)
         elimZero <- TRUE
-        break
+        break       
       }
       else
-        elimZero <- FALSE
+        elimZero <- FALSE      
     }
     if(!elimZero)
       return(list(model=model, TAB.rand=NULL))
   }
 }
 
-### eliminate NS random terms
+### eliminate NS random terms 
 # elimRandEffs <- function(model, data, alpha, reduce.random, l)
 # {
 #   isInitRand <- TRUE
@@ -1724,25 +1742,25 @@ elimZeroVarOrCorr <- function(model, data, l)
 #   stop <- FALSE
 #   while(!stop)
 #   {
-#     fmodel <- formula(model)
+#     fmodel <- formula(model)    
 #     rand.terms <- getRandTerms(fmodel)
-#
+#     
 #     if(isInitRand)
 #     {
 #       rand.table <- initRandTable(rand.terms, reduce.random)
 #       isInitRand <- FALSE
-#     }
+#     }      
 #     fm <- paste(fmodel)
 #     pv.max <- 0
 #     infoForTerms <- vector("list", length(rand.terms))
 #     names(infoForTerms) <-   rand.terms
-#
+#     
 #     for(rand.term in rand.terms)
 #     {
 #       fm <- paste(fmodel)
 #       isCorr.int <- isCorrInt(rand.term)
 #       isCorr.slope <- isCorrSlope(rand.term)
-#       if(isCorr.int || (isCorr.slope && length(substring.location(rand.term,"+")$first)>1))
+#       if(isCorr.int || (isCorr.slope && length(substring.location(rand.term,"+")$first)>1)) 
 #       {
 #         new.terms <- changeSlopePart(rand.term, isCorr.int)
 #         nsTerm <- findNSslopesTerm(rand.term, isCorr.int, fm, model, l)
@@ -1753,13 +1771,13 @@ elimZeroVarOrCorr <- function(model, data, l)
 #       mf.final <-  as.formula(paste(fm[2],fm[1],fm[3], sep=""))
 #       mf.final <- update.formula(mf.final,mf.final)
 #       is.present.rand <- checkPresRandTerms(mf.final)
-#
+#       
 #       # no more random terms in the model
 #       if(!is.present.rand)
 #       {
 #         return(compareMixVSFix(model, mf.final, data, rand.term, rand.table, alpha, elim.num, reduce.random))
-#
-#       }
+#         
+#       } 
 #       #if(!is.null(l))
 #       #  model.red <- eval(substitute(lmer(mf.final, data=data, contrasts=l),list(mf.final=mf.final)))
 #       #else
@@ -1767,30 +1785,30 @@ elimZeroVarOrCorr <- function(model, data, l)
 #       model.red <- updateModel(model, mf.final, getME(model, "is_REML"), l)
 #       anova.red <- anova(model, model.red)
 #       infoForTerms[[rand.term]] <- saveInfoForTerm(rand.term, anova.red$Chisq[2], anova.red$"Chi Df"[2] , anova.red$'Pr(>Chisq)'[2])
-#
+#       
 #       if((anova.red$'Pr(>Chisq)'[2] >= pv.max) && reduce.random)
-#       {
+#       { 
 #         pv.max <- anova.red$'Pr(>Chisq)'[2]
 #         infoForTermElim <- infoForTerms[[rand.term]]
-#         model.final <- model.red
+#         model.final <- model.red 
 #         #if(anova.red$'Pr(>Chisq)'[2]==1)
 #         #  break
 #       }
-#     }
-#
+#     }    
+#     
 #     if(!reduce.random)
 #     {
 #       rand.table <- updateRandTable(infoForTerms, rand.table, reduce.random=reduce.random)
 #       model.last <- model
 #       break
 #     }
-#
+#     
 #     rand.terms.upd <- getRandTerms(formula(model.final))
-#
+#     
 #     if(infoForTermElim$pv > alpha)
 #     {
 #       rand.table <- updateRandTable(infoForTermElim, rand.table, rand.terms.upd[!rand.terms.upd %in% rand.terms] , elim.num, reduce.random)
-#       elim.num=elim.num+1
+#       elim.num=elim.num+1      
 #     }
 #     else
 #     {
@@ -1798,9 +1816,9 @@ elimZeroVarOrCorr <- function(model, data, l)
 #       model.last <- model
 #       break
 #     }
-#
-#     model <- model.final
-#   }
+#     
+#     model <- model.final  
+#   }  
 #   return(list(model=model.last, TAB.rand=rand.table))
 # }
 
@@ -1869,31 +1887,29 @@ getREML <- function(model)
 #update model
 updateModel <- function(model, mf.final, reml, l)
 {
-  if(!mf.final == as.formula(.~.))
+  #if(!mf.final == as.formula(.~.))
+  if(!mf.final == as.formula(paste(".~.")))
   {
-     inds <-  names(l) %in% attr(terms(mf.final), "term.labels")
+     #inds <-  names(l) %in% attr(terms(mf.final), "term.labels")
+    inds <-  names(l) %in% attr(terms(as.formula(mf.final)), "term.labels")
      #update contrast l
      l <- l[inds]
   }
-  return(update(object=model, formula.=mf.final, REML=reml, contrasts=l))
-
-
-#   if(!is.null(l))
-#   {
-#     #l <- l[names(l) %in% strsplit(paste(mf.final[3]), split=" + ", fixed=TRUE)[[1]]]
-#     #print(mf.final)
-#     #print(l)
-#     model <- suppressWarnings(update(model, mf.final, REML=model@dims[["REML"]], contrasts=l))
-#   }
-#   else
-#     model <- suppressWarnings(update(model, mf.final, REML=model@dims[["REML"]]))
-#   return(model)
+  
+ nfit <- update(object=model, formula.=mf.final
+                , REML=reml ,contrasts=l, evaluate=FALSE)
+ env <- environment(formula(model))
+ assign("l",l,envir=env)
+ assign("reml",reml,envir=env)
+ nfit <- eval(nfit, envir = env)
+ 
+ return(nfit)   
 }
 
 
 ### Rhune's code for making type 1 SS
 doolittle <- function(x, eps = 1e-6) {
-
+  
   if(!is.matrix(x)) stop("argument 'x' is not a matrix")
   if(ncol(x) != nrow(x))
     stop( "argument x is not a square matrix" )
@@ -1957,7 +1973,7 @@ refitLM <- function(obj, l="contr.SAS") {
 #   m$offset <- offset
 #   m$call <- cl
 #   m
-
+  
   #mm <- model.frame.fixed(obj)
   mm <- model.frame(obj)
   colnames(mm)[1] <- "y"
@@ -1986,7 +2002,7 @@ fillAnovaTable <- function(result, anova.table)
     anova.table[result[[i]]$name, which(colnames(anova.table)=="Pr(>F)")] <- result[[i]]$pvalue
     #anova.table[result[[i]]$name, 1] <- result[[i]]$ss
     #anova.table[result[[i]]$name, 2] <- result[[i]]$ss/result[[i]]$ndf
-
+    
   }
   anova.table
 }
@@ -2079,7 +2095,7 @@ dummy.coef.modif <- function(object, use.na=FALSE, ...)
     vars.final <- append(vars.final, nmatr.vars[-1], after = ind)
   }
   vars <- vars.final
-
+  
   xl <- object$xlevels
   if(!length(xl)) {  		# no factors in model
     return(as.list(coef(object)))
@@ -2135,4 +2151,12 @@ dummy.coef.modif <- function(object, use.na=FALSE, ...)
     res <- c(list("(Intercept)" = coef[int]), res)
   }
   res
+}
+
+updateAnovaTable <- function(resNSelim){
+  anm <- anova(resNSelim$model)
+  anova.table <- resNSelim$anova.table
+  anova.table[rownames(anm), c("Sum Sq", "Mean Sq", "NumDF")] <-
+    as.matrix(anm[, c("Sum Sq", "Mean Sq", "Df")])
+  anova.table
 }
