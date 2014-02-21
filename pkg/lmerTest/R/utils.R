@@ -566,7 +566,7 @@ getNAterm <- function(anova.table, terms){
 
 ###############################################################################
 # eliminate NS effect from the model
-###############################################################################
+############################################################################### 
 elimNSFixedTerm <- function(model, anova.table, data, alpha, elim.num, l)
 {
   ns.term <- getNSFixedTerm(model, anova.table, data, alpha)
