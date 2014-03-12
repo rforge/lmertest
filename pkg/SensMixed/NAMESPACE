@@ -6,13 +6,11 @@ import(parallel)
 
 
 export(sensmixed)
-export(sensOldmixed)
 export(consmixed)
 export(convertToFactors)
 
 
 S3method(print, sensmixed)
-S3method(print, sensOldmixed)
 S3method(plot, sensmixed)
 S3method(print, consmixed)
 

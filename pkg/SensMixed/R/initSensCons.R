@@ -1,19 +1,3 @@
-sensOldmixed <- function(attributes, Prod_effects, replication, individual, data, product_structure = 3, error_structure="No_Rep", alpha.random = 0.1, alpha.fixed = 0.05, ...)
-{  
-  result <- sensOldmixedFun(attributes, Prod_effects, replication, individual, data, product_structure = product_structure, error_structure=error_structure, alpha.random = alpha.random, alpha.fixed = alpha.fixed)
-  class(result) <- "sensOldmixed"
-  result
-}
-
-print.sensOldmixed <- function(x, ...)
-{
-  cat("\n matrix of F and Chi square values:\n")
-  print(round(x$FChi,2))
-  cat("\n matrix of p-values:\n")
-  res <- apply(x$pvalue,2, format.pval, digits=2)
-  rownames(res) <- rownames(x$pvalue)
-  print(res)
-} 
 
 sensmixed <- function(attributes, Prod_effects, replication, individual, data, product_structure = 3, error_structure="No_Rep", alpha.random = 0.1, alpha.fixed = 0.05, ...)
 {  
@@ -22,20 +6,31 @@ sensmixed <- function(attributes, Prod_effects, replication, individual, data, p
   result
 }
 
+
 print.sensmixed <- function(x, ...)
 {
-  cat("\n matrix of F and Chi square values:\n")
-  print(round(x$FChi,2))
-  cat("\n matrix of p-values:\n")
-  res <- apply(x$pvalue,2, format.pval, digits=2)
-  rownames(res) <- rownames(x$pvalue)
+  cat("\nTests for fixed effects:\n")
+  cat("matrix of F values:\n")
+  print(x$fixed$Fval,2)
+  cat("matrix of p-values:\n")
+  res <- apply(x$fixed$pvalueF,2, format.pval, digits=2)
+  rownames(res) <- rownames(x$fixed$pvalueF)
+  print(res)
+  
+  cat("\nTests for random effects:\n")
+  cat("matrix of Chi values:\n")
+  print(x$rand$Chi,2)  
+  cat("matrix of p-values:\n")
+  res <- apply(x$rand$pvalueChi,2, format.pval, digits=2)
+  rownames(res) <- rownames(x$rand$pvalueChi)
   print(res)
 }  
 
-plot.sensmixed <- function(x, ...)
+plot.sensmixed <- function(x, fixed=FALSE, rand=FALSE, ...)
 {
-  plotSensMixed(x)
+  plotSensMixed(x, fixed, rand)
 }
+
 
 consmixed <- function(response, Prod_effects, Cons_effects=NULL, Cons, data, structure = 3, alpha.random = 0.1, alpha.fixed = 0.05, ...)
 {  

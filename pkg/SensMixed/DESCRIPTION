@@ -1,7 +1,7 @@
 Package: SensMixed
 Type: Package
 Title: Mixed effects modelling for sensory and consumer data
-Version: 1.0-1
+Version: 1.0-3
 Date: 2013-09-10
 Authors@R: c(person("Alexandra", "Kuznetsova", role = c("aut", "cre"),
                           email = "alku@dtu.dk"),

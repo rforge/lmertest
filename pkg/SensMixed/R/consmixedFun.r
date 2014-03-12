@@ -13,7 +13,7 @@ consmixedFun <- function(response, Prod_effects, Cons_effects=NULL, Cons, data, 
 #structure=3 : Full factorial model with ALL possible fixed and random effects. 
 #         (Automized reduction in random part, AND automized reduction in fixed part).
   
-attach(data)
+#attach(data)
 
 model <- createLMERmodel(structure, data, response, fixed = list(Product=Prod_effects, Consumer=Cons_effects), random = Cons, FALSE)
   
@@ -44,7 +44,7 @@ if(checkCorr(model))
 
 t <- step(model, reduce.fixed = isFixReduce, reduce.random = isRandReduce, alpha.random = alpha.random, alpha.fixed = alpha.fixed)
 
-detach(data)
+#detach(data)
 
 return(t)
 }

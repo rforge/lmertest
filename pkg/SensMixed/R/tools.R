@@ -58,7 +58,9 @@ createLMERmodel <- function(structure, data, response, fixed, random, corr)
   #construct formula for lmer model 
   #fma<-createFormula(structure, data, response, fixed, random)
   mf.final <- createFormulaAllFixRand(structure, data, response, fixed, random, corr) 
-  model <- eval(substitute(lmer( mf.final),list( mf.final= mf.final)))
+  #model <- eval(substitute(lmer( mf.final),list( mf.final= mf.final)))
+  model <- lmerTest::lmer(mf.final, data)
+  
   #model <- as(model,"mer")
   #model <- update(model)
   
@@ -80,7 +82,8 @@ checkComb <- function(data, factors)
   effs <- attr(terms(formula(model)), "term.labels")
   neffs <- length(effs)
   randeffs <- effs[grep(" | ", effs)]
-  fixedeffs <- effs[!(effs %in% randeffs)]
+  randeffs <- sapply(randeffs, function(x) substring(x, 5, nchar(x)))
+  fixedeffs <- effs[!(effs %in% names(randeffs))]
   return(list(randeffs=randeffs, fixedeffs=fixedeffs))
 }
 
