@@ -392,13 +392,29 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3, alpha.ra
 }
 
 
-
 step <- function(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, alpha.fixed = 0.05, reduce.fixed = TRUE, reduce.random = TRUE, lsmeans.calc=TRUE, difflsmeans.calc=TRUE, test.effs=NULL, method.grad="simple", ...)
 {  
+  if(!inherits(model, "lmerMod"))
+    stop("The model is not linear mixed effects model")
+
   result <- totalAnovaRandLsmeans(model=model, ddf=ddf , type=type,  alpha.random=alpha.random, alpha.fixed=alpha.fixed, reduce.fixed=reduce.fixed, reduce.random=reduce.random, lsmeans.calc=lsmeans.calc, difflsmeans.calc=difflsmeans.calc, isTotal=TRUE, isTtest=FALSE, test.effs=test.effs, method.grad=method.grad)
+
   class(result) <- "step"
   result
 }
+
+#step.merModLmerTest <- function(object, scope, scale = 0,
+#direction = c("both", "backward", "forward"),
+#trace = 1, keep = NULL, steps = 1000, k = 2, ...)
+  #function(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, alpha.fixed = 0.05, reduce.fixed = TRUE, reduce.random = TRUE, lsmeans.calc=TRUE, difflsmeans.calc=TRUE, test.effs=NULL, method.grad="simple", ...)
+#{  
+#  if(!inherits(object, "lmerMod"))
+#    stop("The model is not linear mixed effects model")
+ # result <- totalAnovaRandLsmeans(model=model, ddf=ddf , type=type,  alpha.random=alpha.random, alpha.fixed=alpha.fixed, reduce.fixed=reduce.fixed, reduce.random=reduce.random, lsmeans.calc=lsmeans.calc, difflsmeans.calc=difflsmeans.calc, isTotal=TRUE, isTtest=FALSE, test.effs=test.effs, method.grad=method.grad)
+#  result <- 2
+#  class(result) <- "step.merModLmerTest"
+#  result
+#}
 
 ### UNUSED function
 #totalAnalysis.formula <- function(formula, data, ...)
@@ -409,65 +425,65 @@ step <- function(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, alpha.f
 #  resAnalysis
 #}
 
-print.step <- function(x, ...)
-{
-  
-  if(!is.null(x$rand.table))
-  {
-    cat("\nRandom effects:\n") 
-    x$rand.table[,"p.value"] <- format.pval(x$rand.table[,"p.value"], digits=4, eps=1e-7)
-    x$rand.table[,"Chi.sq"] <- round(x$rand.table[,"Chi.sq"],2)
-    print(x$rand.table)
-    #printCoefmat(x$rand.table, digits=3 , dig.tst=1  ,tst.ind=which(colnames(x$rand.table)=="Chi.DF"), P.values=TRUE, has.Pvalue=TRUE, na.print = "KEEP")
-  }
-  
-  if(nrow(x$anova.table) != 0)
-  {
-    if(class(x$model) == "lm" | class(x$model) == "gls")
-    {
-      cat("\nFixed effects:\n")
-      print(x$anova.table)
-      cat("\nLeast squares means:\n")
-      print(x$lsmeans.table) 
-      cat("\nFinal model:\n")
-      print(x$model)
-      return()
-    }
-    else
-    {
-      cat("\nFixed effects:\n")
-      x$anova.table[,"Pr(>F)"] <- format.pval(x$anova.table[,"Pr(>F)"], digits=4, eps=1e-7)
-      x$anova.table[,c("Sum Sq","Mean Sq", "F.value")] <- round(x$anova.table[,c("Sum Sq","Mean Sq", "F.value")],4)
-      x$anova.table[,"DenDF"] <- round(x$anova.table[,"DenDF"],2)
-      print(x$anova.table) 
-       #printCoefmat(x$anova.table, dig.tst=3, tst.ind=3, cs.ind=3, digits=3 ,P.values = TRUE, has.Pvalue=TRUE)
-      if(!is.null(x$lsmeans.table))
-      {
-        cat("\nLeast squares means:\n")
-        printCoefmat(x$lsmeans.table, dig.tst=3 ,tst.ind=c(1:(which(colnames(x$lsmeans.table)=="Estimate")-1),which(colnames(x$lsmeans.table)=="DF")), digits=3 ,P.values = TRUE, has.Pvalue=TRUE)
-      }
-      if(!is.null(x$diffs.lsmeans.table))
-      {
-        cat("\n Differences of LSMEANS:\n")
-        printCoefmat(x$diffs.lsmeans.table, dig.tst=1  ,tst.ind=c(1:(which(colnames(x$diffs.lsmeans.table)=="Estimate")-1),which(colnames(x$diffs.lsmeans.table)=="DF")), digits=3 ,P.values = TRUE, has.Pvalue=TRUE)
-      }
-      
-    }    
-  }
-  else
-    print(x$anova.table)
-  cat("\nFinal model:\n")
-  print(x$model@call) 
-}
-
-
-plot.step <- function(x, ...)
-{
-  if(!is.null(x$lsmeans.table) && nrow(x$lsmeans.table)>0)
-    plotLSMEANS(x$lsmeans.table, x$response, "LSMEANS")     
-  if(!is.null(x$diffs.lsmeans.table) && nrow(x$diffs.lsmeans.table)>0)
-    plotLSMEANS(x$diffs.lsmeans.table, x$response, "DIFF of LSMEANS")
-}
+ print.step <- function(x, ...)
+ {
+   
+   if(!is.null(x$rand.table))
+   {
+     cat("\nRandom effects:\n") 
+     x$rand.table[,"p.value"] <- format.pval(x$rand.table[,"p.value"], digits=4, eps=1e-7)
+     x$rand.table[,"Chi.sq"] <- round(x$rand.table[,"Chi.sq"],2)
+     print(x$rand.table)
+     #printCoefmat(x$rand.table, digits=3 , dig.tst=1  ,tst.ind=which(colnames(x$rand.table)=="Chi.DF"), P.values=TRUE, has.Pvalue=TRUE, na.print = "KEEP")
+   }
+   
+   if(nrow(x$anova.table) != 0)
+   {
+     if(class(x$model) == "lm" | class(x$model) == "gls")
+     {
+       cat("\nFixed effects:\n")
+       print(x$anova.table)
+       cat("\nLeast squares means:\n")
+       print(x$lsmeans.table) 
+       cat("\nFinal model:\n")
+       print(x$model)
+       return()
+     }
+     else
+     {
+       cat("\nFixed effects:\n")
+       x$anova.table[,"Pr(>F)"] <- format.pval(x$anova.table[,"Pr(>F)"], digits=4, eps=1e-7)
+       x$anova.table[,c("Sum Sq","Mean Sq", "F.value")] <- round(x$anova.table[,c("Sum Sq","Mean Sq", "F.value")],4)
+       x$anova.table[,"DenDF"] <- round(x$anova.table[,"DenDF"],2)
+       print(x$anova.table) 
+        #printCoefmat(x$anova.table, dig.tst=3, tst.ind=3, cs.ind=3, digits=3 ,P.values = TRUE, has.Pvalue=TRUE)
+       if(!is.null(x$lsmeans.table))
+       {
+         cat("\nLeast squares means:\n")
+         printCoefmat(x$lsmeans.table, dig.tst=3 ,tst.ind=c(1:(which(colnames(x$lsmeans.table)=="Estimate")-1),which(colnames(x$lsmeans.table)=="DF")), digits=3 ,P.values = TRUE, has.Pvalue=TRUE)
+       }
+       if(!is.null(x$diffs.lsmeans.table))
+       {
+         cat("\n Differences of LSMEANS:\n")
+         printCoefmat(x$diffs.lsmeans.table, dig.tst=1  ,tst.ind=c(1:(which(colnames(x$diffs.lsmeans.table)=="Estimate")-1),which(colnames(x$diffs.lsmeans.table)=="DF")), digits=3 ,P.values = TRUE, has.Pvalue=TRUE)
+       }
+       
+     }    
+   }
+   else
+     print(x$anova.table)
+   cat("\nFinal model:\n")
+   print(x$model@call) 
+ }
+ 
+ 
+ plot.step <- function(x, ...)
+ {
+   if(!is.null(x$lsmeans.table) && nrow(x$lsmeans.table)>0)
+     plotLSMEANS(x$lsmeans.table, x$response, "LSMEANS")     
+   if(!is.null(x$diffs.lsmeans.table) && nrow(x$diffs.lsmeans.table)>0)
+     plotLSMEANS(x$diffs.lsmeans.table, x$response, "DIFF of LSMEANS")
+ }
 
 # lmer <-
 #   function(formula, data, family = NULL, REML = TRUE,
@@ -508,7 +524,7 @@ plot.step <- function(x, ...)
 
 
 setMethod("anova", signature(object="merModLmerTest"),
-          function(object,..., ddf="Satterthwaite", type=3, method.grad="simple")  
+          function(object, ..., ddf="Satterthwaite", type=3, method.grad="simple")  
           {
             
             mCall <- match.call(expand.dots = TRUE)
@@ -521,11 +537,10 @@ setMethod("anova", signature(object="merModLmerTest"),
             else
             {
               cnm <- callNextMethod()
-              if(!is.null(ddf)&& ddf=="lme4") 
+              if(!is.null(ddf) &&  ddf=="lme4") 
                 return(cnm)              
-             {
-                  table <- cnm
-                  
+              {
+                  table <- cnm          
                   
                   an.table <- tryCatch({totalAnovaRandLsmeans(model=object, ddf=ddf, type=type, isAnova=TRUE, reduce.random=FALSE, reduce.fixed=FALSE, method.grad=method.grad)$anova.table}, error = function(e) { NULL })
                   if(!is.null(an.table))
@@ -545,6 +560,8 @@ setMethod("anova", signature(object="merModLmerTest"),
                     
                     attr(table, "heading") <- paste("Analysis of Variance Table of type", type ," with ", ddf, "\napproximation for degrees of freedom")
                   }
+                  else
+                    message("anova from lme4 is returned\nsome computational error has occurred in lmerTest")
                   
                   
                   
@@ -565,6 +582,10 @@ setMethod("summary", signature(object = "merModLmerTest"),
             else
             {
               tsum <- tryCatch( {totalAnovaRandLsmeans(model=object, ddf="Satterthwaite", isTtest=TRUE)$ttest}, error = function(e) { NULL })
+              if(is.null(tsum)){
+                message("summary from lme4 is returned\nsome computational error has occurred in lmerTest")
+                return(cl)
+              }
               coefs.satt <- cbind(cl$coefficients[,1:2, drop=FALSE], tsum$df, tsum$tvalue, tsum$tpvalue)
                # t.pval <- tryCatch( {totalAnovaRandLsmeans(model=object, ddf="Satterthwaite", isTtest=TRUE)$ttest$tpvalue}, error = function(e) { NULL })
                # coefs.satt <- cbind(cl$coefficients, t.pval) 
@@ -580,6 +601,8 @@ setMethod("summary", signature(object = "merModLmerTest"),
 #randTAB.default<-function(model, data, ...)
 rand <- function(model, ...)
 {
+  if(!inherits(model, "lmerMod"))
+    stop("The model is not linear mixed effects model")
   result <- totalAnovaRandLsmeans(model=model, isRand=TRUE, reduce.random=FALSE)  
   res <- list(rand.table=result$rand.table, isCorr = result$corr.intsl)
   class(res) <- "rand"
@@ -600,6 +623,8 @@ print.rand <- function(x, ...)
 
 lsmeans <- function(model, test.effs=NULL, method.grad="simple", ...)
 {
+  if(!inherits(model, "lmerMod"))
+    stop("The model is not linear mixed effects model")
   result <- totalAnovaRandLsmeans(model=model, ddf="Satterthwaite", isLSMEANS=TRUE, test.effs=test.effs, reduce.random=FALSE, reduce.fixed=FALSE, method.grad=method.grad)  
   res <- list(lsmeans.table=result$lsmeans.table, response=result$response)
   class(res) <- "lsmeans"
@@ -623,6 +648,8 @@ plot.lsmeans <- function(x, ...)
 
 difflsmeans <- function(model, test.effs=NULL, method.grad="simple", ...)
 {
+  if(!inherits(model, "lmerMod"))
+    stop("The model is not linear mixed effects model")
   result <- totalAnovaRandLsmeans(model=model, ddf="Satterthwaite", isDiffLSMEANS=TRUE, test.effs=test.effs, reduce.random=FALSE, reduce.fixed=FALSE, method.grad=method.grad)  
   res <- list(diffs.lsmeans.table=result$diffs.lsmeans.table, response=result$response)
   class(res) <- "difflsmeans"
@@ -633,7 +660,7 @@ print.difflsmeans <- function(x, ...)
 {
   
   cat("Differences of LSMEANS:\n")
-  printCoefmat(data.matrix(x$diffs.lsmeans.table), dig.tst=1, tst.ind=c(1:(which(colnames(x$diffs.lsmeans.table)=="Estimate")-1),which(colnames(x$diffs.lsmeans.table)=="DF")), digits=3 , P.values=TRUE, has.Pvalue=TRUE)
+  printCoefmat(data.matrix(x$diffs.lsmeans.table), dig.tst=1, tst.ind=c(1:(which(colnames(x$diffs.lsmeans.table)=="Estimate")-1), which(colnames(x$diffs.lsmeans.table)=="DF")), digits=3 , P.values=TRUE, has.Pvalue=TRUE)
   
 }
 

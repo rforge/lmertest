@@ -235,7 +235,11 @@ calcSatterth  <-  function(Lc, rho, method.grad)
   else
      C.theta.optim <- Ct.rhbc(rho, rho$param$vec.matr, Lc)
   #invC.theta<-ginv(C.theta.optim)
-  invC.theta <- solve(C.theta.optim)
+  
+  invC.theta <- tryCatch({solve(C.theta.optim)}, error = function(e) { NULL })
+  if(is.null(invC.theta))
+    return(list(denom = 0, Fstat = NA, pvalue = NA, ndf=NA))
+  
   q <- qr(C.theta.optim)$rank
   F.stat <- (t(Lc %*% rho$fixEffs) %*% invC.theta %*% (Lc %*% rho$fixEffs))/q
   
