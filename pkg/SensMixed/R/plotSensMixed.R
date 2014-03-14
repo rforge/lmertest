@@ -3,9 +3,7 @@
 ###################################################################################################################
 ### plot results
 plotSensMixed <- function(resSensMixed, fixed=FALSE, rand=FALSE)
-{
-  
-  
+{  
   dens <- function(x)
   {
     if(x < 0.01) 
@@ -35,9 +33,7 @@ plotSensMixed <- function(resSensMixed, fixed=FALSE, rand=FALSE)
     return(gr[2])
   }
   
-  #######################################################################################################
-  #######  Plot of random effects. Run and look at results before and then run for the fixed effects plot
-  #######################################################################################################
+  ## plot of random terms
   if(rand || (!rand && !fixed)){
     
     #### plots as in lmerTest  paper
@@ -80,9 +76,7 @@ plotSensMixed <- function(resSensMixed, fixed=FALSE, rand=FALSE)
   
  
   
-  #######################################################################################################
-  #######  Plot of fixed effects
-  #######################################################################################################
+  ## plot of fixed terms
   if(fixed || (!rand && !fixed)){
     plot.new()
     #library(RColorBrewer)
@@ -121,7 +115,7 @@ plotSensMixed <- function(resSensMixed, fixed=FALSE, rand=FALSE)
       if(i < ncol(Fval))
         par(new=TRUE)
     }
-    legend(locator(1), names.fixed,  col=rev(col.bars), pch=15,  bty="n", cex=cex.gr)
+    legend(locator(1), names.fixed,  col=col.bars, pch=15,  bty="n", cex=cex.gr)
     legend(locator(1), rev(c("p-value < 0.01", "p-value < 0.05", "p-value < 0.1", "p-value >= 0.1")),  col="black", density=rev(c(500, 100, 50, 10)), bty="n", cex=cex.gr)
   }
 }

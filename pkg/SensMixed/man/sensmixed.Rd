@@ -84,13 +84,13 @@ library(SensMixed)
 data(TVbo)
 
 #run automated selection process
-result <- sensmixed(c("Coloursaturation","Colourbalance"),
+sensmixed(c("Coloursaturation","Colourbalance"),
 Prod_effects=c("TVset", "Picture"), replication="Repeat", 
 individual="Assessor", data=TVbo)
 
 \dontrun{
 #plot F and Chi square values
-plot(result)
+#plot(result)
 }
 
 \dontrun{

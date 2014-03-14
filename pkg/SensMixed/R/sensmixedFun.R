@@ -2,8 +2,8 @@
 # performs  analysis of sensory data
 ##############################################################################
 sensmixedFun <- function(attributes, Prod_effects, replication, individual, data, 
-                         product_structure = 3, error_structure="No_Rep", 
-                         alpha.random = 0.1, alpha.fixed = 0.05 )
+                         product_structure = 3, error_structure="No_Rep",
+                         MAM=FALSE, alpha.random = 0.1, alpha.fixed = 0.05 )
 {
   ##product_structure=1  (default structure) : Analysis of main fixed effects
   ###product_structure=2 : Main effects AND all 2-factor interactions. 

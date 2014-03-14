@@ -71,8 +71,8 @@ Alexandra Kuznetsova, Per Bruun Brockhoff, Rune Haubo Bojesen Christensen
 library(SensMixed)
 data(ham)
 
-#consmixed(response="Informed.liking", 
-#Prod_effects= c("Product","Information"), 
-#Cons_effects=c("Gender","Age"), Cons = "Consumer", data =ham, structure=1)
+consmixed(response="Informed.liking", 
+Prod_effects= c("Product","Information"), 
+Cons_effects=c("Gender","Age"), Cons = "Consumer", data =ham, structure=1)
 
 }

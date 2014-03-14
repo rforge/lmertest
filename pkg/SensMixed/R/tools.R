@@ -1,3 +1,9 @@
+## check if the data is balanced
+isbalanced <- function(data)
+{
+  suppressWarnings(!is.list(replications(~ . , data)))
+}
+
 ### function checks  if there are zero cells in a factor term
 checkZeroCell <- function(data, factors)
 {
