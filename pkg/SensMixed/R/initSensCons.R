@@ -1,7 +1,12 @@
 
-sensmixed <- function(attributes, Prod_effects, replication, individual, data, product_structure = 3, error_structure="No_Rep", alpha.random = 0.1, alpha.fixed = 0.05, ...)
+sensmixed <- function(attributes, Prod_effects, replication, individual, data, 
+                      product_structure = 3, error_structure="No_Rep", MAM=FALSE,
+                      parallel=TRUE, alpha.random = 0.1, alpha.fixed = 0.05, ...)
 {  
-  result <- sensmixedFun(attributes, Prod_effects, replication, individual, data, product_structure = product_structure, error_structure=error_structure, alpha.random = alpha.random, alpha.fixed = alpha.fixed)
+  result <- sensmixedFun(attributes, Prod_effects, replication, individual, data,
+                         product_structure = product_structure, 
+                         error_structure=error_structure,  MAM=MAM, parallel=parallel,
+                         alpha.random = alpha.random, alpha.fixed = alpha.fixed)
   class(result) <- "sensmixed"
   result
 }
@@ -14,6 +19,9 @@ print.sensmixed <- function(x, ...)
   print(x$fixed$Fval,2)
   cat("matrix of p-values:\n")
   res <- apply(x$fixed$pvalueF,2, format.pval, digits=2)
+  if(class(res) =="character"){
+    res <- t(as.matrix(res, rownames.force = TRUE))
+  }
   rownames(res) <- rownames(x$fixed$pvalueF)
   print(res)
   
@@ -32,9 +40,12 @@ plot.sensmixed <- function(x, fixed=FALSE, rand=FALSE, ...)
 }
 
 
-consmixed <- function(response, Prod_effects, Cons_effects=NULL, Cons, data, structure = 3, alpha.random = 0.1, alpha.fixed = 0.05, ...)
+consmixed <- function(response, Prod_effects, Cons_effects=NULL, Cons, data, 
+                      structure = 3, alpha.random = 0.1, alpha.fixed = 0.05, ...)
 {  
-  result <- consmixedFun(response=response, Prod_effects, Cons_effects=Cons_effects, Cons, data, structure = structure, alpha.random = alpha.random, alpha.fixed = alpha.fixed)
+  result <- consmixedFun(response=response, Prod_effects, Cons_effects=Cons_effects,
+                         Cons, data, structure = structure, alpha.random = alpha.random,
+                         alpha.fixed = alpha.fixed)
   class(result)<-"consmixed"
   result
 }

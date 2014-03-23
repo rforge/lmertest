@@ -9,8 +9,8 @@ The LRT test is used for testing random terms, F-type hypothesis test is used fo
 }
 \usage{
 sensmixed(attributes, Prod_effects, replication, 
-individual, data, product_structure = 3, error_structure="No_Rep",
-alpha.random = 0.1, alpha.fixed = 0.05, ...)
+          individual, data, product_structure = 3, error_structure="No_Rep",
+          MAM=FALSE, parallel=TRUE, alpha.random = 0.1, alpha.fixed = 0.05, ...)
 }
 \arguments{
   \item{attributes}{
@@ -40,12 +40,20 @@ alpha.random = 0.1, alpha.fixed = 0.05, ...)
 
 \item{product_structure}{
     
-    one of the values in c(1,2,3). 1: only main effects will enter the initial biggest model. 2: main effects and 2-way interaction. 3: all main effects and all possible interaction 
+    one of the values in c(1, 2, 3). 1: only main effects will enter the initial biggest model. 2: main effects and 2-way interaction. 3: all main effects and all possible interaction 
 }
 
 \item{error_structure}{
     
     one of the values in c("No_Rep", "2-WAY", "3-WAY"). "No_Rep" and "2-WAY" - assessor effect and all possible interactions between assessor and Product_effects. "3-WAY" - assessor and replicate effect and interaction between them and interaction between them and Product_effects
+}
+
+\item{MAM}{
+    
+    logical. if MAM model should be constructed (scaling correction)
+}
+\item{parallel}{
+    logical. Should the computation be done in parallel. the default is TRUE   
 }
 
 \item{alpha.random}{
@@ -84,9 +92,13 @@ library(SensMixed)
 data(TVbo)
 
 #run automated selection process
-sensmixed(c("Coloursaturation","Colourbalance"),
+system.time(res <- sensmixed(c("Coloursaturation", "Colourbalance"),
 Prod_effects=c("TVset", "Picture"), replication="Repeat", 
-individual="Assessor", data=TVbo)
+individual="Assessor", data=TVbo, MAM=TRUE))
+
+system.time(res_paral <- sensmixed(names(TVbo)[5:ncol(TVbo)],
+Prod_effects=c("TVset", "Picture"), replication="Repeat", 
+individual="Assessor", data=TVbo, error_structure="3-WAY"))
 
 \dontrun{
 #plot F and Chi square values

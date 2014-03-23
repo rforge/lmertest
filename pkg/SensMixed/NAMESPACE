@@ -3,6 +3,7 @@ import(Hmisc)
 importFrom(gplots, barplot2)
 import(RColorBrewer)
 import(parallel)
+import(lsmeans)
 
 
 export(sensmixed)
