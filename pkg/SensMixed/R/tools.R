@@ -81,16 +81,23 @@ createLMERmodel <- function(structure, data, response, fixed, random, corr, MAM=
     if(length(fixed$Product)>1){
       data$prod <- interaction(data[, fixed$Product[1]], data[, fixed$Product[2]])
       mf.final.lsm <- createFormulaAllFixRand(structure, data, response, 
-                                              list(Product="prod", Consumer=fixed$Consumer), random, corr)   
-      #ff <- as.formula(paste(mf.final[2], mf.final[1], "prod", sep=""))
+                                              list(Product="prod", 
+                                                   Consumer=fixed$Consumer), 
+                                              random, corr)   
     }else{
       mf.final.lsm <- mf.final
     }
     
     ## create formulas for anova and lsmeans   
     ############################################################################
-    ff <- fixedFormula(mf.final)   
-    data$x <- scale(predict(lm(ff, data=data)), scale=FALSE)    
+    ff <- fixedFormula(mf.final)
+    
+    # create x out of predicted values from lm
+    data$x <- rep(NA, nrow(data))
+    x.prd <- scale(predict(lm(ff, data=data)), scale=FALSE)
+    notNA <- rownames(x.prd)
+    data[notNA, "x"] <- x.prd
+    
     ## for anova
     fm <- paste(mf.final)
     fm[3] <- paste(fm[3], paste(random$individual, "x", sep=":"), sep=" + ")
@@ -99,8 +106,7 @@ createLMERmodel <- function(structure, data, response, fixed, random, corr, MAM=
     fm.lsm <- paste(mf.final.lsm)
     fm.lsm[3] <- paste(fm.lsm[3],  paste(random$individual, "x", sep=":"),
                        "x", sep=" + ")
-    fo.lsm <- as.formula(paste(fm.lsm[2], fm.lsm[1], fm.lsm[3], sep=""))
-    
+    fo.lsm <- as.formula(paste(fm.lsm[2], fm.lsm[1], fm.lsm[3], sep=""))    
     
     ## create models for anova and lsmeans
     ############################################################################

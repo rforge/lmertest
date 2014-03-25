@@ -122,24 +122,27 @@ sensmixedFun <- function(attributes, Prod_effects, replication, individual, data
         #return(anova(as(model, "merModLmerTest"), type=1))
         assign("new.resp", new.resp, envir=environment(formula(model)))        
         if(MAM){
-          data.an <- model.frame(model)
-          fo <- paste(formula(model))
+          model.an <- refit(object=model, newresp=new.resp, 
+                            rename.response = TRUE)
+          data.an <- model.frame(model.an)
+          fo <- paste(formula(model.an))
           #fo[2] <- "new.resp"
           #fo[3] <- paste(Prod_effects, collapse="*")
-          data.an$new.resp <- new.resp
+          #data.an$new.resp <- new.resp
           lm.pred <- lm(as.formula(paste("new.resp", "~", 
                                          paste(Prod_effects, collapse="*"), sep="")),
                         data=data.an)
           data.an$x <- scale(predict(lm.pred), scale=FALSE)
           m <- lmer(as.formula(paste("new.resp", fo[1], fo[3], sep="")), 
                     data=data.an)
-          #st <- step(m, lsmeans.calc=FALSE, difflsmeans.calc=FALSE, 
-          #           reduce.fixed=FALSE)
+          st <- step(m, fixed.calc=FALSE)
           #anova.table <- anova(st$model, type=1)
-          rand.table <- rand(m)$rand.table
-          anova.table <- anova(m,  type=1)          
-          if(any(is.nan(anova.table[, "Pr(>F)"])))
-            anova.table <- anova(m, ddf="Kenward-Roger", type=1)     
+          #rand.table <- rand(m)$rand.table
+          
+          rand.table <- st$rand.table
+          anova.table <- anova(as(m,"merModLmerTest"),  type=1)          
+          #if(any(is.nan(anova.table[, "Pr(>F)"])))
+          #  anova.table <- anova(m, ddf="Kenward-Roger", type=1)     
           rownames(anova.table)[unlist(lapply(rownames(anova.table), function(y) grepl(":x", y)))] <- "Scaling"
           
           ## update model for lsmeans
@@ -180,7 +183,7 @@ sensmixedFun <- function(attributes, Prod_effects, replication, individual, data
     res
     },  error = function(e) { NULL })
     if(is.null(respar)){
-      message(" \n ERROR in parallel has occurred, an unparallized version is used instead \n")     
+      message(" \n WARNING: error in parallel has occurred, an unparallized version is used instead \n")     
       return(sensmixedFun(attributes, Prod_effects, replication, individual, data, 
                                       product_structure, error_structure,
                                       MAM, parallel=FALSE, alpha.random, alpha.fixed ))
@@ -191,11 +194,13 @@ sensmixedFun <- function(attributes, Prod_effects, replication, individual, data
       assign("new.resp", new.resp, envir=environment(formula(model)))
       #assign("new.resp", new.resp, envir=environment(formula(model.init$model.lsmeans)))      
       if(MAM){
-        data.an <- model.frame(model)
-        fo <- paste(formula(model))
+        model.an <- refit(object=model, newresp=new.resp, 
+                       rename.response = TRUE)
+        data.an <- model.frame(model.an)
+        fo <- paste(formula(model.an))
         #fo[2] <- "new.resp"
         #fo[3] <- paste(Prod_effects, collapse="*")
-        data.an$new.resp <- new.resp
+        #data.an$new.resp <- new.resp
         lm.pred <- lm(as.formula(paste("new.resp", "~", 
                                        paste(Prod_effects, collapse="*"), sep="")),
                       data=data.an)
@@ -203,26 +208,27 @@ sensmixedFun <- function(attributes, Prod_effects, replication, individual, data
         m <- lmer(as.formula(paste("new.resp", fo[1], fo[3], sep="")), 
                       data=data.an)
         
-       # st <- step(m, lsmeans.calc=FALSE, difflsmeans.calc=FALSE, 
-       #                  reduce.fixed=FALSE)
-        rand.table <- rand(m)$rand.table
+        st <- step(m, fixed.calc=FALSE)
+        #rand.table <- rand(m)$rand.table
+        rand.table <- st$rand.table
         #fo <- paste(formula(m))
         #data.an <- model.frame(m)
         #data.an$Colourbalance <- TVbo$Colourbalance 
         #m <- lmer(as.formula(paste("Colourbalance", fo[1], fo[3], sep="")), 
         #                                       data=data.an)
-        anova.table <- anova(m, type=1)
-        if(any(is.nan(anova.table[, "Pr(>F)"])))
-          anova.table <- anova(m,  ddf="Kenward-Roger", type=1)
+        #anova.table <- anova(m, type=1)
+        anova.table <- anova(as(st$model, "merModLmerTest"), type=1)
+        #if(any(is.nan(anova.table[, "Pr(>F)"])))
+        #  anova.table <- anova(m,  ddf="Kenward-Roger", type=1)
         rownames(anova.table)[unlist(lapply(rownames(anova.table), function(y) grepl(":x", y)))] <- "Scaling"
         
         ## update model for lsmeans
         m.lsm <- refit(object=model.lsm, newresp=new.resp, 
                        rename.response = TRUE)        
-        fo.lsm <- paste(formula(model.lsm))
-        fo.lsm[2] <- "new.resp"
-        data.lsm <- model.frame(model.lsm)
-        data.lsm$new.resp <- new.resp 
+        fo.lsm <- paste(formula(m.lsm))
+        #fo.lsm[2] <- "new.resp"
+        data.lsm <- model.frame(m.lsm)
+        #data.lsm$new.resp <- new.resp 
         data.lsm$x <- data.an$x 
         m.lsm <- lmer(as.formula(paste(fo.lsm[2], fo.lsm[1], fo.lsm[3], sep="")), 
                       data=data.lsm)
@@ -249,32 +255,40 @@ sensmixedFun <- function(attributes, Prod_effects, replication, individual, data
 
   
   #### fill the results
-  for(i in 1:length(attributes))
-  {    
-    #fill pvalues for fixed effects
-    calc <- res[[i]]$anova.table
-    ## if the reduced is lm model
-    if("Residuals" %in% rownames(res[[i]]$anova.table))
-      pvalueF[rownames(calc)[-nrow(calc)], i] <- calc[-nrow(calc), 5]
-    else
-      pvalueF[rownames(calc), i] <- calc[, 6]
+  finalres <- tryCatch({
+    for(i in 1:length(attributes))
+    {    
+      #fill pvalues for fixed effects
+      calc <- res[[i]]$anova.table
+      ## if the reduced is lm model
+      if("Residuals" %in% rownames(res[[i]]$anova.table))
+        pvalueF[rownames(calc)[-nrow(calc)], i] <- calc[-nrow(calc), 5]
+      else
+        pvalueF[rownames(calc), i] <- calc[, 6]
+      
+      #fill pvalues for random effects
+      calcrand <- res[[i]]$rand.table    
+      pvalueChi[rownames(calcrand),i] <- calcrand[, "p.value"]
+      
+      # fill F and Chi values
+      if("Residuals" %in% rownames(res[[i]]$anova.table))
+        Fval[rownames(calc)[-nrow(calc)],i] <- calc[-nrow(calc), 4]
+      else
+        Fval[rownames(calc),i] <- calc[,5]
+      Chi[rownames(calcrand),i] <- calcrand[,"Chi.sq"]    
+    }
     
-    #fill pvalues for random effects
-    calcrand <- res[[i]]$rand.table    
-    pvalueChi[rownames(calcrand),i] <- calcrand[, "p.value"]
-    
-    # fill F and Chi values
-    if("Residuals" %in% rownames(res[[i]]$anova.table))
-      Fval[rownames(calc)[-nrow(calc)],i] <- calc[-nrow(calc), 4]
-    else
-      Fval[rownames(calc),i] <- calc[,5]
-    Chi[rownames(calcrand),i] <- calcrand[,"Chi.sq"]    
-  }
-  
-  pvalueF[is.na(pvalueF)] <- 1
-  pvalueChi[is.na(pvalueChi)] <- 1
-  
+    pvalueF[is.na(pvalueF)] <- 1
+    pvalueChi[is.na(pvalueChi)] <- 1
 
+    }, error = function(e) { NULL })
+  if(is.null(finalres) && parallel){
+    message(" \n WARNING: error in parallel has occurred: cannot call Kenward-Roger 
+            in parallel. instead use unparallelized version \n")     
+    return(sensmixedFun(attributes, Prod_effects, replication, individual, data, 
+                        product_structure, error_structure,
+                        MAM, parallel=FALSE, alpha.random, alpha.fixed ))
+  }
   return(list(fixed = list(Fval=Fval, pvalueF=pvalueF), random = list(Chi=Chi, pvalueChi=pvalueChi)))
   
 }
