@@ -1,6 +1,6 @@
 
-R version 3.0.2 (2013-09-25) -- "Frisbee Sailing"
-Copyright (C) 2013 The R Foundation for Statistical Computing
+R version 3.0.3 (2014-03-06) -- "Warm Puppy"
+Copyright (C) 2014 The R Foundation for Statistical Computing
 Platform: i386-w64-mingw32/i386 (32-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -61,7 +61,6 @@ The following object is masked from 'package:stats':
 > ## Don't show: 
 > m <- lmer(log(Coloursaturation)~TVset*Picture+
 + (1|Assessor)+(1|Assessor:TVset), data=TVbo)
-> 
 > step(m, test.effs="TVset", reduce.fixed=TRUE, reduce.random=TRUE)
 
 Random effects:
@@ -102,7 +101,7 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 Final model:
 lme4::lmer(formula = log(Coloursaturation) ~ TVset + Picture + 
     (1 | Assessor:TVset) + TVset:Picture, data = TVbo, REML = reml, 
-    contrasts = l)
+    contrasts = l.lmerTest.private.contrast)
 > ## End Don't show
 > 
 > ## Not run: 
@@ -254,7 +253,7 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 Final model:
 lme4::lmer(formula = Preference ~ sens2 + Homesize + (1 + sens2 | 
-    Consumer), data = carrots, REML = reml, contrasts = l)
+    Consumer), data = carrots, REML = reml, contrasts = l.lmerTest.private.contrast)
 > 
 > 
 > 
@@ -404,7 +403,7 @@ Final model:
 lme4::lmer(formula = Informed.liking ~ Product + Information + 
     Gender + (1 | Product:Consumer) + Product:Information + Product:Gender + 
     Information:Gender + Product:Information:Gender, data = ham, 
-    REML = reml, contrasts = l)
+    REML = reml, contrasts = l.lmerTest.private.contrast)
 > 
 > 
 > 
@@ -918,7 +917,7 @@ Days -0.138
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  34.94 1.16 36.3 NA NA 
+Time elapsed:  34.77 0.9 35.85 NA NA 
 > grDevices::dev.off()
 null device 
           1 
