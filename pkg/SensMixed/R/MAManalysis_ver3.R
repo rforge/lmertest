@@ -7,7 +7,7 @@
 # C. Peltier, M. Visali, P. B. Brockhoff & Schlich, P. (2013). The mam-cap
 # table: a new tool for monitoring panel performances. Food Quality and
 # Preference. 
-library(doBy)
+#library(doBy)
 
 MAManalysis=function(data,adjustedMAM=TRUE,alpha_conditionalMAM=0.2){
   # data:

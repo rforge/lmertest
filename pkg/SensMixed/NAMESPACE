@@ -4,6 +4,7 @@ importFrom(gplots, barplot2)
 import(RColorBrewer)
 import(parallel)
 import(lsmeans)
+import(doBy)
 
 
 export(sensmixed)

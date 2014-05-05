@@ -11,8 +11,7 @@ Author: Alexandra Kuznetsova, Per Bruun Brockhoff, Rune Haubo Bojesen
         Christensen
 Maintainer: Alexandra Kuznetsova <alku@dtu.dk>
 Depends: stats, lmerTest
-Imports: Hmisc, gplots, RColorBrewer, parallel, lsmeans
-Suggests: doBy
+Imports: Hmisc, gplots, RColorBrewer, parallel, lsmeans, doBy
 Description: The package provides with functions that facilitate analysis of Sensory as well as Consumer data
 License: GPL (>= 2)
 

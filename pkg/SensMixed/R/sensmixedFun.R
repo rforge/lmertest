@@ -10,7 +10,6 @@ sensmixedFun <- function(attributes, Prod_effects, replication=NULL, individual,
   
   if(MAM_PER)
   {
-    if(require(doBy))
       return(runMAM(data, Prod_effects, individual, attributes, adjustedMAM, alpha_conditionalMAM))   
   }
 
