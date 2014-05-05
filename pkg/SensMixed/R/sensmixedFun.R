@@ -195,9 +195,10 @@ sensmixedFun <- function(attributes, Prod_effects, replication=NULL, individual,
     },  error = function(e) { NULL })
     if(is.null(respar)){
       message(" \n WARNING: error in parallel has occurred, an unparallized version is used instead \n")     
-      return(sensmixedFun(attributes, Prod_effects, replication, individual, data, 
-                                      product_structure, error_structure,
-                                      MAM, parallel=FALSE, alpha.random, alpha.fixed ))
+      return(sensmixedFun(attributes, Prod_effects, replication, individual, 
+                          data, product_structure, error_structure, MAM, MAM_PER,
+                          adjustedMAM, alpha_conditionalMAM, parallel=FALSE, 
+                          reduce.random, alpha.random, alpha.fixed))
     }
   }
   else{
