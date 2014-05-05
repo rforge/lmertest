@@ -1,15 +1,18 @@
 ##############################################################################
 # performs  analysis of sensory data
 ##############################################################################
-sensmixedFun <- function(attributes, Prod_effects, replication, individual, data, 
-                         product_structure = 3, error_structure="No_Rep",
-                         MAM=FALSE, parallel=TRUE, alpha.random = 0.1, alpha.fixed = 0.05)
+sensmixedFun <- function(attributes, Prod_effects, replication=NULL, individual, data, product_structure = 3, error_structure="No_Rep", MAM=FALSE, MAM_PER=FALSE, adjustedMAM=FALSE, alpha_conditionalMAM=1, parallel=TRUE, reduce.random=TRUE, alpha.random = 0.1, alpha.fixed = 0.05)
 {
   ## product_structure=1  (default structure) : Analysis of main fixed effects
   ## product_structure=2 : Main effects AND all 2-factor interactions. 
   ## product_structure=3 : Full factorial model with ALL possible fixed effects
   ## error_structure 
   
+  if(MAM_PER)
+  {
+    if(require(doBy))
+      return(runMAM(data, Prod_effects, individual, attributes, adjustedMAM, alpha_conditionalMAM))   
+  }
 
   
   if(!is.null(replication) && error_structure!="No-Rep")
@@ -38,6 +41,8 @@ sensmixedFun <- function(attributes, Prod_effects, replication, individual, data
   
   #resultFULL <- vector("list",length(attributes))
   nbvar <- length(attributes)
+  
+  
   
   ## create the initial model
   model.init <- createLMERmodel(structure=list(product_structure=product_structure, 
@@ -89,7 +94,8 @@ sensmixedFun <- function(attributes, Prod_effects, replication, individual, data
   
   ## TODO: change rownames for pvaues according to elimRand.R
   ##       should work for slopes as well
-  #rownames(pvalue) <- c(fixedrand$fixedeffs,  substr(fixedrand$randeffs, 5, nchar(fixedrand$randeffs)))  
+  #rownames(pvalue) <- c(fixedrand$fixedeffs,  substr(fixedrand$randeffs, 5, 
+#nchar(fixedrand$randeffs)))  
   rownames(pvalueF) <- fixedrand$fixedeffs
   rownames(pvalueF)[unlist(lapply(rownames(pvalueF), function(x) grepl(":x",x)))] <- "Scaling"
   rownames(pvalueChi) <- fixedrand$randeffs
@@ -108,9 +114,11 @@ sensmixedFun <- function(attributes, Prod_effects, replication, individual, data
     func <- local({
       #data
       refit
+      step
       model
       model.lsm
       data
+      reduce.random
       
       function(new.resp)
       {
@@ -140,10 +148,14 @@ sensmixedFun <- function(attributes, Prod_effects, replication, individual, data
           #rand.table <- rand(m)$rand.table
           
           rand.table <- st$rand.table
-          anova.table <- anova(as(m,"merModLmerTest"),  type=1)          
+          if(reduce.random)
+            anova.table <- anova(as(st$model, "merModLmerTest"), type=1)
+          else
+            anova.table <- anova(m, type=1)
           #if(any(is.nan(anova.table[, "Pr(>F)"])))
           #  anova.table <- anova(m, ddf="Kenward-Roger", type=1)     
-          rownames(anova.table)[unlist(lapply(rownames(anova.table), function(y) grepl(":x", y)))] <- "Scaling"
+          rownames(anova.table)[unlist(lapply(rownames(anova.table), 
+                                              function(y) grepl(":x", y)))] <- "Scaling"
           
           ## update model for lsmeans
 #           m.lsm <- refit(object=model.lsm, newresp=new.resp, 
@@ -166,7 +178,7 @@ sensmixedFun <- function(attributes, Prod_effects, replication, individual, data
         m <- refit(object=model, newresp=new.resp, 
                    rename.response = TRUE)
         #anova(as(m,"merModLmerTest"), ddf="Kenward-Roger", type=1)    
-        s <- step(m, reduce.fixed = FALSE, reduce.random = TRUE, 
+        s <- step(m, reduce.fixed = FALSE, reduce.random = reduce.random, 
                   alpha.random = 0.1, alpha.fixed = 0.05, lsmeans.calc=FALSE,
                   difflsmeans.calc = FALSE) 
         #detach(data)
@@ -217,10 +229,14 @@ sensmixedFun <- function(attributes, Prod_effects, replication, individual, data
         #m <- lmer(as.formula(paste("Colourbalance", fo[1], fo[3], sep="")), 
         #                                       data=data.an)
         #anova.table <- anova(m, type=1)
-        anova.table <- anova(as(st$model, "merModLmerTest"), type=1)
+        if(reduce.random)
+          anova.table <- anova(as(st$model, "merModLmerTest"), type=1)
+        else
+          anova.table <- anova(m, type=1)
         #if(any(is.nan(anova.table[, "Pr(>F)"])))
         #  anova.table <- anova(m,  ddf="Kenward-Roger", type=1)
-        rownames(anova.table)[unlist(lapply(rownames(anova.table), function(y) grepl(":x", y)))] <- "Scaling"
+        rownames(anova.table)[unlist(lapply(rownames(anova.table), 
+                                            function(y) grepl(":x", y)))] <- "Scaling"
         
         ## update model for lsmeans
         m.lsm <- refit(object=model.lsm, newresp=new.resp, 
@@ -238,11 +254,12 @@ sensmixedFun <- function(attributes, Prod_effects, replication, individual, data
             lsmeans.table <-  eval(substitute(lsmeans::lsmeans(object=m.lsm, 
                                                            pairwise ~ prod), 
                                           list(prod=as.name(Prod_effects))))  
-        return(list(anova.table=anova.table, rand.table=rand.table,lsmeans.table=lsmeans.table))        
+        return(list(anova.table=anova.table, rand.table=rand.table,
+                    lsmeans.table=lsmeans.table))        
       }
       m <- refit(object=model, newresp=new.resp, 
                  rename.response = TRUE) 
-      s <- step(m, reduce.fixed = FALSE, reduce.random = TRUE, 
+      s <- step(m, reduce.fixed = FALSE, reduce.random = reduce.random, 
                 alpha.random = 0.1, alpha.fixed = 0.05, lsmeans.calc=FALSE,
                 difflsmeans.calc = FALSE) 
       s

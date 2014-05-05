@@ -1,12 +1,14 @@
 
-sensmixed <- function(attributes, Prod_effects, replication, individual, data, 
-                      product_structure = 3, error_structure="No_Rep", MAM=FALSE,
-                      parallel=TRUE, alpha.random = 0.1, alpha.fixed = 0.05, ...)
+sensmixed <- function(attributes, Prod_effects, replication = NULL, individual, data, product_structure = 3, error_structure="No_Rep", MAM=FALSE, MAM_PER=FALSE, adjustedMAM=FALSE, alpha_conditionalMAM=1, parallel=TRUE, reduce.random=TRUE , alpha.random = 0.1, alpha.fixed = 0.05, ...)
 {  
   result <- sensmixedFun(attributes, Prod_effects, replication, individual, data,
                          product_structure = product_structure, 
-                         error_structure=error_structure,  MAM=MAM, parallel=parallel,
-                         alpha.random = alpha.random, alpha.fixed = alpha.fixed)
+                         error_structure=error_structure,  MAM=MAM, 
+                         MAM_PER=MAM_PER, adjustedMAM=adjustedMAM, 
+                         alpha_conditionalMAM=alpha_conditionalMAM,
+                         parallel=parallel, reduce.random=reduce.random, 
+                         alpha.random = alpha.random, 
+                         alpha.fixed = alpha.fixed)
   class(result) <- "sensmixed"
   result
 }

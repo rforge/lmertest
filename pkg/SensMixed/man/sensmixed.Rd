@@ -10,7 +10,7 @@ The LRT test is used for testing random terms, F-type hypothesis test is used fo
 \usage{
 sensmixed(attributes, Prod_effects, replication, 
           individual, data, product_structure = 3, error_structure="No_Rep",
-          MAM=FALSE, parallel=TRUE, alpha.random = 0.1, alpha.fixed = 0.05, ...)
+          MAM=FALSE, MAM_PER=FALSE, adjustedMAM=FALSE, alpha_conditionalMAM=1, parallel=TRUE, reduce.random=TRUE , alpha.random = 0.1, alpha.fixed = 0.05, ...)
 }
 \arguments{
   \item{attributes}{
@@ -52,8 +52,25 @@ sensmixed(attributes, Prod_effects, replication,
     
     logical. if MAM model should be constructed (scaling correction)
 }
+\item{MAM_PER}{
+    
+    logical. if MAManalysis function should be called (scaling correction)
+}
+\item{adjustedMAM}{
+    
+    logical. should MAM be adjusted for the scaling
+}
+\item{alpha_conditionalMAM}{
+    
+    logical. scaling should be part of the model in case its p-value is less than alpha_conditionalMAM
+}
 \item{parallel}{
     logical. Should the computation be done in parallel. the default is TRUE   
+}
+
+\item{reduce.random}{
+    
+     logical. Eliminate non-significant random effects according to alpha.random or not. The default is TRUE
 }
 
 \item{alpha.random}{
@@ -100,6 +117,15 @@ system.time(res_paral <- sensmixed(names(TVbo)[5:ncol(TVbo)],
 Prod_effects=c("TVset", "Picture"), replication="Repeat", 
 individual="Assessor", data=TVbo, error_structure="3-WAY"))
 
+
+## run MAManalysis function
+res <- sensmixed(c("Coloursaturation", "Colourbalance"),
+                 Prod_effects=c("TVset"), replication="Repeat", 
+                  individual="Assessor", data=TVbo, MAM_PER=TRUE)
+## print is not yet implemented
+## get anova part
+res[[3]][,,1]
+
 \dontrun{
 #plot F and Chi square values
 #plot(result)
@@ -111,5 +137,8 @@ Prod_effects=c("TVset", "Picture"),
 replication="Repeat", individual="Assessor", data=TVbo)
 
 plot(result)
+
+
+
 }
 }

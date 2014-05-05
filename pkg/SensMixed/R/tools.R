@@ -4,13 +4,37 @@ isbalanced <- function(data)
   suppressWarnings(!is.list(replications(~ . , data)))
 }
 
+runMAM <- function(data, Prod_effects, individual, attributes, adjustedMAM=FALSE, alpha_conditionalMAM=1){
+  if(length(attributes) < 2)
+    stop("number of attributes for MAM should be more than 1")
+  if(length(Prod_effects) > 1)
+    stop("should be one-way product structure")  
+  dataMAM <- data[, c(individual, Prod_effects)]
+  dataMAM$replication <- rep(0, nrow(data))
+  dataMAM[, 1] <- as.factor(dataMAM[, 1])
+  dataMAM[, 2] <- as.factor(dataMAM[, 2])
+  if(nlevels(dataMAM[, 2]) < 3)
+    stop("There MUST be at least 3 products")
+  ## create a rep factor
+  assprod <- interaction(dataMAM[, 1], dataMAM[, 2])
+  t <- table(assprod)
+  if(length(unique(t))!=1)
+    stop("data is unbalanced")
+  for(i in 1:length(names(t)))
+    dataMAM$replication[assprod==names(t)[i]] <- 1:unique(t)
+  dataMAM <- cbind(dataMAM, data[, attributes])
+  return(MAManalysis(dataMAM, adjustedMAM, alpha_conditionalMAM))
+}
+
+
 ### function checks  if there are zero cells in a factor term
 checkZeroCell <- function(data, factors)
 {
   t <- table(data[, match(factors, names(data))])
   if(length(which(t==0))>0)
   {
-    message(paste("Some of the combinations of ", paste(factors,collapse=":"), " has no data, therefore this combination will not be part of the initial model"))
+    message(paste("Some of the combinations of ", paste(factors,collapse=":"), 
+                  " has no data, therefore this combination will not be part of the initial model"))
     cat("\n")
     return(TRUE)
   }
@@ -100,12 +124,19 @@ createLMERmodel <- function(structure, data, response, fixed, random, corr, MAM=
     
     ## for anova
     fm <- paste(mf.final)
-    fm[3] <- paste(fm[3], paste(random$individual, "x", sep=":"), sep=" + ")
+    if(is.list(random))
+      fm[3] <- paste(fm[3], paste(random$individual, "x", sep=":"), sep=" + ")
+    else
+      fm[3] <- paste(fm[3], paste(random, "x", sep=":"), sep=" + ")
     fo.anova <- as.formula(paste(fm[2], fm[1], fm[3], sep=""))    
     ## for lsmeans
     fm.lsm <- paste(mf.final.lsm)
-    fm.lsm[3] <- paste(fm.lsm[3],  paste(random$individual, "x", sep=":"),
+    if(is.list(random))
+      fm.lsm[3] <- paste(fm.lsm[3],  paste(random$individual, "x", sep=":"),
                        "x", sep=" + ")
+    else
+      fm.lsm[3] <- paste(fm.lsm[3],  paste(random, "x", sep=":"),
+                         "x", sep=" + ")
     fo.lsm <- as.formula(paste(fm.lsm[2], fm.lsm[1], fm.lsm[3], sep=""))    
     
     ## create models for anova and lsmeans
