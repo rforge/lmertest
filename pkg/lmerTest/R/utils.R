@@ -452,7 +452,7 @@ initAnovaTable <- function(model, test.terms, isFixReduce)
     {
       anova.table <- c(anova.table[,1:5], 0, anova.table[,6])
       anova.table <- matrix(anova.table, nrow=1, ncol=length(anova.table))
-      colnames(anova.table) <- c("Sum Sq", "Mean Sq", "NumDF", "DenDF", "F.value", "elim.num"," Pr(>F)")
+      colnames(anova.table) <- c("Sum Sq", "Mean Sq", "NumDF", "DenDF", "F.value", "elim.num","Pr(>F)")
       rownames(anova.table) <- rownames(anm)
       return(anova.table)
     }

@@ -100,12 +100,12 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3,
   result$corr.intsl <- checkCorr(model)  
   
   
- 
-  if(isRand || isTotal)
-  {
-    result.rand <- elimZeroVarOrCorr(model, data, l.lmerTest.private.contrast)
-    model <- result.rand$model      
-  }    
+ ## removed as elimRandEffs may do the same as elimZeroVarOrCorr, so no need
+  #if(isRand || isTotal)
+ # {
+ #   result.rand <- elimZeroVarOrCorr(model, data, l.lmerTest.private.contrast)
+ #   model <- result.rand$model      
+ # }    
   
   
   #save results for fixed effects for model with only fixed effects
