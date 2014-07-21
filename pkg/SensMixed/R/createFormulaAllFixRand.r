@@ -1,7 +1,8 @@
 
 
 #create formula with all random and fixed effects and their interactions
-createFormulaAllFixRand  <-  function(structure, data, response, fixed, random, corr)
+createFormulaAllFixRand  <-  function(structure, data, response, fixed,
+                                      random, corr)
 {
    
    f1 <- function(x){
@@ -77,13 +78,20 @@ createFormulaAllFixRand  <-  function(structure, data, response, fixed, random, 
                    if(is.cov.present)
                    {
                      if(corr)
-                       formula1 <- paste(formula1,"+", "(1+",formula.covs,"|",eff.fix.rand,":",eff.rand,")",sep="")
+                       formula1 <- paste(formula1,"+", "(1+",formula.covs,"|",
+                                         eff.fix.rand,":",eff.rand,")",sep="")
                      else
-                       formula1 <- paste(formula1,"+", paste(lapply(covs, function(x) paste("(0+",x,"|",eff.fix.rand,":",eff.rand,")",sep="")),collapse="+"))
+                       formula1 <- paste(formula1,"+", 
+                                         paste(lapply(covs, function(x) 
+                                           paste("(0+",x,"|",eff.fix.rand,":",eff.rand,")",
+                                                 sep="")),
+                                           collapse="+"))
                      
                    }                      
                    if(!is.cov.present || !corr)
-                      formula1 <- paste(formula1,"+", "(1|",eff.fix.rand,":",eff.rand,")",sep="")
+                      formula1 <- paste(formula1,"+", 
+                                        "(1|",eff.fix.rand,":",eff.rand,")",
+                                        sep="")
                  }
                     
                }
@@ -116,9 +124,11 @@ createFormulaAllFixRand  <-  function(structure, data, response, fixed, random, 
           if(is.cov.present)
           {
             if(corr)
-              formula1 <- paste(formula1,"+", "(1+",formula.covs,"|",eff.rand,")",sep="")
+              formula1 <- paste(formula1,"+", 
+                                "(1+",formula.covs,"|",eff.rand,")",sep="")
             else
-              formula1 <- paste(formula1,"+", paste(lapply(covs, function(x) paste("(0+",x,"|",eff.rand,")",sep="")),collapse="+"))
+              formula1 <- paste(formula1,"+", paste(lapply(covs, function(x) 
+                paste("(0+",x,"|",eff.rand,")",sep="")),collapse="+"))
            }            
           if(!is.cov.present || !corr)
             formula1 <- paste(formula1,"+", "(1|",eff.rand,")",sep="")

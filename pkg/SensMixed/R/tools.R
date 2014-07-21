@@ -4,7 +4,8 @@ isbalanced <- function(data)
   suppressWarnings(!is.list(replications(~ . , data)))
 }
 
-runMAM <- function(data, Prod_effects, individual, attributes, adjustedMAM=FALSE, alpha_conditionalMAM=1){
+runMAM <- function(data, Prod_effects, individual, attributes, adjustedMAM=FALSE, 
+                   alpha_conditionalMAM=1){
   if(length(attributes) < 2)
     stop("number of attributes for MAM should be more than 1")
   if(length(Prod_effects) > 1)
@@ -42,7 +43,8 @@ checkZeroCell <- function(data, factors)
   return(FALSE)
 }
 
-### checks if the number of levels for an interaction term is equal to number of observations
+## checks if the number of levels for an interaction term 
+## is equal to number of observations
 checkNumberInteract <- function(data, factors)
 {
   ## returns TRUE if number of levels is equal to nrow of data
@@ -61,7 +63,9 @@ checkNumberInteract <- function(data, factors)
       warning.str <- c(warning.str," interaction ", sep=" ")
     #for(i in length(factors))
     #    warning.str <- paste(warning.str, factors[i],sep=" ")  
-    warning.str <- c(warning.str, paste(factors,collapse=":"), " is more or equal to the number of observations in data", sep=" ")    
+    warning.str <- c(warning.str, paste(factors,collapse=":"), 
+                     " is more or equal to the number of observations in data", 
+                     sep=" ")    
     message(warning.str)
     cat("\n")
     return(TRUE)
@@ -83,8 +87,10 @@ convertToFactors <- function(data, facs)
 fixedFormula <- function(fmodel)
 {
   terms.fm <- attr(terms.formula(fmodel),"term.labels")
-  ind.rand.terms <- which(unlist(lapply(terms.fm,function(x) substring.location(x, "|")$first))!=0)
-  terms.fm[ind.rand.terms] <- unlist(lapply(terms.fm[ind.rand.terms],function(x) paste("(",x,")",sep="")))
+  ind.rand.terms <- which(unlist(lapply(terms.fm,
+                                        function(x) substring.location(x, "|")$first))!=0)
+  terms.fm[ind.rand.terms] <- unlist(lapply(terms.fm[ind.rand.terms],
+                                            function(x) paste("(",x,")",sep="")))
   fm <- paste(fmodel)
   fm[3] <- paste(terms.fm[-ind.rand.terms],collapse=" + ")
   if(fm[3]=="")
@@ -95,15 +101,19 @@ fixedFormula <- function(fmodel)
 }
 
 ### Create an lmer model
-createLMERmodel <- function(structure, data, response, fixed, random, corr, MAM=FALSE)
+createLMERmodel <- function(structure, data, response, fixed, random, corr, 
+                            MAM=FALSE, mult.scaling = FALSE, 
+                            calc_post_hoc = FALSE)
 { 
   
   #construct formula for lmer model    
-  mf.final <- createFormulaAllFixRand(structure, data, response, fixed, random, corr)    
+  mf.final <- createFormulaAllFixRand(structure, data, response, fixed, random, 
+                                      corr)    
   ## if MAM needs to be contructed
   if(MAM){
     if(length(fixed$Product)>1){
-      data$prod <- interaction(data[, fixed$Product[1]], data[, fixed$Product[2]])
+      data$prod <- interaction(data[, fixed$Product[1]], 
+                               data[, fixed$Product[2]])
       mf.final.lsm <- createFormulaAllFixRand(structure, data, response, 
                                               list(Product="prod", 
                                                    Consumer=fixed$Consumer), 
@@ -114,7 +124,16 @@ createLMERmodel <- function(structure, data, response, fixed, random, corr, MAM=
     
     ## create formulas for anova and lsmeans   
     ############################################################################
+   
+    
     ff <- fixedFormula(mf.final)
+    if(length(fixed$Product)>1 && mult.scaling){
+      prods <- paste("x", fixed$Product, sep="")
+      data[, prods] <- lapply(paste(ff[2], ff[1], fixed$Product), 
+                                function(formulas)  
+                                scale(predict(lm(as.formula(formulas), 
+                                                 data=data)), scale=FALSE) )
+    }
     
     # create x out of predicted values from lm
     data$x <- rep(NA, nrow(data))
@@ -124,11 +143,22 @@ createLMERmodel <- function(structure, data, response, fixed, random, corr, MAM=
     
     ## for anova
     fm <- paste(mf.final)
-    if(is.list(random))
-      fm[3] <- paste(fm[3], paste(random$individual, "x", sep=":"), sep=" + ")
-    else
-      fm[3] <- paste(fm[3], paste(random, "x", sep=":"), sep=" + ")
+    if(is.list(random)){
+      if(length(fixed$Product)>1 && mult.scaling)
+        fm[3] <- paste(fm[3], paste(random$individual, prods, sep=":", 
+                                    collapse=" + "), sep =" + ")
+      else
+        fm[3] <- paste(fm[3], paste(random$individual, "x", sep=":"), sep=" + ")
+    }
+    else{
+      if(length(fixed$Product)>1 && mult.scaling)
+        fm[3] <- paste(fm[3], paste(random, prods, sep=":", 
+                                    collapse=" + "), sep =" + ")
+      else
+        fm[3] <- paste(fm[3], paste(random, "x", sep=":"), sep=" + ")      
+    }
     fo.anova <- as.formula(paste(fm[2], fm[1], fm[3], sep=""))    
+    
     ## for lsmeans
     fm.lsm <- paste(mf.final.lsm)
     if(is.list(random))
@@ -162,8 +192,11 @@ createLMERmodel <- function(structure, data, response, fixed, random, corr, MAM=
     }   
     
     ## model for lsmeans
-    model.lsmeans <- lmerTest::lmer(fo.lsm, data, contrasts=l)
-    return(list(model.anova=model.anova, model.lsmeans=model.lsmeans))
+    if(calc_post_hoc){
+      model.lsmeans <- lmerTest::lmer(fo.lsm, data, contrasts=l)
+      return(list(model.anova=model.anova, model.lsmeans=model.lsmeans))
+    }
+    else return(list(model.anova=model.anova))
     #summaryBy(Coloursaturation ~ prod , data)
     #st.lsmeans <- step(model.lsmeans, lsmeans.calc=FALSE, difflsmeans.calc=FALSE, reduce.fixed=FALSE)
     #newm <- lmerTest::lmer(formula(st.lsmeans$model), data=data, contrasts=l)
@@ -195,6 +228,7 @@ createLMERmodel <- function(structure, data, response, fixed, random, corr, MAM=
   return(model)
 }
 
+
 # check an interaction term for validity
 checkComb <- function(data, factors)
 {
@@ -215,4 +249,472 @@ checkComb <- function(data, factors)
 {
   pvalue[rownames(x$anova.table),x$response] <- x$anova.table[,6]
   pvalue
+}
+
+.renameScalingTerm <- function(tableWithScaling, Prod_effects){
+#   if(length(Prod_effects)>1){    
+#     xprods <- paste("x", Prod_effects, sep="") 
+#     for(indProd in 1:length(xprods)){
+#       rownames(tableWithScaling)[unlist(lapply(rownames(tableWithScaling), 
+#                                           function(x) 
+#                                             grepl(xprods[indProd], x)))] <-
+#         paste("Scaling", substring(xprods[indProd], 2, nchar(xprods[indProd])),
+#               sep=" ")
+#     }
+#   }
+#   else
+    rownames(tableWithScaling)[unlist(lapply(rownames(tableWithScaling), 
+                                        function(x) grepl(":x", x)))] <- 
+    "Scaling"
+  tableWithScaling
+}
+
+## step function for NO MAM
+.stepAllAttrNoMAM <- function(new.resp.private.sensmixed, 
+                              model = model,
+                              reduce.random = reduce.random, 
+                              alpha.random = alpha.random, 
+                              alpha.fixed = alpha.fixed, 
+                              calc_post_hoc = calc_post_hoc){
+  assign("new.resp.private.sensmixed", new.resp.private.sensmixed, 
+         envir=environment(formula(model)))
+  suppressMessages(m <- refit(object=model, newresp = new.resp.private.sensmixed, 
+             rename.response = TRUE))
+  suppressMessages(s <- step(m, reduce.fixed = FALSE, 
+                             reduce.random = reduce.random, 
+                             alpha.random = alpha.random, 
+                             alpha.fixed = alpha.fixed, 
+                             lsmeans.calc=FALSE,
+                             difflsmeans.calc = calc_post_hoc))
+  s
+}
+
+## step function for MAM
+.stepAllAttrMAM <- function(attr, product_structure, error_structure,
+                            data, Prod_effects, random,
+                            reduce.random = reduce.random, 
+                            alpha.random = alpha.random, 
+                            alpha.fixed = alpha.fixed, 
+                            mult.scaling = mult.scaling, 
+                            calc_post_hoc = calc_post_hoc){
+  model.init <- suppressMessages(createLMERmodel(structure = 
+                                  list(product_structure = product_structure, 
+                                       error_structure = error_structure), 
+                                  data = data, response = attr,
+                                  fixed = list(Product = Prod_effects, 
+                                             Consumer=NULL),
+                                random = random, corr = FALSE, MAM = TRUE,
+                                mult.scaling = mult.scaling, 
+                                calc_post_hoc = calc_post_hoc))
+  model.an <- model.init$model.anova
+  model.lsm <- model.init$model.lsmeans
+  
+
+  st <- suppressMessages(step(model.an, fixed.calc = FALSE))
+  rand.table <- st$rand.table
+  
+  if(reduce.random){
+    anova.table <- suppressMessages(anova(as(st$model, "merModLmerTest"), 
+                                          type = 1))
+    if(length(which(anova.table[, "Pr(>F)"] == "NaN") > 0))
+       anova.table <- suppressMessages(anova(as(st$model, "merModLmerTest"), 
+                                             type = 1, ddf="Kenward-Roger")) 
+  }
+  else{
+    anova.table <- suppressMessages(anova(model.an, type = 1))
+    if(length(which(anova.table[, "Pr(>F)"] == "NaN") > 0))
+       anova.table <- suppressMessages(anova(as(model.an, "merModLmerTest"), 
+                                             type = 1, ddf="Kenward-Roger")) 
+  }
+  anova.table <- .renameScalingTerm(anova.table, Prod_effects) 
+ 
+  if(calc_post_hoc){
+    if(length(Prod_effects) > 1)
+      lsmeans.table <- lsmeans::lsmeans( model.lsm, pairwise ~ prod)
+    else 
+      lsmeans.table <-  eval(substitute(lsmeans::lsmeans(object=model.lsm, 
+                                                         pairwise ~ prod), 
+                                        list(prod=as.name(Prod_effects)))) 
+    return(list(anova.table=anova.table, rand.table=rand.table,
+                lsmeans.table=lsmeans.table)) 
+  }
+ 
+  return(list(anova.table=anova.table, rand.table=rand.table)) 
+}
+
+calc.cols <- function(x)
+{
+  if(x<0.001) 
+    return("red") 
+  if(x<0.01) 
+    return("orange") 
+  if(x<0.05) 
+    return("yellow") 
+  return("grey")
+}
+
+
+
+## UNUSED function
+.plotFixedPartsSensmixed <- function(Fval, pvalueF, cex=2, interact.symbol){
+    #x11()
+    #plot.new()
+   # layout(matrix(c(rep(2,2),3,rep(2,2),3,rep(2,2),3, rep(1,2),3), 4, 3, 
+   #               byrow = TRUE))
+    layout(matrix(c(rep(2,2),3,rep(2,2),3,rep(2,2),3, rep(1,2),3), 4, 3, 
+                  byrow = TRUE), 
+           heights=c(0.4, 1 , 1.4), widths = c(2,2,4.3))
+    
+    #Fval <- resSensMixed$fixed$Fval
+    #pvalueF <- resSensMixed$fixed$pvalueF
+    
+    #### plots for F value
+    cex.gr <- cex
+    names.fixed <- rownames(Fval)# [inds.fixed]
+    if(!interact.symbol==":"){        
+      names.fixed <- sapply(names.fixed, change.inter.symbol, interact.symbol)
+    }
+    
+    ylim <- c(0, max(sqrt(Fval)) + 0.5)
+    
+    names.fixed.effs <- LETTERS[1:nrow(Fval)]
+    names.fixed.effs.legend <- paste(names.fixed.effs, collapse="")
+    #plot(x=bp1[1,], y=rep(1,15), type="n", axes=F, xlab="", ylab="")
+    plot.new()
+    #else if (is.matrix(FChi.fvalue))
+    #  ylim <- c(0, max(apply(FChi.fvalue,2,sum)))
+    for(i in 1:ncol(Fval))
+    {
+      
+      fvals <- matrix(0, nrow(Fval), ncol(Fval))
+      fvals[,i] <- sqrt(Fval[,i])
+      
+      
+      if(i == ncol(Fval))
+      {
+        if(length(colnames(Fval)) > 10)
+          cex.names <- cex - 0.2
+        else
+          cex.names <- cex
+        bp <- barplot(fvals, col= unlist(lapply(pvalueF[,i], calc.cols)), 
+                      ylim=ylim, las=2, main=expression(paste("Barplot for ",
+                                                              sqrt(F), 
+                                                              " values"
+                      )), names.arg =
+                        colnames(Fval), las=2, cex.names=cex.names, beside=TRUE, 
+                      add=TRUE, xpd=FALSE, cex.main=cex, cex.axis=cex)       
+        #text(x=bp, y=rep(0.5, ncol(Fval)), names.fixed.effs, font=1, cex=cex)
+        if(sqrt(max(Fval)) > 8)
+          text(x=bp, y=sqrt(Fval)+0.3, names.fixed.effs, font=1, cex=cex)
+        else
+          text(x=bp, y=sqrt(Fval)+0.15, names.fixed.effs, font=1, cex=cex)
+        
+        plot.new()        
+        legend("right", names.fixed, pch=names.fixed.effs.legend,  
+               bty="n", pt.lwd=cex, pt.cex=cex, text.font=1, cex=cex)
+        legend("topright", c("ns","p < 0.05", "p < 0.01", "p < 0.001"), pch=15, 
+               col=c("grey","yellow","orange","red"), title="Significance", 
+               bty="n", cex=cex, text.font=1)
+      }
+      else{
+        if(i==1)
+          barplot(fvals, col=unlist(lapply(pvalueF[,i], calc.cols)), 
+                  ylim=ylim, axes=FALSE, las=2, cex.names=cex, 
+                  beside=TRUE)    
+        else
+          barplot(fvals, col=unlist(lapply(pvalueF[,i], calc.cols)), 
+                  ylim=ylim, axes=FALSE, las=2, cex.names=cex, 
+                  beside=TRUE, add=TRUE)          
+      }       
+      if(i < ncol(Fval))
+        par(new=TRUE)
+    }
+
+} 
+
+change.inter.symbol <- function(x, interact.symbol){
+  if(grepl(":", x)){
+    symb.loc <- substring.location(x, ":")
+    spl.effs <- strsplit(x,":")[[1]]
+    x <- paste(spl.effs, collapse=interact.symbol)
+    return(x)
+  }
+  x
+}
+
+.changeOutput <- function(vals, pvals, isRand){
+  colnames.out <- rownames(vals)
+  names <- colnames(vals)
+  tr <- vector("list", length(colnames.out))
+  
+  for(i in 1:length(colnames.out)){       
+    tr[[i]] <- createTexreg(
+      coef.names = names, se=vals[i,],
+      coef = vals[i,],
+      pvalues = pvals[i,], isRand=isRand)
+  }
+    
+  names(tr) <- colnames.out
+  return(tr)
+}
+# 
+# .convertOutputToMatrix <- function(result){
+#   resSensMixed$random
+#   Chi <- matrix(0, nrow = length(result), ncol = nrow(result[[1]]))
+# }
+
+.plotBars <- function(val, pval, title, plotLegend = TRUE, plotLetters = TRUE, 
+                      reduceNames = TRUE, cex = 2, cex.main = 2, 
+                      ylim = ylim, 
+                      names.effs = NULL, 
+                      names.effs.legend = NULL){
+  if(reduceNames)
+    names.arg <- sapply(colnames(val), 
+                        function(x) paste(substring(x,1,7),"..", sep=""))
+  else
+    names.arg <- colnames(val)
+  if(plotLegend)
+    cex.names <- cex
+  else
+    cex.names <- cex - 0.7
+  for(i in 1:ncol(val))
+  {
+    vals <- matrix(0, nrow(val), ncol(pval))
+    vals[,i] <- val[,i]      
+    if(i == ncol(val)){
+      if(length(colnames(val)) > 10)
+        cex.names <- cex.names - 0.2
+      else
+        cex.names <- cex.names
+      bp <- barplot(vals, col = unlist(lapply(pval[,i], calc.cols)), 
+                    ylim=ylim, las = 2, 
+                    main = title,
+                    names.arg = names.arg, las = 2,
+                    cex.names = cex.names, beside = TRUE, add = TRUE, 
+                    xpd = FALSE, cex.main = cex.main, cex.axis = cex - 0.3) 
+      
+      if(plotLetters){
+        if(max(val) > 8)
+          text(x = bp, y = val + 0.3, names.effs, font = 1, cex = cex - 0.3)
+        else
+          text(x = bp, y = val + 0.15, names.effs, font = 1, cex = cex - 0.1)
+      }
+      
+      #text(x=bp, y=rep(0.5, ncol(Chi)), names.rand.effs, font=1, cex=cex)
+      
+      if(plotLegend){
+        plot.new()        
+        legend("right", rownames(val), pch = names.effs.legend,  
+               bty="n", pt.lwd = cex, pt.cex = cex, text.font = 1, 
+               cex = cex - 0.4)
+        legend("topright", c("ns","p < 0.05", "p < 0.01", "p < 0.001"), pch = 15, 
+               col = c("grey","yellow","orange","red"), title = "Significance", 
+               bty = "n", cex = cex, text.font = 1)
+      }      
+      
+    }
+    else{
+      if(i==1)
+        barplot(vals,col = unlist(lapply(pval[,i], calc.cols)),
+                ylim = ylim, axes = FALSE, las = 2, cex.names = cex, 
+                cex.axis = cex, beside = TRUE)    
+      else
+        barplot(vals,col = unlist(lapply(pval[,i], calc.cols)), 
+                ylim = ylim, axes = FALSE, las = 2, cex.names = cex, 
+                cex.axis = cex, beside=TRUE, add=TRUE)         
+      
+    }
+    if(i < ncol(val))
+      par(new = TRUE)
+  }
+}
+
+.plotSensMixed <- function(val, pval, title, mult = FALSE, 
+                           cex = 2,                           
+                           interact.symbol = ":"){
+  ylim <- c(0, max(val) + 0.5)
+  
+  ## change the interaction symbol
+  if(!interact.symbol == ":")      
+    rownames(pval) <- rownames(val) <-  sapply(rownames(val), change.inter.symbol, 
+                           interact.symbol)  
+ 
+  
+  ## multiple plots
+  if(mult==TRUE){
+    neff <- nrow(val)
+    if(neff < 2)
+      layout( matrix(1:2, 1, 2, byrow=TRUE)) 
+    else if(neff < 4)
+      layout(matrix(1:4, 2, 2, byrow=TRUE))            
+    else if(neff < 5)
+      layout(cbind(matrix(1:4, 2, 2, byrow=TRUE), 5:6),
+             heights=c(1, 1))   
+    
+    #mtext('Outer Title', adj=0.5, side=3, outer=TRUE) 
+    #Title("My 'Title' in a strange place", side = 3, line = -21, outer = TRUE)
+   #plot.new()
+    #text(0.5,0.5, title)
+    
+    for(eff in rownames(pval)){
+       .plotBars(val[eff, , drop=FALSE], pval[eff, , drop=FALSE], 
+                 title = eff, plotLegend = FALSE, 
+                 plotLetters = FALSE, reduceNames = TRUE, cex = cex, 
+                 cex.main = cex - 0.7, ylim = ylim)
+    }
+    plot.new()
+    legend("right", c("ns","p < 0.05", "p < 0.01", "p < 0.001"), pch=15, 
+           col=c("grey","yellow","orange","red"), title="Significance", 
+            bty="n", cex = cex - 0.5, text.font=1)
+    }else{
+        layout(matrix(c(rep(2,2),3,rep(2,2),3,rep(2,2),3, rep(1,2),3), 4, 3, 
+                      byrow = TRUE), 
+               heights=c(0.4, 1 , 1.4), widths = c(2,2,4.3))
+        names.effs <- LETTERS[1:nrow(val)]
+        names.effs.legend <- paste(names.effs, collapse="")
+        
+        plot.new()
+        .plotBars(val, pval, title = title, 
+                  plotLegend = TRUE, plotLetters = TRUE, reduceNames = FALSE, 
+                  cex = cex, cex.main = cex - 0.2, ylim = ylim,
+                  names.effs = names.effs, 
+                  names.effs.legend = names.effs.legend)
+      }
+}
+
+.changeConsmixedOutputForDoc <- function(table, name.pval){  
+  table[, name.pval] <- gsub("<", "&lt ", table[, name.pval])
+  table  
+}
+
+## output for the sensmixed
+.createDocOutputSensmixed <- function(x, file = NA, bold = FALSE, append = TRUE){
+  colnames.out.rand <- rownames(x$rand$Chi)
+  names <- colnames(x$rand$Chi)
+  tr_rand <- vector("list", length(colnames.out.rand))
+  
+  for(i in 1:length(colnames.out.rand)){       
+    tr_rand[[i]] <- createTexreg(
+      coef.names = names, se=x$rand$Chi[i,],
+      coef = x$rand$Chi[i,],
+      pvalues = x$rand$pvalueChi[i,], isRand=TRUE    
+    )     
+  } 
+  
+  
+  ## output for the fixed effects
+  colnames.out.fixed <- rownames(x$fixed$Fval)
+  names <- colnames(x$fixed$Fval)
+  tr <- vector("list", length(colnames.out.fixed))
+  
+  for(i in 1:length(colnames.out.fixed)){       
+    tr[[i]] <- createTexreg(
+      coef.names = names, se=x$fixed$Fval[i,],
+      coef = x$fixed$Fval[i,],
+      pvalues = x$fixed$pvalueF[i,],
+      isRand=FALSE
+    )     
+  }
+  
+  #  wdGet()
+  #  funny<-function(){
+  #    c <- plot(x, mult = TRUE)
+  #    print(c)
+  #  }
+  #  wdPlot(plotfun=funny,method="bitmap", height = 10 , width = 10)
+  #  
+  
+  if(bold)
+    htmlreg(list(lrand = tr_rand, lfixed = tr), 
+            file = file, inline.css = FALSE, 
+            doctype = FALSE, html.tag = FALSE, head.tag = FALSE, 
+            body.tag = FALSE, 
+            , 
+            custom.model.names =list(
+              custom.model.names.rand = colnames.out.rand, 
+              custom.model.names.fixed = colnames.out.fixed), 
+            caption = list(
+              caption.rand="Likelihood ration test for the random effects",
+              caption.fixed="F-test for the fixed effects"), bold=TRUE,
+            stars=numeric(0), append = append)
+  else
+    htmlreg(list(lrand = tr_rand, lfixed = tr), 
+            file = file, inline.css 
+            = FALSE, 
+            doctype = FALSE, html.tag = FALSE, 
+            head.tag = FALSE, body.tag = FALSE, 
+            custom.model.names = 
+              list(custom.model.names.rand = colnames.out.rand,
+                   custom.model.names.fixed = colnames.out.fixed), 
+            caption = 
+              list(caption.rand = "Likelihood ration test for the random effects",
+                   caption.fixed="F-test for the fixed effects"), bold=FALSE,
+            append = append)
+  if(!is.null(x$post_hoc)){
+    #names(x$post_hoc)
+    sink(file = file, append = append)
+    for(i in 1:length(x$post_hoc)){
+      x$post_hoc[[i]][, "p.value"] <- format.pval(x$post_hoc[[i]][,"p.value"],
+                                                  digits=3, eps=1e-3)
+      x$post_hoc[[i]] <- .changeConsmixedOutputForDoc(x$post_hoc[[i]], "p.value")
+      xt.posthoc <- xtable(x$post_hoc[[i]], align="lccccc",
+                           display=c("s","f", "f", "d", "f", "s"))
+      caption(xt.posthoc) <- 
+        paste("Post-hoc for the attribute ", names(x$post_hoc)[i])
+      print(xt.posthoc, caption.placement="top", table.placement="H",
+            sanitize.text.function=function(x){x}, size="\\small", type = "html")
+    }    
+    sink()
+  }
+  
+}
+
+## output for the consmixed
+.createDocOutputConsmixed <- function(x, file = NA, bold = FALSE, append = TRUE){
+  sink(file = file, append = append)
+  
+  ## tests for the random effects
+  x$rand.table[, "p.value"] <- format.pval(x$rand.table[,"p.value"],
+                                           digits=3, eps=1e-3)
+  x$rand.table <- .changeConsmixedOutputForDoc(x$rand.table, "p.value")
+  if("elim.num" %in% colnames(x$rand.table))
+    xt.rand <- xtable(x$rand.table, align="lcccc", 
+                      display=c("s","f","d","s","s"))
+  else
+    xt.rand <- xtable(x$rand.table, align="lccc", 
+                      display=c("s","f","d","s"))
+  caption(xt.rand) <- "Likelihood ratio tests for the random-effects
+  and their order of elimination"
+  print(xt.rand, caption.placement="top", table.placement="H",
+        sanitize.text.function=function(x){x}, size="\\small", type = "html")
+  
+  ## tests for the fixed effects
+  x$anova.table[, "Pr(>F)"] <- format.pval(x$anova.table[,"Pr(>F)"],
+                                           digits=3, eps=1e-3)
+  x$anova.table <- .changeConsmixedOutputForDoc(x$anova.table, "Pr(>F)")
+  if("elim.num" %in% colnames(x$anova.table)) 
+    xt.anova <- xtable(x$anova.table, align="lccccccc",
+                       display=c("s","f", "f", "d", "f", "f", "s", "s"))     
+  else
+    xt.anova <- xtable(x$anova.table, align="lcccccc",
+                       display=c("s","f", "f", "d", "f", "f","s"))
+  caption(xt.anova) <- 
+    "F-tests for the fixed-effects and their order of elimination"
+  
+  
+  print(xt.anova, caption.placement="top", table.placement="H",
+        sanitize.text.function=function(x){x}, size="\\small", type = "html")
+  
+  ## post hoc output
+  x$diffs.lsmeans.table[, "p-value"] <- 
+    format.pval(x$diffs.lsmeans.table[,"p-value"], digits=3, eps=1e-3)
+  x$diffs.lsmeans.table <- 
+    .changeConsmixedOutputForDoc(x$diffs.lsmeans.table, "p-value")    
+  xt.lsmeans <- xtable(x$diffs.lsmeans.table, align="lccccccc",
+                       display=c("s","f", "f", "f", "f", "f","f", "s"))
+  caption(xt.lsmeans) <- 
+    "Differences of Least Squares Means"
+  print(xt.lsmeans, caption.placement="top", table.placement="H",
+        sanitize.text.function=function(x){x}, size="\\small", type = "html")
+  sink()
 }

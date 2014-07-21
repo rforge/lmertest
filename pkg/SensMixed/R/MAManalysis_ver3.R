@@ -9,7 +9,7 @@
 # Preference. 
 #library(doBy)
 
-MAManalysis=function(data,adjustedMAM=TRUE,alpha_conditionalMAM=0.2){
+MAManalysis=function(data, adjustedMAM=TRUE, alpha_conditionalMAM=0.2){
   # data:
   # data should be a data.frame of the following very specific form:  
   # The data MUST have the structure: ass prod rep att1 att2 ....attP
