@@ -129,9 +129,13 @@ print.sensmixed <- function(x, ...)
 #   }    
 }  
 
-plot.sensmixed <- function(x, mult = FALSE, cex = 2,  interact.symbol = ":", ...)
+plot.sensmixed <- function(x, mult = FALSE, sep = FALSE, cex = 2,  
+                           interact.symbol = ":", isFixed = TRUE, 
+                           isRand = TRUE, ...)
 {
-  plotSensMixed(x, mult = mult, cex = cex, interact.symbol = interact.symbol)
+  plotSensMixed(x, mult = mult, sep = sep, cex = cex, 
+                interact.symbol = interact.symbol, isFixed = isFixed, 
+                isRand = isRand)
 }
 
 saveToDoc <- function(x, file = NA, bold = FALSE, append = TRUE)

@@ -181,9 +181,9 @@ sensmixedFun <- function(attributes = NULL, Prod_effects, replication = NULL,
         
         
         if(length(Prod_effects) > 1)
-          lsmeans.table <- lsmeans::lsmeans(model.lsm, pairwise ~ prod)
+          lsmeans.table <- lsmeans::.old.lsmeans(model.lsm, pairwise ~ prod)
         else 
-          lsmeans.table <-  eval(substitute(lsmeans::lsmeans(object = model.lsm, 
+          lsmeans.table <-  eval(substitute(lsmeans::.old.lsmeans(object = model.lsm, 
                                                              pairwise ~ prod), 
                                             list(prod=as.name(Prod_effects))))  
         return(list(anova.table = anova.table, rand.table = rand.table,

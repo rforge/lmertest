@@ -9,7 +9,9 @@ function creates barplots for the  square roots of F statistics and
 square roots of chi square values for all attributes
 }
 \usage{
-\method{plot}{sensmixed} (x, mult = FALSE, cex = 2,  interact.symbol = ":", ...)
+\method{plot}{sensmixed} (x, mult = FALSE, sep = FALSE, 
+                             cex = 2,  interact.symbol = ":", isFixed = TRUE, 
+                             isRand = TRUE, ...)
 }
 
 \arguments{
@@ -20,11 +22,21 @@ object of class sensmixed
 logical. Should multiple plots be plotted, that is barplots 
 for each effect in a separate plot
 }
+\item{sep}{
+logical. If TRUE then separate plot is plotted for each effect 
+(mult argument should be then also TRUE)
+}
 \item{cex}{
 The magnification to be used
 }
 \item{interact.symbol}{
 The symbol to be used for the interaction effects
+}
+\item{isFixed}{
+logical. Whether to plot tests of the fixed effects
+}
+\item{isRand}{
+logical. Whether to plot tests of the random effects
 }
  \item{\dots}{
      other potential arguments.

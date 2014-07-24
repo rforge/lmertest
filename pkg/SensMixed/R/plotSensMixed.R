@@ -2,8 +2,8 @@
 ## Different plots for SensMixed package 
 ###################################################################################################################
 ### plot results
-plotSensMixed <- function(resSensMixed, mult = FALSE, cex = 2, 
-                          interact.symbol = ":")
+plotSensMixed <- function(resSensMixed, mult = FALSE, sep = FALSE, cex = 2, 
+                          interact.symbol = ":", isFixed = TRUE, isRand = TRUE)
 {  
   dens <- function(x)
   {
@@ -42,17 +42,24 @@ plotSensMixed <- function(resSensMixed, mult = FALSE, cex = 2,
  Fval <- sqrt(resSensMixed$fixed$Fval)
  pvalueF <- resSensMixed$fixed$pvalueF  
  if(mult == FALSE){
-   .plotSensMixed(Chi, pvalueChi, title =  expression(paste("Barplot for ", 
+   if(isRand)
+     .plotSensMixed(Chi, pvalueChi, title =  expression(paste("Barplot for ", 
                                                             sqrt(chi^2))), 
-                  mult=FALSE, interact.symbol = interact.symbol, cex = cex)
-   .plotSensMixed(Fval, pvalueF, title = expression(paste("Barplot for ",
-                                                          sqrt(F), 
-                                                          " values")), 
-                  mult=FALSE, interact.symbol = interact.symbol, cex = cex)
+                    mult=FALSE, sep = FALSE, interact.symbol = interact.symbol, 
+                    cex = cex)
+   if(isFixed)
+     .plotSensMixed(Fval, pvalueF, title = expression(paste("Barplot for ",
+                                                            sqrt(F), " values")), 
+                    mult=FALSE, sep = FALSE, interact.symbol = interact.symbol, 
+                    cex = cex)
  }
  else{
-   .plotSensMixed(Chi, pvalueChi, mult=TRUE)
-   .plotSensMixed(Fval, pvalueF, mult=TRUE)
+   if(isRand)
+     .plotSensMixed(Chi, pvalueChi, mult = TRUE, sep = sep,
+                    interact.symbol = interact.symbol, cex = cex)
+   if(isFixed)
+     .plotSensMixed(Fval, pvalueF, mult = TRUE, sep = sep,
+                    interact.symbol = interact.symbol, cex = cex)
  }
    
  

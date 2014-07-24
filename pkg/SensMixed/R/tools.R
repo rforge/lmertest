@@ -188,7 +188,10 @@ createLMERmodel <- function(structure, data, response, fixed, random, corr,
       names(l) <- names(contr)
     }else{
       l <- as.list(rep("contr.sum", 2))
-      names(l) <- c("prod", random$individual)       
+      if(is.list(random))
+        names(l) <- c("prod", random$individual) 
+      else
+        names(l) <- c("prod", random) 
     }   
     
     ## model for lsmeans
@@ -330,9 +333,9 @@ checkComb <- function(data, factors)
  
   if(calc_post_hoc){
     if(length(Prod_effects) > 1)
-      lsmeans.table <- lsmeans::lsmeans( model.lsm, pairwise ~ prod)
+      lsmeans.table <- lsmeans::.old.lsmeans( model.lsm, pairwise ~ prod)
     else 
-      lsmeans.table <-  eval(substitute(lsmeans::lsmeans(object=model.lsm, 
+      lsmeans.table <-  eval(substitute(lsmeans::.old.lsmeans(object=model.lsm, 
                                                          pairwise ~ prod), 
                                         list(prod=as.name(Prod_effects)))) 
     return(list(anova.table=anova.table, rand.table=rand.table,
@@ -529,7 +532,7 @@ change.inter.symbol <- function(x, interact.symbol){
   }
 }
 
-.plotSensMixed <- function(val, pval, title, mult = FALSE, 
+.plotSensMixed <- function(val, pval, title, mult = FALSE, sep = FALSE,
                            cex = 2,                           
                            interact.symbol = ":"){
   ylim <- c(0, max(val) + 0.5)
@@ -541,31 +544,53 @@ change.inter.symbol <- function(x, interact.symbol){
  
   
   ## multiple plots
-  if(mult==TRUE){
+  if(mult){
+    reduceNames <- TRUE
     neff <- nrow(val)
-    if(neff < 2)
-      layout( matrix(1:2, 1, 2, byrow=TRUE)) 
-    else if(neff < 4)
-      layout(matrix(1:4, 2, 2, byrow=TRUE))            
-    else if(neff < 5)
-      layout(cbind(matrix(1:4, 2, 2, byrow=TRUE), 5:6),
-             heights=c(1, 1))   
-    
-    #mtext('Outer Title', adj=0.5, side=3, outer=TRUE) 
-    #Title("My 'Title' in a strange place", side = 3, line = -21, outer = TRUE)
-   #plot.new()
-    #text(0.5,0.5, title)
+    if(sep){
+      layout(matrix(c(rep(2,2),3,rep(2,2),3,rep(2,2),3, rep(1,2),3), 4, 3, 
+                    byrow = TRUE), 
+             heights=c(0.4, 1 , 1.4), widths = c(2,2,4.3))
+      reduceNames <- FALSE
+    }else{
+      if(neff < 2)
+        layout( matrix(1:2, 1, 2, byrow=TRUE)) 
+      else if(neff < 4)
+        layout(matrix(1:4, 2, 2, byrow=TRUE))            
+      else if(neff < 5)
+        layout(cbind(matrix(1:4, 2, 2, byrow=TRUE), 5:6),
+               heights=c(1, 1)) 
+      else if(neff < 7)
+        layout(cbind(matrix(1:6, 3, 2, byrow=TRUE), 7:9))   
+      else if(neff < 10)
+        layout(cbind(matrix(1:9, 3, 3, byrow=TRUE), 10:12))  
+    }
     
     for(eff in rownames(pval)){
-       .plotBars(val[eff, , drop=FALSE], pval[eff, , drop=FALSE], 
-                 title = eff, plotLegend = FALSE, 
-                 plotLetters = FALSE, reduceNames = TRUE, cex = cex, 
-                 cex.main = cex - 0.7, ylim = ylim)
-    }
-    plot.new()
-    legend("right", c("ns","p < 0.05", "p < 0.01", "p < 0.001"), pch=15, 
-           col=c("grey","yellow","orange","red"), title="Significance", 
-            bty="n", cex = cex - 0.5, text.font=1)
+      if(sep){
+        plot.new()
+        .plotBars(val[eff, , drop=FALSE], pval[eff, , drop=FALSE], 
+                  title = eff, plotLegend = FALSE, 
+                  plotLetters = FALSE, reduceNames = reduceNames, cex = cex, 
+                  cex.main = cex - 0.7, ylim = ylim)
+        plot.new()
+        legend("right", c("ns","p < 0.05", "p < 0.01", "p < 0.001"), pch=15, 
+               col=c("grey","yellow","orange","red"), title="Significance", 
+               bty="n", cex = cex - 0.5, text.font=1)
+      }
+      else{
+        .plotBars(val[eff, , drop=FALSE], pval[eff, , drop=FALSE], 
+                  title = eff, plotLegend = FALSE, 
+                  plotLetters = FALSE, reduceNames = reduceNames, cex = cex, 
+                  cex.main = cex - 0.7, ylim = ylim)
+      }      
+     }
+     if(!sep){
+       plot.new()
+       legend("right", c("ns","p < 0.05", "p < 0.01", "p < 0.001"), pch=15, 
+              col=c("grey","yellow","orange","red"), title="Significance", 
+              bty="n", cex = cex - 0.5, text.font=1)
+     }        
     }else{
         layout(matrix(c(rep(2,2),3,rep(2,2),3,rep(2,2),3, rep(1,2),3), 4, 3, 
                       byrow = TRUE), 
