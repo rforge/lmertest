@@ -272,6 +272,176 @@ checkComb <- function(data, factors)
   tableWithScaling
 }
 
+
+###############################################################################
+# get terms contained  - from lmerTest package
+###############################################################################
+getIndTermsContained <- function(allterms, ind.hoi)
+{
+  
+  terms.hoi.split <- strsplit(allterms[ind.hoi],":")
+  ind.terms.contain <- NULL
+  #check which of the terms are contained in the highest order terms
+  for(i in (1:length(allterms))[-ind.hoi]) 
+  {
+    isContained<-FALSE
+    for(j in 1:length(terms.hoi.split))
+    {
+      #if the term is contained in some of the highest order interactions then 
+      #we cannot test it for significance
+      if(length(which(unlist(strsplit(allterms[i],":")) %in% terms.hoi.split[[j]] == FALSE))==0)
+      {
+        isContained <- TRUE
+        break
+      }                
+    }
+    if(isContained)
+      ind.terms.contain <- c(ind.terms.contain,i)
+    
+  }
+  # if there are no terms that are contained in the maximum order effects
+  # then compare all the terms between each other for the maximum p value
+  if( is.null(ind.terms.contain) )
+    return(NULL)
+  return(ind.terms.contain)
+}
+
+###############################################################################
+# get terms contained 
+###############################################################################
+.getIndTermsContained <- function(allterms, ind.hoi)
+{
+  
+  terms.hoi.split <- strsplit(allterms[ind.hoi],":")
+  ind.terms.contain <- NULL
+  #check which of the terms are contained in the highest order terms
+  for(i in (1:length(allterms))[-ind.hoi]) 
+  {
+    isContained<-FALSE
+    for(j in 1:length(terms.hoi.split))
+    {
+      #if the term is contained in some of the highest order interactions then 
+      #we cannot test it for significance
+      if(length(which(unlist(strsplit(allterms[i],":")) %in% terms.hoi.split[[j]] == FALSE))==0)
+      {
+        isContained <- TRUE
+        break
+      }                
+    }
+    if(isContained)
+      ind.terms.contain <- c(ind.terms.contain,i)
+    
+  }
+  # if there are no terms that are contained in the maximum order effects
+  # then compare all the terms between each other for the maximum p value
+  if( is.null(ind.terms.contain) )
+    return(NULL)
+  return(ind.terms.contain)
+}
+
+
+## get the pure lsmeans for an interaction term
+getPureInter <- function(lsm.table, anova.table, eff){
+
+  rows.lsm <- sapply(rownames(lsm.table), 
+                     function(x) strsplit(x, " ")[[1]][1]) 
+  pure.inter.lsm <- lsm.table[which(rows.lsm %in% eff), ]
+  
+  contained.effs <- 
+    rownames(anova.table)[.getIndTermsContained(rownames(anova.table), 
+                                               which(rownames(anova.table) 
+                                                     == eff))]
+  ## deltas for 3 way interactions
+  if( length(unlist(strsplit(eff,":"))) == 3 ){
+    ind.inteffs <- grep(":", contained.effs)
+    ##plust main effs
+    main.effs <- contained.effs[-ind.inteffs]
+    ##minus the interactions
+    contained.effs <- contained.effs[ind.inteffs]
+  }
+
+  p1 <- pure.inter.lsm[ , 1:which(colnames(pure.inter.lsm)=="Estimate") ]
+  for(ceff in contained.effs){
+    p1  <- merge(p1, 
+                 lsm.table[rows.lsm == ceff, 
+                           c(unlist(strsplit(ceff,":")), "Estimate")], 
+                 by = unlist(strsplit(ceff,":")))
+    p1[, "Estimate.x"] <- p1[, "Estimate.x"] - p1[, "Estimate.y"]
+    colnames(p1)[which(colnames(p1) == "Estimate.x")] <- "Estimate"
+    p1 <- p1[ ,- which(colnames(p1) == "Estimate.y")]        
+  }
+  ## plus the main effs
+  if( length(unlist(strsplit(eff,":"))) == 3 ){
+    for(ceff in main.effs){
+      p1  <- merge(p1, 
+                   lsm.table[rows.lsm == ceff, 
+                             c(unlist(strsplit(ceff,":")), "Estimate")], 
+                   by = unlist(strsplit(ceff,":")))
+      p1[, "Estimate.x"] <- p1[, "Estimate.x"] + p1[, "Estimate.y"]
+      colnames(p1)[which(colnames(p1) == "Estimate.x")] <- "Estimate"
+      p1 <- p1[ ,- which(colnames(p1) == "Estimate.y")]        
+    }
+  }
+  p1
+}
+
+## calculate pure diffs
+.calcPureDiffs <- function(pureinter){
+  puredifs <- matrix(0, ncol=nrow(pureinter), nrow = nrow(pureinter))
+  for (i in 1:nrow(pureinter)) for (j in 1:i) 
+    puredifs[i,j] <- pureinter[i, "Estimate"] -  pureinter[j, "Estimate"]  
+  puredifs
+}
+
+## calculate average d prime from the step function
+.calcAvDprime <- function(model, anova.table, dlsm.table, lsm.table){
+  sigma <- summary(model, "lme4")$sigma
+  rows <- sapply(rownames(dlsm.table), 
+                 function(x) strsplit(x, " ")[[1]][1]) 
+  anova.table$dprimeav <- rep(1, nrow(anova.table))
+  
+  for(eff in rownames(anova.table)){
+    #lsm <- lsmeans::.old.lsmeans( model , pairwise ~ Track:SPL:Car)
+    #dp <- lsm[[2]][, 1]/sigma
+    
+    
+    ## for interaction  - 
+    #eff <- attr(terms(model),"term.labels")[3]
+    
+    #lsm <- lsmeans::.old.lsmeans(model,  as.formula(paste("pairwise ~ ", eff)), 
+    #                             lf = TRUE)
+    #fixef()
+    #split.eff  <-  unlist(strsplit(eff,":"))
+    #if( length(split.eff) > 1 ){
+      
+    pureinter <- getPureInter(lsm.table, anova.table, eff)
+    puredifs <- .calcPureDiffs(pureinter) 
+      
+      
+    #all.equal(sum(pure.inter.pairs^2)/(12), sum(puredifs^2)/(12), tol = 1e-4)
+    dp <- puredifs / sigma      
+    av.dp <- sqrt(sum(dp^2)/(nrow(dp)*(nrow(dp)-1)/2))
+    #}
+    #else{
+     # lsm.eff <- getPureInter(lsm.table, eff)
+      
+      #dp <- dlsm.table[which(rows %in% eff), 1] / sigma
+      #av.dp <- sqrt(sum(dp^2)/length(dp))
+      
+    #}
+    anova.table[eff, "dprimeav"] <- av.dp 
+  }
+  anova.table
+  
+  #m.bo <- lme4::lmer(att1 ~ Track*SPL*Car + (1|Assessor) + (1|SPL:Assessor) + 
+  #                     (1|Track:SPL:Assessor) + (1|Car:SPL:Assessor), 
+  #                   data = sound_data_balanced)
+  #lsm <- lsmeans::.old.lsmeans(m.bo,  pairwise ~ Track:SPL:Car, lf = TRUE)
+  #lsm[[1]] %*% fixef(model)
+  #with(sound_data_balanced, tapply(att1, factor(Track:SPL:Car), mean))
+}
+
+
 ## step function for NO MAM
 .stepAllAttrNoMAM <- function(new.resp.private.sensmixed, 
                               model = model,
@@ -283,13 +453,17 @@ checkComb <- function(data, factors)
          envir=environment(formula(model)))
   suppressMessages(m <- refit(object=model, newresp = new.resp.private.sensmixed, 
              rename.response = TRUE))
-  suppressMessages(s <- step(m, reduce.fixed = FALSE, 
+  suppressMessages(st <- step(m, reduce.fixed = FALSE, 
                              reduce.random = reduce.random, 
                              alpha.random = alpha.random, 
                              alpha.fixed = alpha.fixed, 
-                             lsmeans.calc=FALSE,
+                             lsmeans.calc = TRUE,
                              difflsmeans.calc = calc_post_hoc))
-  s
+  
+  if(calc_post_hoc)
+    st$anova.table <- .calcAvDprime(st$model, st$anova.table, 
+                                    st$diffs.lsmeans.table, st$lsmeans.table)    
+  st
 }
 
 ## step function for MAM
@@ -641,6 +815,25 @@ change.inter.symbol <- function(x, interact.symbol){
     )     
   }
   
+  if("scaling" %in% names(x)){
+    ## output for the scaling  effects if presented
+    colnames.out.scaling <- rownames(x$scaling$FScaling)
+    names <- colnames(x$scaling$FScaling)
+    tr_scal <- vector("list", length(colnames.out.scaling))
+    
+    for(i in 1:length(colnames.out.scaling)){       
+      tr_scal[[i]] <- createTexreg(
+        coef.names = names, se=x$scaling$FScaling[i,],
+        coef = x$scaling$FScaling[i,],
+        pvalues = x$scaling$pvalueScaling[i,],
+        isRand=FALSE
+      )     
+    }
+    regres <- list(lrand = tr_rand, lfixed = tr, lscale = tr_scal)
+  }
+  else 
+    regres <- list(lrand = tr_rand, lfixed = tr)
+  
   #  wdGet()
   #  funny<-function(){
   #    c <- plot(x, mult = TRUE)
@@ -650,40 +843,41 @@ change.inter.symbol <- function(x, interact.symbol){
   #  
   
   if(bold)
-    htmlreg(list(lrand = tr_rand, lfixed = tr), 
-            file = file, inline.css = FALSE, 
-            doctype = FALSE, html.tag = FALSE, head.tag = FALSE, 
-            body.tag = FALSE, 
-            , 
-            custom.model.names =list(
-              custom.model.names.rand = colnames.out.rand, 
-              custom.model.names.fixed = colnames.out.fixed), 
-            caption = list(
-              caption.rand="Likelihood ration test for the random effects",
-              caption.fixed="F-test for the fixed effects"), bold=TRUE,
-            stars=numeric(0), append = append)
+    stars <- numeric(0)
   else
-    htmlreg(list(lrand = tr_rand, lfixed = tr), 
-            file = file, inline.css 
-            = FALSE, 
-            doctype = FALSE, html.tag = FALSE, 
-            head.tag = FALSE, body.tag = FALSE, 
-            custom.model.names = 
-              list(custom.model.names.rand = colnames.out.rand,
-                   custom.model.names.fixed = colnames.out.fixed), 
-            caption = 
-              list(caption.rand = "Likelihood ration test for the random effects",
-                   caption.fixed="F-test for the fixed effects"), bold=FALSE,
-            append = append)
+    stars <- c(0.001, 
+               0.01, 0.05)
+
+  htmlreg(regres, 
+          file = file, inline.css = FALSE, 
+          doctype = FALSE, html.tag = FALSE, head.tag = FALSE, 
+          body.tag = FALSE,
+          custom.model.names =list(
+            custom.model.names.rand = colnames.out.rand, 
+            custom.model.names.fixed = colnames.out.fixed), 
+          caption = list(
+            caption.rand="Likelihood ration test for the random effects",
+            caption.fixed="F-test for the fixed effects"), bold=bold,
+          stars=stars, append = append)
+  
+  
   if(!is.null(x$post_hoc)){
+    if("scaling" %in% names(x))
+      name.pval <- "p.value"
+    else
+      name.pval <- "p-value"
     #names(x$post_hoc)
     sink(file = file, append = append)
     for(i in 1:length(x$post_hoc)){
-      x$post_hoc[[i]][, "p.value"] <- format.pval(x$post_hoc[[i]][,"p.value"],
+      x$post_hoc[[i]][,  name.pval] <- format.pval(x$post_hoc[[i]][, name.pval],
                                                   digits=3, eps=1e-3)
-      x$post_hoc[[i]] <- .changeConsmixedOutputForDoc(x$post_hoc[[i]], "p.value")
-      xt.posthoc <- xtable(x$post_hoc[[i]], align="lccccc",
+      x$post_hoc[[i]] <- .changeConsmixedOutputForDoc(x$post_hoc[[i]],  name.pval)
+      if("scaling" %in% names(x))
+        xt.posthoc <- xtable(x$post_hoc[[i]], align="lccccc",
                            display=c("s","f", "f", "d", "f", "s"))
+      else
+        xt.posthoc <- xtable(x$post_hoc[[i]], align="lccccccc",
+                             display=c("s","f", "f", "d", "f", "f", "f", "s"))
       caption(xt.posthoc) <- 
         paste("Post-hoc for the attribute ", names(x$post_hoc)[i])
       print(xt.posthoc, caption.placement="top", table.placement="H",

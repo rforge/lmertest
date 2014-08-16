@@ -3,7 +3,7 @@ sensmixed <- function(attributes=NULL, Prod_effects, replication = NULL,
                       individual, data, product_structure = 3,
                       error_structure = "No_Rep", MAM = FALSE, MAM_PER = FALSE, 
                       adjustedMAM = FALSE, alpha_conditionalMAM = 1, 
-                      calc_post_hoc = FALSE, parallel = TRUE,
+                      calc_post_hoc = TRUE, parallel = TRUE,
                       reduce.random = TRUE, alpha.random = 0.1,
                       alpha.fixed = 0.05, interact.symbol = ":", ...)
 {  
@@ -129,11 +129,11 @@ print.sensmixed <- function(x, ...)
 #   }    
 }  
 
-plot.sensmixed <- function(x, mult = FALSE, sep = FALSE, cex = 2,  
+plot.sensmixed <- function(x, mult = FALSE, dprime = FALSE, sep = FALSE, cex = 2,  
                            interact.symbol = ":", isFixed = TRUE, 
                            isRand = TRUE, ...)
 {
-  plotSensMixed(x, mult = mult, sep = sep, cex = cex, 
+  plotSensMixed(x, mult = mult, dprime = dprime, sep = sep, cex = cex, 
                 interact.symbol = interact.symbol, isFixed = isFixed, 
                 isRand = isRand)
 }

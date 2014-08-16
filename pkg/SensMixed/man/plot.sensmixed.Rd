@@ -9,7 +9,7 @@ function creates barplots for the  square roots of F statistics and
 square roots of chi square values for all attributes
 }
 \usage{
-\method{plot}{sensmixed} (x, mult = FALSE, sep = FALSE, 
+\method{plot}{sensmixed} (x, mult = FALSE, dprime = FALSE, sep = FALSE, 
                              cex = 2,  interact.symbol = ":", isFixed = TRUE, 
                              isRand = TRUE, ...)
 }
@@ -21,6 +21,10 @@ object of class sensmixed
  \item{mult}{
 logical. Should multiple plots be plotted, that is barplots 
 for each effect in a separate plot
+}
+ \item{dprime}{
+logical. Should multiattribute plot for product effects use average squared dprimes 
+instead of square root of F statistics
 }
 \item{sep}{
 logical. If TRUE then separate plot is plotted for each effect 

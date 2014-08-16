@@ -16,7 +16,7 @@ sensmixed(attributes=NULL, Prod_effects, replication = NULL,
                               error_structure ="No_Rep", MAM = FALSE, 
                               MAM_PER = FALSE, adjustedMAM = FALSE, 
                               alpha_conditionalMAM = 1,
-                              calc_post_hoc = FALSE, parallel = TRUE, 
+                              calc_post_hoc = TRUE, parallel = TRUE, 
                               reduce.random=TRUE, alpha.random = 0.1, 
                               alpha.fixed = 0.05, interact.symbol = ":", ...)
 }

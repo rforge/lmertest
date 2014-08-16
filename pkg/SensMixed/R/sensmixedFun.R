@@ -6,7 +6,7 @@ sensmixedFun <- function(attributes = NULL, Prod_effects, replication = NULL,
                          individual, data, product_structure = 3, 
                          error_structure = "No_Rep", 
                          MAM = FALSE, MAM_PER = FALSE, adjustedMAM = FALSE, 
-                         alpha_conditionalMAM = 1, calc_post_hoc = FALSE, 
+                         alpha_conditionalMAM = 1, calc_post_hoc = TRUE, 
                          parallel=TRUE, 
                          reduce.random=TRUE, alpha.random = 0.1, 
                          alpha.fixed = 0.05, interact.symbol = interact.symbol)
@@ -123,6 +123,7 @@ sensmixedFun <- function(attributes = NULL, Prod_effects, replication = NULL,
       alpha.random
       alpha.fixed
       calc_post_hoc
+      summary
      
       function(new.resp.private.sensmixed)
       {
@@ -135,8 +136,25 @@ sensmixedFun <- function(attributes = NULL, Prod_effects, replication = NULL,
                                    reduce.random = reduce.random, 
                                    alpha.random = alpha.random, 
                                    alpha.fixed = alpha.fixed, 
-                                   lsmeans.calc=FALSE,
-                                   difflsmeans.calc = calc_post_hoc))
+                                   lsmeans.calc=TRUE,
+                                   difflsmeans.calc = TRUE))        
+        
+        if(calc_post_hoc){
+#           ## calculate averaged squared d-prime  
+#           sigma <- summary(s$model, "lme4")$sigma
+#           rows <- sapply(rownames(s$diffs.lsmeans.table), 
+#                          function(x) strsplit(x, " ")[[1]][1]) 
+#           s$anova.table$dprimeav <- rep(1, nrow(s$anova.table))
+#           for(eff in rownames(s$anova.table)){
+#             dp <- s$diffs.lsmeans.table[which(rows %in% eff),1]/sigma
+#             av.dp <- sqrt(sum(dp^2)/length(dp))
+#             s$anova.table[eff, "dprimeav"] <- av.dp
+          
+#           }
+          #s$anova.table <- .calcAvDprime(s$model, s$anova.table, 
+         #                                 s$diffs.lsmeans.table, s$lsmeans.table)  
+        }       
+        
         s        
       }})
     funcMAM <- local({
@@ -262,7 +280,12 @@ sensmixedFun <- function(attributes = NULL, Prod_effects, replication = NULL,
                                           "substring.location", "step",
                                           ".renameScalingTerm",
                                           "isLMM",
-                                          "fixef", "anova"),
+                                          "fixef", "anova", 
+                                          ".calcAvDprime",
+                                          "getPureInter",
+                                          ".calcPureDiffs",
+                                          ".getIndTermsContained"
+                                          ),
                                            #"model", "model.lsm", "data" ),
                             envir=environment())
     if(RNGkind()[1L] == "L'Ecuyer-CMRG")
@@ -314,8 +337,11 @@ sensmixedFun <- function(attributes = NULL, Prod_effects, replication = NULL,
       post_hoc <- vector(mode = "list", length = length(res))      
       if(MAM)
         names(post_hoc) <- attributes
-      else
+      else{
         names(post_hoc) <- names(res)
+        ## create d prime output
+        dprimeav <- Fval
+      }
     }
       
     for(i in 1:length(attributes))
@@ -328,7 +354,7 @@ sensmixedFun <- function(attributes = NULL, Prod_effects, replication = NULL,
       if("Residuals" %in% rownames(res[[i]]$anova.table))
         pvalueF[rownames(calc)[-nrow(calc)], i] <- calc[-nrow(calc), 5]
       else
-        pvalueF[rownames(calc), i] <- calc[, 6]
+        pvalueF[rownames(calc), i] <- calc[, "Pr(>F)"]
       
       #fill pvalues for random effects
       calcrand <- res[[i]]$rand.table    
@@ -338,15 +364,17 @@ sensmixedFun <- function(attributes = NULL, Prod_effects, replication = NULL,
       if("Residuals" %in% rownames(res[[i]]$anova.table))
         Fval[rownames(calc)[-nrow(calc)],i] <- calc[-nrow(calc), 4]
       else
-        Fval[rownames(calc),i] <- calc[,5]
+        Fval[rownames(calc),i] <- calc[,"F.value"]
       Chi[rownames(calcrand),i] <- calcrand[,"Chi.sq"] 
       
       ## fill differences of lsmeans
       if(calc_post_hoc){
         if(MAM)
           post_hoc[[i]] <- res[[i]]$lsmeans.table[[2]]
-        else
+        else{
           post_hoc[[i]] <- res[[i]]$diffs.lsmeans.table
+          dprimeav[rownames(calc), i] <- calc[, "dprimeav"]
+        }
       }
     }
     
@@ -398,10 +426,10 @@ sensmixedFun <- function(attributes = NULL, Prod_effects, replication = NULL,
   }
   #tr_fixed <- .changeOutput(Fval, pvalueF, FALSE)
   
-  if(calc_post_hoc)
-    return(list(fixed = list(Fval = Fval, pvalueF = pvalueF), 
-                random = list(Chi = Chi, pvalueChi = pvalueChi), 
-                post_hoc = post_hoc, step_res = res))
+  if(calc_post_hoc)    
+      return(list(fixed = list(Fval = Fval, dprimeav = dprimeav, pvalueF = pvalueF), 
+                  random = list(Chi = Chi, pvalueChi = pvalueChi), 
+                  post_hoc = post_hoc, step_res = res))  
   return(list(fixed = list(Fval = Fval, pvalueF = pvalueF), 
               random = list(Chi = Chi, pvalueChi = pvalueChi), step_res = res))  
 }

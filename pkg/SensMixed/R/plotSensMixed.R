@@ -2,7 +2,7 @@
 ## Different plots for SensMixed package 
 ###################################################################################################################
 ### plot results
-plotSensMixed <- function(resSensMixed, mult = FALSE, sep = FALSE, cex = 2, 
+plotSensMixed <- function(resSensMixed, mult = FALSE, dprime = FALSE, sep = FALSE, cex = 2, 
                           interact.symbol = ":", isFixed = TRUE, isRand = TRUE)
 {  
   dens <- function(x)
@@ -40,27 +40,55 @@ plotSensMixed <- function(resSensMixed, mult = FALSE, sep = FALSE, cex = 2,
  Chi <- sqrt(resSensMixed$random$Chi)
  pvalueChi <- resSensMixed$random$pvalueChi
  Fval <- sqrt(resSensMixed$fixed$Fval)
- pvalueF <- resSensMixed$fixed$pvalueF  
+ pvalueF <- resSensMixed$fixed$pvalueF
+ if("scaling" %in% names(resSensMixed)){
+   FScaling <- sqrt(resSensMixed$scaling$FScaling)
+   pScaling <- resSensMixed$scaling$pvalueScaling
+ }
  if(mult == FALSE){
    if(isRand)
      .plotSensMixed(Chi, pvalueChi, title =  expression(paste("Barplot for ", 
                                                             sqrt(chi^2))), 
                     mult=FALSE, sep = FALSE, interact.symbol = interact.symbol, 
                     cex = cex)
-   if(isFixed)
-     .plotSensMixed(Fval, pvalueF, title = expression(paste("Barplot for ",
+   if(isFixed){
+     if(dprime){
+       if(!"dprimeav" %in% names(resSensMixed$fixed))
+         stop("Averaged d primes are not available")
+       .plotSensMixed(resSensMixed$fixed$dprime, pvalueF, 
+                        title = expression(paste("Barplot for averaged d-primes")), 
+                        mult=FALSE, sep = FALSE, 
+                        interact.symbol = interact.symbol, 
+                        cex = cex)  
+     }
+     else
+       .plotSensMixed(Fval, pvalueF, title = expression(paste("Barplot for ",
                                                             sqrt(F), " values")), 
                     mult=FALSE, sep = FALSE, interact.symbol = interact.symbol, 
-                    cex = cex)
+                    cex = cex)  
+   }
  }
  else{
    if(isRand)
      .plotSensMixed(Chi, pvalueChi, mult = TRUE, sep = sep,
                     interact.symbol = interact.symbol, cex = cex)
-   if(isFixed)
-     .plotSensMixed(Fval, pvalueF, mult = TRUE, sep = sep,
+   if(isFixed){
+     if(dprime){
+       if(!"dprimeav" %in% names(resSensMixed$fixed))
+         stop("Averaged d primes are not available")
+       .plotSensMixed(resSensMixed$fixed$dprime, pvalueF, mult = TRUE, sep = sep,
+                      interact.symbol = interact.symbol, cex = cex)
+     }
+     else
+       .plotSensMixed(Fval, pvalueF, mult = TRUE, sep = sep,
                     interact.symbol = interact.symbol, cex = cex)
+   }
  }
+ if("scaling" %in% names(resSensMixed))
+   .plotSensMixed(FScaling, pScaling, title = expression(paste("Barplot for ",
+                                                               sqrt(F), " values")), 
+                  mult=FALSE, sep = FALSE, interact.symbol = interact.symbol, 
+                  cex = cex)
    
  
 }
