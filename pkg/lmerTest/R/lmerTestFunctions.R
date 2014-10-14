@@ -1,11 +1,13 @@
-totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3, 
+totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3, 
                                   alpha.random = 0.1, alpha.fixed = 0.05, 
                                   reduce.fixed = TRUE, reduce.random = TRUE, 
                                   fixed.calc = TRUE, lsmeans.calc = TRUE, 
-                                  difflsmeans.calc=TRUE,  isTotal=FALSE, 
-                                  isAnova=FALSE, isRand=FALSE, isLSMEANS=FALSE, 
-                                  isDiffLSMEANS=FALSE, isTtest=FALSE, 
-                                  test.effs=NULL, method.grad="simple")
+                                  difflsmeans.calc = TRUE,  isTotal = FALSE, 
+                                  isAnova = FALSE, isRand = FALSE, 
+                                  isLSMEANS = FALSE, 
+                                  isDiffLSMEANS = FALSE, isTtest = FALSE, 
+                                  test.effs = NULL, 
+                                  old = FALSE, cl = NULL)
 {
   #errors in specifying the parameters
   if(!isRand && !(ddf %in% c("Satterthwaite","Kenward-Roger")))
@@ -18,6 +20,20 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3,
     print ('Error: parameter type is wrongly specified')
     stop()
   } 
+  
+  ## check whether to use parallel processes 
+  .is.cluster <- !is.null(cl) && inherits(cl, "cluster")
+#   if(.is.cluster){
+#     clusterExport(cl, c("anova", "substring.location", "substring2", "getME",
+#                         "fmElimRandTerm", "getSlGrParts", "findSlopePart",
+#                         "checkPresRandTerms", "updateModel",
+#                         "fixef", "isGLMM", "isLMM", "makeContrastType3SAS", 
+#                         "relatives", "calcFpvalueSS", "calcSatterthJSS",
+#                         "vcovJSS", "llply", "mygrad", "Vv_to_Cv", "mlist2vec",
+#                         "vec2mlist", "get_clen", "safe_chol"), 
+#                   envir = .GlobalEnv)
+#     clusterSetRNGStream(cl) 
+#   }
   
   data <- model.frame(model) #summary(model,"lme4")@frame 
   
@@ -88,8 +104,8 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3,
   data <- data[complete.cases(data),]
   
   
-    
-  model <- updateModel(model, mf.final, getREML(model), l.lmerTest.private.contrast)
+  ## test TODO: uncomment  
+  #model <- updateModel(model, mf.final, getREML(model), l.lmerTest.private.contrast)
   
    
   
@@ -125,7 +141,8 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3,
     if(isRand)
       reduce.random <- FALSE
     result.rand <- elimRandEffs(model, data, alpha.random, reduce.random, 
-                                l.lmerTest.private.contrast)  
+                                l.lmerTest.private.contrast, .is.cluster, 
+                                cl = cl)  
    
     model <- result.rand$model
     #convert rand table to data frame
@@ -143,9 +160,7 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3,
   }
   
   
-  
-  
-  
+    
   #save results for fixed effects for model with only fixed effects
   if(class(model) == "lm" | class(model) == "gls")
     return(saveResultsFixModel(result, model))
@@ -190,7 +205,7 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3,
           #rho$A <- 2*ginv(h)
           
           tsummary <- calculateTtest(rho, diag(rep(1,length(rho$fixEffs))),
-                                     length(rho$fixEffs), method.grad)
+                                     length(rho$fixEffs))
           result$ttest <- list(df=tsummary[,"df"], tvalue=tsummary[,"t value"], 
                                tpvalue=tsummary[,"p-value"])
         }
@@ -204,46 +219,85 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3,
     
     
     # save lmer outcome in rho environmental variable
-    rho <- rhoInit(model)     
+    if(old)
+      rho <- rhoInit(model)
+    else
+      rho <- rhoInitJSS(model)
+    
+    ###### test
+    #system.time(Dev(rho, rho$param$vec.matr))
+    #mkLmerDevfun(formula = formula(model), data = data)
+    #devianceFunction <- do.call(mkLmerDevfun, lFormula(formula = formula(model), 
+    #                                                   data = data))
+    #system.time(devianceFunction(rho$param$vec.matr[-1])) 
+    #rho <- environment(devianceFunction)
+    #hessian(function(x) devianceFunction(x), rho$param$vec.matr[-1])
+    
+    #plstest <- plsJSS(getME(model, "X"), getME(model, "y"), getME(model, "Zt"), 
+    #                  getME(model, "Lambdat"), getME(model, "Lind"))
+    #system.time(plstest(rho$param$vec.matr))
+    #system.time(h1  <-  hessian(function(x) Dev(rho,x), rho$param$vec.matr))
+    #system.time(h2  <-  hessian(function(x) plstest(x), rho$param$vec.matr))
+    #all.equal(h1, h2)
+    ######
     
     # calculate asymptotic covariance matrix A
-    h  <-  hessian(function(x) Dev(rho,x), rho$param$vec.matr)
-    #h  <-  myhess(function(x) Dev(rho,x), rho$param$vec.matr)
-    ch <- try(chol(h), silent=TRUE)
-    if(inherits(ch, "try-error")) {
-      message("Model is not identifiable...")
-    }
-    rho$A <- 2*chol2inv(ch)
-    
-    eigval <- eigen(h, symmetric=TRUE, only.values=TRUE)$values
-    isposA <- TRUE
-    if(min(eigval) < sqrt(.Machine$double.eps)) ## tol ~ sqrt(.Machine$double.eps)
-      isposA <- FALSE
-    
-    #rho$A  <-  2*solve(h)
-
-    
-    #Check if A is positive-definite
-    #isposA <- all(eigen(rho$A)$values>0)      
-    if(!isposA)
-    {
-      print("Asymptotic covariance matrix A is not positive!")
-      #previous code: return ERROR
-      #print("ERROR: asymptotic covariance matrix A is not positive!")
-      #result$model <- model
-      #TABs <- emptyAnovaLsmeansTAB()
-      #result$anova.table <- TABs$TAB.fixed
-      #result$lsmeans.table <- TABs$TAB.lsmeans
-      #result$diffs.lsmeans.table <- TABs$TAB.lsmeans
-      #return(result)
+    if(!(ddf == "Kenward-Roger" && isAnova)){
+      if(!old){
+        #       plsjss <- plsJSS(getME(model, "X"), getME(model, "y"), getME(model, "Zt"), 
+        #                         getME(model, "Lambdat"), getME(model, "Lind"))
+        #       h  <-  hessian(function(x) plsjss(x), rho$param$vec.matr)
+        dd <- devfun3(model, useSc = TRUE, signames = FALSE, getME(model, "is_REML"))
+        h <- hessian(dd, rho$opt)
+      }
+      else
+        h  <-  hessian(function(x) Dev(rho,x), rho$param$vec.matr)
+      #h  <-  myhess(function(x) Dev(rho,x), rho$param$vec.matr)
+      ch <- try(chol(h), silent=TRUE)
+      if(inherits(ch, "try-error")) {
+        message("Model is not identifiable...")
+      }
+      rho$A <- 2*chol2inv(ch)
+      
+      eigval <- eigen(h, symmetric=TRUE, only.values=TRUE)$values
+      isposA <- TRUE
+      if(min(eigval) < sqrt(.Machine$double.eps)) ## tol ~ sqrt(.Machine$double.eps)
+        isposA <- FALSE
+      
+      #rho$A  <-  2*solve(h)
+      
+      
+      #Check if A is positive-definite
+      #isposA <- all(eigen(rho$A)$values>0)      
+      if(!isposA)
+      {
+        print("Asymptotic covariance matrix A is not positive!")
+        #previous code: return ERROR
+        #print("ERROR: asymptotic covariance matrix A is not positive!")
+        #result$model <- model
+        #TABs <- emptyAnovaLsmeansTAB()
+        #result$anova.table <- TABs$TAB.fixed
+        #result$lsmeans.table <- TABs$TAB.lsmeans
+        #result$diffs.lsmeans.table <- TABs$TAB.lsmeans
+        #return(result)
+      }
+      
+      
     }
     
     
     #calculate ttest and p-values for summary
     if(isTtest)
     {
-      tsummary <- calculateTtest(rho, diag(rep(1,length(rho$fixEffs))), 
-                                 length(rho$fixEffs), method.grad)
+      if(!old){
+        tsummary <- calculateTtestJSS(rho, diag(rep(1,length(rho$fixEffs))), 
+                                   length(rho$fixEffs))
+      }
+      else{
+        tsummary <- calculateTtest(rho, diag(rep(1,length(rho$fixEffs))), 
+                                   length(rho$fixEffs))
+      }
+      
       result$ttest <- list(df=tsummary[, "df"], tvalue=tsummary[, "t value"], 
                            tpvalue=tsummary[, "p-value"])
       return(result)
@@ -256,16 +310,18 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3,
       if(isLSMEANS)
       {
         lsmeans.tab <- calcLSMEANS(model, data, rho, alpha.fixed, 
-                                   test.effs=test.effs, method.grad=method.grad,
-                                   lsmeansORdiff=TRUE, l.lmerTest.private.contrast)
+                                   test.effs=test.effs,
+                                   lsmeansORdiff=TRUE, 
+                                   l.lmerTest.private.contrast, old = old)
         result$lsmeans.table <- lsmeans.tab$summ.data
         result$diffs.lsmeans.table <- NULL
       }
       if(isDiffLSMEANS)
       {
         lsmeans.tab <- calcLSMEANS(model, data, rho, alpha.fixed, 
-                                   test.effs=test.effs, method.grad=method.grad,
-                                   lsmeansORdiff=FALSE, l.lmerTest.private.contrast)
+                                   test.effs=test.effs,
+                                   lsmeansORdiff=FALSE, 
+                                   l.lmerTest.private.contrast, old = old)
         result$diffs.lsmeans.table <- lsmeans.tab$summ.data
         result$lsmeans.table <- NULL
       }
@@ -329,9 +385,34 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3,
     }
  
     #calculate ss F value ddf and p value for each term 
-    resultFpvalueSS <- lapply(test.terms, calcFpvalueMAIN, L=L, X.design=X.design,
-                              fullCoefs=fullCoefs, model=model, rho=rho, ddf=ddf,
-                              method.grad=method.grad, type=type)  
+#    resultFpvalueSS <- lapply(test.terms, calcFpvalueMAIN, L=L, X.design=X.design,
+#                               fullCoefs=fullCoefs, model=model, rho=rho, ddf=ddf,
+#                               method.grad=method.grad, type=type, old = old)
+    
+  
+    if (!.is.cluster){
+      resultFpvalueSS <- llply(test.terms, calcFpvalueMAIN, L=L, X.design=X.design,
+                               fullCoefs=fullCoefs, model=model, rho=rho, ddf=ddf,
+                               type=type, old = old)
+    }
+    #else{
+#       clusterExport(cl, c("fixef", "isGLMM", "isLMM", "makeContrastType3SAS", 
+#                           "relatives", "calcFpvalueSS", "calcSatterthJSS",
+#                           "vcovJSS", "llply", "mygrad", "Vv_to_Cv", "mlist2vec",
+#                           "vec2mlist", "get_clen", "safe_chol"), envir = .GlobalEnv)
+#       clusterSetRNGStream(cl) 
+      #ref <- unlist( clusterCall(cl, fun=.merMod_refDist, largeModel, smallModel, nsim=nsim.cl) )
+     # system.time(resultFpvalueSS <- clusterApply(cl, test.terms, 
+     #                                             fun = calcFpvalueMAIN, L = L, 
+     #                                             X.design = X.design, 
+     #                                             fullCoefs = fullCoefs,
+     #                                             model = model, rho = rho, 
+     #                                             ddf = ddf, 
+     #                                             method.grad = method.grad, 
+     #                                             type = type, jss = jss))       
+      #stopCluster(cl)
+   # }
+    
     #fill anova table
     anova.table <- fillAnovaTable(resultFpvalueSS,  anova.table)
     
@@ -374,9 +455,10 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3,
   #if in step function least squares means of diffs of LSMEANS are required
   if(lsmeans.calc)
   {
-    lsmeans.tab <- calcLSMEANS(model, data, rho, alpha.fixed, test.effs=test.effs,
-                               method.grad=method.grad, lsmeansORdiff=TRUE, 
-                               l.lmerTest.private.contrast)
+    lsmeans.tab <- calcLSMEANS(model, data, rho, alpha.fixed, 
+                               test.effs = test.effs,
+                               lsmeansORdiff = TRUE, 
+                               l.lmerTest.private.contrast, old = old)
     result$lsmeans.table <- lsmeans.tab$summ.data
   }
   else
@@ -385,9 +467,10 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3,
   }
   if(difflsmeans.calc)
   {
-    lsmeans.tab <- calcLSMEANS(model, data, rho, alpha.fixed, test.effs=test.effs, 
-                               method.grad=method.grad, lsmeansORdiff=FALSE, 
-                               l.lmerTest.private.contrast)
+    lsmeans.tab <- calcLSMEANS(model, data, rho, alpha.fixed, 
+                               test.effs = test.effs, 
+                               lsmeansORdiff=FALSE, 
+                               l.lmerTest.private.contrast, old = old)
     result$diffs.lsmeans.table <- lsmeans.tab$summ.data
   }
   else
@@ -395,10 +478,11 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3,
     result$diffs.lsmeans.table <- NULL
   }
   
-  tsummary <- calculateTtest(rho, diag(rep(1,length(rho$fixEffs))), 
-                             length(rho$fixEffs), method.grad)
-  result$ttest <- list(df=tsummary[,"df"], tvalue=tsummary[,"t value"], 
-                       tpvalue=tsummary[,"p-value"])
+  ## TODO: UNCOMMENT? it is in CRAN - ttest for the final model
+#   tsummary <- calculateTtest(rho, diag(rep(1,length(rho$fixEffs))), 
+#                              length(rho$fixEffs), method.grad)
+#   result$ttest <- list(df=tsummary[,"df"], tvalue=tsummary[,"t value"], 
+#                        tpvalue=tsummary[,"p-value"])
   
   #format anova.table and random.table according to elim.num column
   result$anova.table <- formatElimNumTable(result$anova.table) 
@@ -420,7 +504,11 @@ totalAnovaRandLsmeans <- function(model, ddf="Satterthwaite", type = 3,
 }
 
 
-step <- function(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, alpha.fixed = 0.05, reduce.fixed = TRUE, reduce.random = TRUE, fixed.calc=TRUE ,lsmeans.calc=TRUE, difflsmeans.calc=TRUE, test.effs=NULL, method.grad="simple", ...)
+step <- function(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, 
+                 alpha.fixed = 0.05, reduce.fixed = TRUE, reduce.random = TRUE, 
+                 fixed.calc=TRUE ,lsmeans.calc=TRUE, difflsmeans.calc=TRUE, 
+                 test.effs=NULL, old = FALSE, cl = NULL, 
+                 ...)
 {  
   if(!inherits(model, "lmerMod"))
     stop("The model is not linear mixed effects model")
@@ -435,7 +523,7 @@ step <- function(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, alpha.f
                                   difflsmeans.calc = difflsmeans.calc, 
                                   isTotal = TRUE, 
                                   isTtest = FALSE, test.effs = test.effs, 
-                                  method.grad = method.grad)
+                                  old = old, cl = cl)
   class(result) <- "step"
   result
 }
@@ -526,12 +614,13 @@ step <- function(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, alpha.f
  }
  
  
- plot.step <- function(x, ...)
+ plot.step <- function(x, main = NULL, cex = 1.4, ...)
  {
    if(!is.null(x$lsmeans.table) && nrow(x$lsmeans.table)>0)
-     plotLSMEANS(x$lsmeans.table, x$response, "LSMEANS")     
+     plotLSMEANS(x$lsmeans.table, x$response, "LSMEANS", main = main, cex = cex)     
    if(!is.null(x$diffs.lsmeans.table) && nrow(x$diffs.lsmeans.table)>0)
-     plotLSMEANS(x$diffs.lsmeans.table, x$response, "DIFF of LSMEANS")
+     plotLSMEANS(x$diffs.lsmeans.table, x$response, "DIFF of LSMEANS", 
+                 main = main, cex = cex)
  }
 
 # lmer <-
@@ -573,7 +662,8 @@ step <- function(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, alpha.f
 
 
 setMethod("anova", signature(object="merModLmerTest"),
-          function(object, ..., ddf="Satterthwaite", type=3, method.grad="simple")  
+          function(object, ..., ddf="Satterthwaite", type=3, 
+                   old = FALSE, cl = NULL)  
           {
             
             mCall <- match.call(expand.dots = TRUE)
@@ -593,11 +683,13 @@ setMethod("anova", signature(object="merModLmerTest"),
                   table <- cnm          
                   
                   an.table <- tryCatch({totalAnovaRandLsmeans(model=object, 
-                                                              ddf=ddf, type=type,
+                                                              ddf=ddf, 
+                                                              type=type,
                                                               isAnova=TRUE, 
                                                               reduce.random=FALSE,
                                                               reduce.fixed=FALSE, 
-                                                              method.grad=method.grad)$anova.table}, error = function(e) { NULL })
+                                                              old = old, cl=cl)$anova.table}
+                                       , error = function(e) { NULL })
                   if(!is.null(an.table))
                   {
                     table <- an.table
@@ -629,14 +721,14 @@ setMethod("anova", signature(object="merModLmerTest"),
           })
 
 setMethod("summary", signature(object = "merModLmerTest"),
-          function(object, ddf="Satterthwaite", ...)
+          function(object, ddf="Satterthwaite", old = FALSE, ...)
           {
             
             cl <- callNextMethod()
             if(!is.null(ddf) && ddf=="lme4") return(cl)
             else
             {
-              tsum <- tryCatch( {totalAnovaRandLsmeans(model=object, ddf="Satterthwaite", isTtest=TRUE)$ttest}, error = function(e) { NULL })
+              tsum <- tryCatch( {totalAnovaRandLsmeans(model=object, ddf="Satterthwaite", isTtest=TRUE, old = old)$ttest}, error = function(e) { NULL })
               if(is.null(tsum)){
                 message("summary from lme4 is returned\nsome computational error has occurred in lmerTest")
                 return(cl)
@@ -677,14 +769,14 @@ print.rand <- function(x, ...)
 
 
 
-lsmeans <- function(model, test.effs=NULL, method.grad="simple", ...)
+lsmeans <- function(model, test.effs=NULL, old = FALSE,...)
 {
   if(!inherits(model, "lmerMod"))
     stop("The model is not linear mixed effects model")
-  result <- totalAnovaRandLsmeans(model=model, ddf="Satterthwaite", 
-                                  isLSMEANS=TRUE, test.effs=test.effs, 
-                                  reduce.random=FALSE, reduce.fixed=FALSE, 
-                                  method.grad=method.grad)  
+  result <- totalAnovaRandLsmeans(model = model, ddf = "Satterthwaite", 
+                                  isLSMEANS = TRUE, test.effs = test.effs, 
+                                  reduce.random = FALSE, reduce.fixed = FALSE, 
+                                  old = old)  
   res <- list(lsmeans.table=result$lsmeans.table, response=result$response)
   class(res) <- "lsmeans"
   res 
@@ -700,23 +792,25 @@ print.lsmeans <- function(x, ...)
                P.values=TRUE, has.Pvalue=TRUE)       
 }
 
-plot.lsmeans <- function(x, ...)
+plot.lsmeans <- function(x, main = NULL, cex = 1.4, ...)
 {
   
   #plots for LSMEANS
   if(!is.null(x$lsmeans.table) && nrow(x$lsmeans.table)>0)
-    plotLSMEANS(x$lsmeans.table, x$response, "LSMEANS")     
+    plotLSMEANS(x$lsmeans.table, x$response, "LSMEANS", main = main, cex = cex)     
 }
 
-difflsmeans <- function(model, test.effs=NULL, method.grad="simple", ...)
+difflsmeans <- function(model, test.effs=NULL, 
+                        old = FALSE, ...)
 {
   if(!inherits(model, "lmerMod"))
     stop("The model is not linear mixed effects model")
-  result <- totalAnovaRandLsmeans(model=model, ddf="Satterthwaite", 
-                                  isDiffLSMEANS=TRUE, test.effs=test.effs, 
-                                  reduce.random=FALSE, reduce.fixed=FALSE, 
-                                  method.grad=method.grad)  
-  res <- list(diffs.lsmeans.table=result$diffs.lsmeans.table, response=result$response)
+  result <- totalAnovaRandLsmeans(model = model, ddf = "Satterthwaite", 
+                                  isDiffLSMEANS = TRUE, test.effs = test.effs, 
+                                  reduce.random = FALSE, reduce.fixed = FALSE, 
+                                  old = old)  
+  res <- list(diffs.lsmeans.table=result$diffs.lsmeans.table, 
+              response=result$response)
   class(res) <- "difflsmeans"
   res 
 }
@@ -732,10 +826,11 @@ print.difflsmeans <- function(x, ...)
   
 }
 
-plot.difflsmeans <- function(x, ...)
+plot.difflsmeans <- function(x, main = NULL, cex = 1.4, ...)
 {
   
   #plots for DIFF of LSMEANS
   if(!is.null(x$diffs.lsmeans.table) && nrow(x$diffs.lsmeans.table)>0)
-    plotLSMEANS(x$diffs.lsmeans.table, x$response, "DIFF of LSMEANS")   
+    plotLSMEANS(x$diffs.lsmeans.table, x$response, "DIFF of LSMEANS", 
+                main = main, cex = cex)   
 }

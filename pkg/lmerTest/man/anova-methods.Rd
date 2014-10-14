@@ -15,13 +15,15 @@ Methods for Function \code{anova} in Package \pkg{lmerTest}
 %\code{\link{anova}}
 %}
 
-\usage{\S4method{anova}{merModLmerTest}(object, \dots , ddf="Satterthwaite", type=3, method.grad="simple")}
+\usage{\S4method{anova}{merModLmerTest}(object, \dots , ddf="Satterthwaite", 
+type=3, old = FALSE, cl = NULL)}
 \arguments{
 \item{object}{object of class "merModLmerTest"}
 \item{\dots}{object of class "merModLmerTest". Then the model comparison statistisc will be calculated}
 \item{ddf}{By default the Satterthwaite's approximation to degrees of freedom is calculated. If ddf="Kenward-Roger", then the Kenward-Roger's approximation is calculated using \code{KRmodcomp} function from \pkg{pbkrtest} package. If ddf="lme4" then the anova table that comes from \pkg{lme4} package is returned.}
 \item{type}{type of hypothesis to be tested. Could be type=3 or type=1 (The definition comes from SAS theory) }
-\item{method.grad}{"simple" is the default one and the fastest one. "Richardson" gives more accurate results. This argument only applies to ddf="Satterthwaite"}
+\item{old}{if TRUE, then uses the old algorithm for calculating deviance and vcov. If FALSE then the C code from lme4 package is called for calculating deviance and vcov}
+\item{cl}{A vector identifying a cluster; is used for parallel computing}
 }
 
 
@@ -41,7 +43,7 @@ Schaalje G.B., McBride J.B., Fellingham G.W. 2002 Adequacy of approximations to 
 library(lmerTest)
 
 m.ham <- lmer(Informed.liking ~ Product*Information*Gender 
-+ (1|Consumer), data=ham)
++ (1|Consumer), data = ham)
 
 # type 3 anova table with  denominator degrees of freedom
 # calculated based on Satterthwaite's approximation
@@ -49,18 +51,24 @@ anova(m.ham)
 
 # type 1 anova table with denominator degrees of freedom
 # calculated based on Satterthwaite's approximation
-anova(m.ham, type=1)
+\dontrun{
+anova(m.ham, type = 1)
+}
 
 # type3 anova table with additional F statistics and denominator degrees of freedom
 # calculated based on Kenward-Roger's approximation
-anova(m.ham, ddf="Kenward-Roger")
+anova(m.ham, ddf = "Kenward-Roger")
 
+\dontrun{
 # anova table, that is returned by lme4 package
-anova(m.ham, ddf="lme4")
+anova(m.ham, ddf = "lme4")
+}
 
 \dontshow{
+\dontrun{
 fm2 <- lmer(Preference ~ sens2 + I(sens1^2)  +
                            (1+sens2|Consumer), data=carrots)
+}
 }
 }
 

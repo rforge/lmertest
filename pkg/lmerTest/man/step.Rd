@@ -10,7 +10,7 @@ performs automatic backward elimination of all effects of linear mixed effect mo
 \usage{
 step(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, alpha.fixed = 0.05, 
 reduce.fixed = TRUE, reduce.random = TRUE, fixed.calc=TRUE, lsmeans.calc=TRUE,
-difflsmeans.calc=TRUE, test.effs=NULL, method.grad="simple",  ...)
+difflsmeans.calc=TRUE, test.effs=NULL, old = FALSE, cl = NULL ,  ...)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -69,9 +69,9 @@ difflsmeans.calc=TRUE, test.effs=NULL, method.grad="simple",  ...)
     charachter vector specifying the names of terms to be tested in LSMEANS. If NULL all the terms are tested. If \code{lsmeans.calc==FALSE} then LSMEANS are not calculated.
 }
 
-\item{method.grad}{
-   approximation method for the grad function, which is used in calculation of denominator degrees of freedom. Could be "simple" or "Richardson". "simple" is the default one.
-}
+\item{old}{if TRUE, then uses the old algorithm for calculating deviance and vcov. If FALSE then the C code from lme4 package is called for calculating deviance and vcov}
+
+\item{cl}{A vector identifying a cluster; is used for parallel computing}
 
 
   \item{\dots}{

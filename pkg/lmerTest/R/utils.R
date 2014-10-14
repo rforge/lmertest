@@ -4,7 +4,8 @@ Dev <- function(rho, vec.matr, nll = FALSE) {
 ### nll: should the negative log-likelihood rather than the deviance
 ### (= 2*nll) be returned?  
   sigma <- vec.matr[[1]]
-  Lambda <- makeLambda(rho, vec.matr) 
+  Lambda <- makeLambda(rho, vec.matr)
+  #Lambdat@x[] <<- theta[Lind] 
   Ut  <-  crossprod(Lambda,rho$Zt)
   L <- Cholesky(tcrossprod(Ut), LDL = FALSE, Imult = 1)
   cu <- solve(L, solve(L, Ut %*% rho$y, sys = "P"), sys = "L")
@@ -57,6 +58,21 @@ Ct.rhbc <- function(rho, vec.matr, Lc) {
   
   vcov <- getVcov(rho, vec.matr)
   return(as.matrix(Lc %*% as.matrix(vcov) %*% t(Lc)))
+}
+
+Ct.JSS <- function(model, Lc, use.lme4 = FALSE, pars = NULL) {
+  ### Returns the [ind, ind] element of the variance-covariance matrix
+  ### of the fixed effects parameters, beta evaluated at the value of
+  ### vec.matr. The gradient of this wrt. vec.matr are needed to estimate the
+  ### Satterthwaite's degrees of freedom for the t-statistic.
+  if(use.lme4)
+    vcov_out <- vcov(model)   
+  else{
+    func.vcov <- vcovJSS(model)
+    #pars <- attr(func.vcov, "optimum")
+    vcov_out <- func.vcov(pars)   
+  }  
+  return(as.matrix(Lc %*% as.matrix(vcov_out) %*% t(Lc)))  
 }
 
 ###########################################################################
@@ -218,16 +234,111 @@ rhoInit <- function(model)
    #check if there are correlations between intercepts and slopes
    rho$corr.intsl <- checkCorr(model)
    
+   #rho$Lambda <- makeLambda(rho, vec.matr) 
+   
    rho$param <- param
    return(rho)
 
+}
+
+##########################################################################
+# Create rho environmental variable of mixed model ####################### 
+##########################################################################
+rhoInitJSS <- function(model)
+{
+  # creating rho
+  rho <- new.env(parent = emptyenv()) # create an empty environment
+  rho$model <- model
+  rho$y <- getY(model) #model@y                   # store arguments and derived values
+  rho$X <- getX(model) #model@X
+  ##chol(rho$XtX <- crossprod(rho$X))       # check for full column rank
+  
+  rho$REML <-  getREML(model)#model@dims['REML']
+  #rho$Zt <- getZt(model)
+  #rho$nlev <- sapply(model@flist, function(x) length(levels(factor(x))))
+  #rho$L <- Cholesky(tcrossprod(rho$Zt), LDL = FALSE, Imult = 1, super = TRUE)
+  #ls.str(rho)
+  
+  # change rho$nlev to suit random coefficients
+  #rf.model <- ranef(model)
+  #rho$nlev <- NULL
+  #nlev.names <- NULL
+#   for(i in 1:length(rf.model))
+#   {   
+#     #nrow(rf.model[[i]])
+#     nlev.names <- c(nlev.names,rep(names(rf.model[i]),ncol(rf.model[[i]])))
+#     rho$nlev <- c(rho$nlev,rep(nrow(rf.model[[i]]),ncol(rf.model[[i]])))    
+#   }
+#   names(rho$nlev) <-   nlev.names 
+  
+  rho$s <- summary(model, ddf="lme4")
+  
+  rho$fixEffs <- fixef(model)
+  rho$sigma <- sigma(model)
+  
+  
+  
+#   #correlation between intercept and slope is present
+#   #put all necessary info about correlation in param variable
+#   param <- NULL
+#   #add std dev to the vector
+#   #param$vec.matr <- as.numeric(rho$s@REmat[nrow(rho$s@REmat),4])
+#   # a new one
+#   param$vec.matr <- attr(VarCorr(model), "sc")
+#   param$vec.num <- NULL
+#   
+#   param$STdim <- NULL
+#   
+#   modelST <- getST(model)
+#   for(i in 1:length(modelST)) 
+#   {
+#     
+#     #correlation between intercept and slope is present
+#     if(nrow(modelST[[i]])>1)
+#     {       
+#       S <- diag(diag(modelST[[i]]))       
+#       T <- modelST[[i]]
+#       T[!lower.tri(modelST[[i]])] <- 0
+#       diag(T) <- 1
+#       lambda1 <- T %*% S
+#       #for one random coefficient
+#       #param$vec.matr <- c(param$vec.matr,as.vector(lambda1)[-3])
+#       #param$vec.num <- c(param$vec.num,rep(i,3))       
+#       # for one random coefficient
+#       #rho$nlev <- rho$nlev[-i]
+#       
+#       # for multiple random coefficients
+#       param$vec.matr <- c(param$vec.matr,lambda1[lower.tri(lambda1, diag=TRUE)])
+#       param$vec.num <- c(param$vec.num,rep(i,length(which(as.vector(lower.tri(lambda1, diag=TRUE))==TRUE))))       
+#       rho$nlev <- rho$nlev[-((i+1):(i+ncol(lambda1)-1))]
+#       param$STdim <- c(param$STdim,ncol(lambda1))
+#     }
+#     else
+#     {
+#       param$vec.matr <- c(param$vec.matr,modelST[[i]])
+#       param$vec.num <- c(param$vec.num,i)
+#       param$STdim <- c(param$STdim,1)
+#     }       
+#   }
+  
+  #check if there are correlations between intercepts and slopes
+  #rho$corr.intsl <- checkCorr(model)
+  
+  #rho$Lambda <- makeLambda(rho, vec.matr) 
+  ## get the optima
+  pp <- model@pp$copy()
+  vlist <- sapply(model@cnms, length)
+  opt <- Cv_to_Vv(pp$theta, n = vlist, s = rho$sigma)
+  rho$opt <- opt
+  rho$thopt <- pp$theta
+  return(rho)  
 }
 
        
 ##############################################################################################
 # function to calculate summary of F test with Satterthwaite's approximation of denominator df 
 ##############################################################################################
-calcSatterth  <-  function(Lc, rho, method.grad)
+calcSatterth  <-  function(Lc, rho)
 {
   # F statistics for tested term
   if(is.vector(Lc))
@@ -238,7 +349,7 @@ calcSatterth  <-  function(Lc, rho, method.grad)
   
   invC.theta <- tryCatch({solve(C.theta.optim)}, error = function(e) { NULL })
   if(is.null(invC.theta))
-    return(list(denom = 0, Fstat = NA, pvalue = NA, ndf=NA))
+    return(list(denom = 0, Fstat = NA, pvalue = NA, ndf=NA, ss = NA, ms = NA))
   
   q <- qr(C.theta.optim)$rank
   F.stat <- (t(Lc %*% rho$fixEffs) %*% invC.theta %*% (Lc %*% rho$fixEffs))/q
@@ -250,12 +361,19 @@ calcSatterth  <-  function(Lc, rho, method.grad)
   
   PL <- t(svdec$vectors) %*% Lc
   
-  nu.m <- NULL
-  for( m in 1:length(svdec$values) )
-  {   
-     g <- grad(function(x)  Ct.rhbc(rho,x,t(PL[m,])), rho$param$vec.matr , method = method.grad)
-     nu.m <- c(nu.m, 2*(svdec$values[m])^2/(t(g) %*% rho$A %*% g))
+#   nu.m <- NULL
+#   for( m in 1:length(svdec$values) )
+#   {   
+#      g <- grad(function(x)  Ct.rhbc(rho,x,t(PL[m,])), rho$param$vec.matr , method = method.grad)
+#      nu.m <- c(nu.m, 2*(svdec$values[m])^2/(t(g) %*% rho$A %*% g))
+#   }
+  
+  nu.m.fun <- function(m){
+    g <- grad(function(x)  Ct.rhbc(rho,x,t(PL[m,])), rho$param$vec.matr)
+    #nu.m <- c(nu.m, 2*(svdec$values[m])^2/(t(g) %*% rho$A %*% g))
+    2*(svdec$values[m])^2/(t(g) %*% rho$A %*% g)
   }
+  system.time(nu.m <- unlist(llply(1:length(svdec$values), .fun = nu.m.fun)))
   
   E <- sum( (nu.m/(nu.m-2)) * as.numeric(nu.m>2))
   nu.F <- 2*E*as.numeric(E>q)/(E-q)
@@ -263,13 +381,82 @@ calcSatterth  <-  function(Lc, rho, method.grad)
   pvalueF <- 1 - pf(F.stat,qr(Lc)$rank, nu.F)
   
   # calculate ss and ms
-  #ms <- F.stat * rho$sigma^2
-  #ss <- ms * q
+  if(is.na(F.stat))
+    ms <- ss <- NA
+  else{
+    ms <- F.stat * rho$sigma^2
+    ss <- ms * q  
+  }
+  
   
   ## calculate ss from camp method proc glm
   #ss <- getSS(Lc, rho$fixEffs ,ginv(rho$XtX)) 
-  return( list(denom = nu.F, Fstat = F.stat, pvalue = pvalueF, ndf=q) )
+  return( list(denom = nu.F, Fstat = F.stat, pvalue = pvalueF, ndf=q, ss = ss, ms = ms) )
 
+}
+
+##############################################################################################
+# function to calculate summary of F test with Satterthwaite's approximation of denominator df 
+##############################################################################################
+calcSatterthJSS  <-  function(Lc, rho)
+{
+  # F statistics for tested term
+  if(is.vector(Lc))
+    C.theta.optim <- as.matrix(t(Lc) %*% as.matrix(vcov(rho$model)) %*% Lc)    
+  else
+    C.theta.optim <- as.matrix(Lc %*% as.matrix(vcov(rho$model)) %*% t(Lc))    
+  #invC.theta<-ginv(C.theta.optim)
+  
+  invC.theta <- tryCatch({solve(C.theta.optim)}, error = function(e) { NULL })
+  if(is.null(invC.theta))
+    return(list(denom = 0, Fstat = NA, pvalue = NA, ndf=NA, ss = NA, ms = NA))
+  
+  q <- qr(C.theta.optim)$rank
+  F.stat <- (t(Lc %*% rho$fixEffs) %*% invC.theta %*% (Lc %*% rho$fixEffs))/q
+  
+  
+  #df for F statistics for tested term
+  svdec <- eigen(C.theta.optim) 
+  
+  
+  PL <- t(svdec$vectors) %*% Lc
+  
+  #nu.m <- NULL
+  vss <- vcovJSS(rho$model)
+#   for( m in 1:length(svdec$values) )
+#   {   
+#     g <- grad(function(x)  vss(t(PL[m,]), x), rho$opt)
+#     #nu.m <- c(nu.m, 2*(svdec$values[m])^2/(t(g) %*% rho$A %*% g))
+#     nu.m <- c(nu.m, 2*(svdec$values[m])^2/(t(g) %*% rho$A %*% g))
+#   }
+  nu.m.fun <- function(m){
+    #g <- grad(function(x)  vss(t(PL[m,]), x), rho$opt)#, method = "simple")
+    g <- mygrad(function(x)  vss(t(PL[m,]), x), rho$opt, method="forward")
+    #nu.m <- c(nu.m, 2*(svdec$values[m])^2/(t(g) %*% rho$A %*% g))
+    2*(svdec$values[m])^2/(t(g) %*% rho$A %*% g)
+  }
+  nu.m <- unlist(llply(1:length(svdec$values), .fun = nu.m.fun))
+
+  nu.m[which(abs(2 - nu.m) < 1e-5)] <- 2.00001
+
+
+  E <- sum( (nu.m/(nu.m-2)) * as.numeric(nu.m>2))
+  nu.F <- 2 * E * as.numeric(E > q) / (E - q)
+  
+  pvalueF <- 1 - pf(F.stat,qr(Lc)$rank, nu.F)
+  
+  # calculate ss and ms
+  if(is.na(F.stat))
+    ms <- ss <- NA
+  else{
+    ms <- F.stat * rho$sigma^2
+    ss <- ms * q
+  }
+  
+  ## calculate ss from camp method proc glm
+  #ss <- getSS(Lc, rho$fixEffs ,ginv(rho$XtX)) 
+  return( list(ss = ss, ms = ms, denom = nu.F, Fstat = F.stat, pvalue = pvalueF, ndf=q) )
+  
 }
 
 getSS <- function(L, coef, XtX.) {
@@ -287,7 +474,7 @@ getSS <- function(L, coef, XtX.) {
 # function to calculate F stat and pvalues for a given term
 ###########################################################################
 calcFpvalueSS <- function(term, Lc, fullCoefs, X.design, model, rho, ddf, 
-                          method.grad="simple", type)
+                           type, old)
 {
   
   if(is.null(Lc))
@@ -322,17 +509,20 @@ calcFpvalueSS <- function(term, Lc, fullCoefs, X.design, model, rho, ddf,
       res.KR <- KRmodcomp( model, Lc )
     
     ## calculate ms and ss
-   # ms <- res.KR$test[1,"stat"] * rho$sigma^2
-    #ss <- ms * res.KR$test[1,"ndf"]
+    ms <- res.KR$test[1,"stat"] * rho$sigma^2
+    ss <- ms * res.KR$test[1,"ndf"]
     #ss <- getSS(Lc, rho$fixEffs ,ginv(rho$XtX)) 
    # return(list(denom = res.KR$stats["df2"], Fstat = res.KR$stats["Fstat"], pvalue =  res.KR$stats["p.value"]))
     
-    return( list(denom = res.KR$test[1,"ddf"], Fstat = res.KR$test[1,"stat"], pvalue =  res.KR$test[1,"p.value"], ndf = res.KR$test[1,"ndf"]))#, ss = ss ))
+    return( list(denom = res.KR$test[1,"ddf"], Fstat = res.KR$test[1,"stat"], pvalue =  res.KR$test[1,"p.value"], ndf = res.KR$test[1,"ndf"], ss = ss , ms = ms))
   }
   else
   {
     ## apply satterthwaite's approximation of ddf
-    return( c(calcSatterth(Lc, rho, method.grad)))#, list(ss = ss)) )
+    if(!old)
+      return( c(calcSatterthJSS(Lc, rho)))
+    else
+      return( c(calcSatterth(Lc, rho)))#, list(ss = ss)) )
   }
 }
 
@@ -340,7 +530,7 @@ calcFpvalueSS <- function(term, Lc, fullCoefs, X.design, model, rho, ddf,
 # function to calculate F stat and pvalues for a given term. MAIN
 ###########################################################################
 calcFpvalueMAIN <- function(term, L, X.design, fullCoefs, model, rho, ddf, 
-                            method.grad="simple", type)
+                            type, old)
 {
                          
     if( type == 3 )
@@ -349,9 +539,10 @@ calcFpvalueMAIN <- function(term, L, X.design, fullCoefs, model, rho, ddf,
       Lc <- makeContrastType3SAS(model, term, L)    
       #non identifiable because of rank deficiency
       if(!length(Lc))
-        result.fstat <- list(denom=0, Fstat=NA, pvalue=NA, ndf=NA)
+        result.fstat <- list(denom=0, Fstat=NA, pvalue=NA, ndf=NA, ss = NA, ms = NA)
       else
-        result.fstat <- calcFpvalueSS(term, Lc, fullCoefs, X.design, model, rho, ddf, method.grad=method.grad, type)           
+        result.fstat <- calcFpvalueSS(term, Lc, fullCoefs, X.design, model, rho, 
+                                      ddf, type, old)           
     }
     
     if( type == 1 )
@@ -359,7 +550,8 @@ calcFpvalueMAIN <- function(term, L, X.design, fullCoefs, model, rho, ddf,
       
       find.term <- which(colnames(X.design) == term)
       Lc <- L[find.term[which(find.term %in% rho$nums.Coefs)],]            
-      result.fstat <- calcFpvalueSS(term, Lc, fullCoefs, X.design, model, rho, ddf, method.grad=method.grad, type)      
+      result.fstat <- calcFpvalueSS(term, Lc, fullCoefs, X.design, model, rho, 
+                                    ddf, type, old)      
     } 
    
 
@@ -369,7 +561,7 @@ calcFpvalueMAIN <- function(term, L, X.design, fullCoefs, model, rho, ddf,
 ###############################################################################
 # function to calculate T test 
 ###############################################################################
-calculateTtest <- function(rho, Lc, nrow.res, method.grad)
+calculateTtest <- function(rho, Lc, nrow.res)
 {
   #(Lc<-t(popMatrix(m, c("Product"))))
   #resultTtest <- matrix(0, nrow = ncol(Lc), ncol = 3)
@@ -382,7 +574,7 @@ calculateTtest <- function(rho, Lc, nrow.res, method.grad)
   #
   for(i in 1:nrow.res)
   {
-     g <- grad(function(x) Ct.rhbc (rho, x, t(Lc[,i])) , rho$param$vec.matr, method = method.grad)   
+     g <- grad(function(x) Ct.rhbc (rho, x, t(Lc[,i])) , rho$param$vec.matr)   
      #denominator df
      denom <- t(g) %*% rho$A %*% g
      varcor <- Ct.rhbc(rho, rho$param$vec.matr, t(Lc[,i]))
@@ -392,6 +584,40 @@ calculateTtest <- function(rho, Lc, nrow.res, method.grad)
      resultTtest[i,2] <- (Lc[,i] %*%rho$fixEffs)/sqrt(varcor) #(Lc[,i] %*%rho$s@coefs[,1])/sqrt(varcor)
      resultTtest[i,3] <- 2*(1 - pt(abs(resultTtest[i,2]), df = resultTtest[i,1]))
      resultTtest[i,4] <- sqrt(varcor) 
+  }
+  
+  return(resultTtest)
+}
+
+###############################################################################
+# function to calculate T test JSS
+###############################################################################
+calculateTtestJSS <- function(rho, Lc, nrow.res)
+{
+  #(Lc<-t(popMatrix(m, c("Product"))))
+  #resultTtest <- matrix(0, nrow = ncol(Lc), ncol = 3)
+  #define Lc contrast matrix for t-test
+  #Lc <- diag(rep(1,nrow(rho$s@coefs)))
+  resultTtest <- matrix(0, nrow = nrow.res, ncol = 4)
+  colnames(resultTtest) <- c("df", "t value", "p-value", "sqrt.varcor")
+  #rownames(resultTtest) <- rownames(rho$s@coefs)
+  
+  #
+  vss <- vcovJSS(rho$model)
+  for(i in 1:nrow.res)
+  {
+    #g <- grad(function(x) Ct.rhbc (rho, x, t(Lc[,i])) , rho$param$vec.matr, method = method.grad) 
+    g <- mygrad(function(x)  vss(t(Lc[,i]), x), rho$opt, method="forward")
+    
+    #denominator df
+    denom <- t(g) %*% rho$A %*% g
+    varcor <- vss(t(Lc[,i]), rho$opt)#Ct.rhbc(rho, rho$param$vec.matr, t(Lc[,i]))
+    #df
+    resultTtest[i,1] <- 2*(varcor)^2/denom
+    #statistics
+    resultTtest[i,2] <- (Lc[,i] %*%rho$fixEffs)/sqrt(varcor) #(Lc[,i] %*%rho$s@coefs[,1])/sqrt(varcor)
+    resultTtest[i,3] <- 2*(1 - pt(abs(resultTtest[i,2]), df = resultTtest[i,1]))
+    resultTtest[i,4] <- sqrt(varcor) 
   }
   
   return(resultTtest)
@@ -850,7 +1076,8 @@ convertNumsToFac <- function(data, begin, end)
 ###################################################################
 #fills the LSMEANS and DIFF summary matrices
 ###################################################################
-fillLSMEANStab <- function(mat, rho, summ.eff, nfacs, alpha, method.grad)
+fillLSMEANStab <- function(mat, rho, summ.eff, nfacs, alpha, 
+                           old = FALSE)
 {
    #change mat when there are NA values in estimation of effects (XXt is rank deficient)
    #mat <- mat[,colnames(mat) %in% names(rho$fixEffs)]
@@ -858,7 +1085,10 @@ fillLSMEANStab <- function(mat, rho, summ.eff, nfacs, alpha, method.grad)
    mat <- matrix(mat[,colnames(mat) %in% names(rho$fixEffs)], nrow=nrow(mat), ncol=length(newcln), dimnames=list(rownames(mat),  newcln))
    estim.lsmeans <- mat %*% rho$fixEffs
    summ.eff[,nfacs+1] <- estim.lsmeans
-   ttest.res <- calculateTtest(rho, t(mat), nrow(mat), method.grad)
+   if(!old)
+     ttest.res <- calculateTtestJSS(rho, t(mat), nrow(mat))
+   else
+     ttest.res <- calculateTtest(rho, t(mat), nrow(mat))
    summ.eff[,nfacs+2] <- ttest.res[,4]#stdErrLSMEANS(rho, std.rand, mat)
    #df
    summ.eff[,(nfacs+3)] <- ttest.res[,1]
@@ -916,12 +1146,15 @@ getNamesForPlot <- function(names, ind)
 }
 
 #plots for LSMEANS or DIFF of LSMEANS
-plotLSMEANS <- function(table, response, which.plot=c("LSMEANS", "DIFF of LSMEANS"))
+plotLSMEANS <- function(table, response, 
+                        which.plot=c("LSMEANS", "DIFF of LSMEANS"), 
+                        main = NULL, cex = 1.4)
 {
     if(which.plot=="LSMEANS")
       names <- getNamesForPlot(rownames(table),2)
     else
-      names <- getNamesForPlot(rownames(table),1)
+      names <- getNamesForPlot(rownames(table),1)   
+      
     namesForPlot <- names$namesForPlot
     namesForLevels <- names$namesForLevels
     un.names <- unique(namesForPlot)
@@ -935,17 +1168,35 @@ plotLSMEANS <- function(table, response, which.plot=c("LSMEANS", "DIFF of LSMEAN
       #windows()
       #par(mfrow=c(1,1))
       #x11()
-      layout(matrix(c(rep(1,3),2,rep(1,3),2), 2, 4, byrow = TRUE))
-      barplot2(table[inds.eff,"Estimate"],col=unlist(col.bars), 
-               ci.l=table[inds.eff,ncol(table)-2], 
-               ci.u=table[inds.eff,ncol(table)-1], plot.ci=TRUE, 
-               names.arg=namesForLevels[inds.eff], 
-               ylab=response, main=paste(which.plot," and CI plot for", 
-                                         un.names[i]), las=2)
+      #layout(matrix(c(rep(1,3),2,rep(1,3),2), 2, 4, byrow = TRUE))      
+      layout(matrix(c(rep(2,2),3,rep(2,2),3,rep(2,2),3, rep(1,2),3), 4, 3, 
+                    byrow = TRUE), 
+             heights=c(0.2, 1 , 1.2), widths = c(3, 3, 2.5))
       plot.new()
-      legend("topright", c("ns","p<0.05", "p<0.01", "p<0.001"), pch=15, 
+      if(which.plot == "LSMEANS")
+        barplot2(table[inds.eff,"Estimate"],col=unlist(col.bars), 
+                 ci.l=table[inds.eff,ncol(table)-2], 
+                 ci.u=table[inds.eff,ncol(table)-1], plot.ci=TRUE, 
+                 names.arg=namesForLevels[inds.eff], 
+                 ylab=response, 
+                 main = ifelse(!is.null(main), main, 
+                               paste("Least squares means with 95% confidence intervals for \n", 
+                                           un.names[i])), las=2, cex.names = cex,
+                 cex.axis = cex, cex.main = cex, cex.lab = cex, font.lab = 2)
+      else
+        barplot2(table[inds.eff,"Estimate"],col=unlist(col.bars), 
+                 ci.l=table[inds.eff,ncol(table)-2], 
+                 ci.u=table[inds.eff,ncol(table)-1], plot.ci=TRUE, 
+                 names.arg=namesForLevels[inds.eff], 
+                 ylab=response, 
+                 main = ifelse(!is.null(main), main, 
+                               paste("Differences of least squares means \n with 95% confidence intervals for \n", un.names[i])), las=2, cex.names = cex,
+                 cex.axis = cex, cex.main = cex, cex.lab = cex, font.lab = 2)
+      
+      plot.new()
+      legend("topright", c("ns","p < 0.05", "p < 0.01", "p < 0.001"), pch=15, 
              col=c("grey","yellow","orange","red"), title="SIGNIFICANCE", 
-             bty="n", cex=0.8)
+             bty="n", cex=cex)
       if(which.plot=="LSMEANS")
       {
         if(length(split.eff)==2)
@@ -967,7 +1218,7 @@ plotLSMEANS <- function(table, response, which.plot=c("LSMEANS", "DIFF of LSMEAN
 
 #calculate DIFFERENCES OF LSMEANS and STDERR for effect
 calcDiffsForEff <- function(facs, fac.comb, split.eff, eff, effs, data, rho, 
-                            alpha, mat, method.grad)
+                            alpha, mat,  old = FALSE)
 {
    ###calculating diffs for 2 way interaction
    if(length(split.eff)>=1 && length(split.eff)<=2)
@@ -1010,14 +1261,16 @@ calcDiffsForEff <- function(facs, fac.comb, split.eff, eff, effs, data, rho,
      {
        mat.diffs[ind.diffs,] <- mat[mat.nums.diffs[1,ind.diffs],]- mat[mat.nums.diffs[2,ind.diffs],]
      }
-     names.combn <- apply(mat.names.diffs, 2, function(x) paste(x[1],x[2],sep="-"))
+     names.combn <- apply(mat.names.diffs, 2, 
+                          function(x) paste(x[1], x[2], sep=" - "))
      rownames(mat.diffs) <- paste(eff, names.combn)
      
      diffs.summ <-  matrix(NA, ncol=7, nrow=nrow(mat.diffs))
      colnames(diffs.summ) <- c("Estimate","Standard Error", "DF", "t-value", "Lower CI", "Upper CI", "p-value")
      rownames(diffs.summ) <- rownames(mat.diffs)
           
-     diffs.summ <- as.data.frame(fillLSMEANStab(mat.diffs, rho, diffs.summ, 0, alpha, method.grad))
+     diffs.summ <- as.data.frame(fillLSMEANStab(mat.diffs, rho, diffs.summ, 0, 
+                                                alpha,  old = old))
      return(roundLSMEANStab(diffs.summ, 0))
     }
    
@@ -1025,7 +1278,7 @@ calcDiffsForEff <- function(facs, fac.comb, split.eff, eff, effs, data, rho,
 
 #calculate LSMEANS and STDERR for effect
 calcLsmeansForEff <- function(lsmeans.summ, fac.comb, eff, split.eff, alpha, mat, 
-                              rho, facs, method.grad)
+                              rho, facs,  old = FALSE)
 {
    
    summ.eff <- matrix(NA, ncol=ncol(lsmeans.summ), nrow=nrow(fac.comb))
@@ -1033,7 +1286,8 @@ calcLsmeansForEff <- function(lsmeans.summ, fac.comb, eff, split.eff, alpha, mat
    #rownames(summ.eff) <- rep(eff, nrow(fac.comb))
    summ.eff[,split.eff] <- fac.comb
    names.arg <- concatLevs(summ.eff[,split.eff])
-   summ.eff <- as.data.frame(fillLSMEANStab(mat, rho, summ.eff, length(facs), alpha, method.grad))
+   summ.eff <- as.data.frame(fillLSMEANStab(mat, rho, summ.eff, length(facs), 
+                                            alpha,  old = old))
    summ.eff <- convertFacsToNum(summ.eff, length(facs)+1, ncol(summ.eff))
    #estim.lsmeans <- mat%*%rho$fixEffs
    #summ.eff[,length(facs)+1] <- round(estim.lsmeans,4)
@@ -1062,8 +1316,8 @@ calcLsmeansForEff <- function(lsmeans.summ, fac.comb, eff, split.eff, alpha, mat
 #calculate LSMEANS DIFFS and CI for all effects
 ###################################################################
 calcLSMEANS <- function(model, data, rho, alpha, test.effs = NULL, 
-                        method.grad="Richardson", lsmeansORdiff=TRUE, 
-                        l.lmerTest.private.contrast)
+                        lsmeansORdiff = TRUE, 
+                        l.lmerTest.private.contrast, old = FALSE)
 {  
  
  #library(gplots)
@@ -1121,12 +1375,13 @@ calcLSMEANS <- function(model, data, rho, alpha, test.effs = NULL,
    if(!lsmeansORdiff)
      summ.data <- rbind(summ.data,   calcDiffsForEff(facs, fac.comb, split.eff,
                                                      eff, effs, data, rho, alpha,
-                                                     mat, method.grad))
+                                                     mat, 
+                                                     old = old))
    else
      summ.data <- rbind(summ.data,   calcLsmeansForEff(lsmeans.summ, fac.comb, 
                                                        eff, split.eff, alpha, 
                                                        mat, rho, facs, 
-                                                       method.grad))
+                                                       old = old))
  }
  return(list(summ.data = summ.data))
 }
@@ -1503,8 +1758,7 @@ checkPresRandTerms <- function(mf.final)
 }
 
 ### compare mixed model versus fixed
-compareMixVSFix <- function(model, mf.final, data, name.term, rand.table, alpha, 
-                            elim.num, reduce.random)
+compareMixVSFix <- function(model, mf.final, data, name.term)
 {
   #library(nlme)
   #return(NULL)
@@ -1527,21 +1781,24 @@ compareMixVSFix <- function(model, mf.final, data, name.term, rand.table, alpha,
   l.red <- -2*logLik(model.red, REML=FALSE)[1]
   
   p.chisq <- 1 - pchisq (l.red -l.fix ,1)
-  infoForTerm <- saveInfoForTerm(name.term, l.red -l.fix, 1, p.chisq)
+  infoForTerm <- saveInfoForTerm(name.term, l.red -l.fix, 1, p.chisq, 
+                                 model.red = model.red)
   #detach(package:nlme)
   
-  if(infoForTerm$pv > alpha)
-  {    
-    rand.table <- updateRandTable(infoForTerm, rand.table, elim.num=elim.num, reduce.random=reduce.random)
-    model.last <- if(reduce.random) model.red else model
-    
-  }
-  else
-  {
-    rand.table <- updateRandTable(infoForTerm, rand.table, reduce.random=reduce.random)
-    model.last <- model    
-  }
-  return(list(model=model.last, TAB.rand=rand.table))   
+  return(infoForTerm)
+  
+#   if(infoForTerm$pv > alpha)
+#   {    
+#     rand.table <- updateRandTable(infoForTerm, rand.table, elim.num=elim.num, reduce.random=reduce.random)
+#     model.last <- if(reduce.random) model.red else model
+#     
+#   }
+#   else
+#   {
+#     rand.table <- updateRandTable(infoForTerm, rand.table, reduce.random=reduce.random)
+#     model.last <- model    
+#   }
+#   return(list(model=model.last, TAB.rand=rand.table))   
 }
 
 
@@ -2054,7 +2311,11 @@ fillAnovaTable <- function(result, anova.table)
     anova.table[result[[i]]$name, 5] <- result[[i]]$Fstat
     anova.table[result[[i]]$name, which(colnames(anova.table)=="Pr(>F)")] <- 
       result[[i]]$pvalue
-    #anova.table[result[[i]]$name, 1] <- result[[i]]$ss
+    if(!is.na(result[[i]]$ss)){
+      anova.table[result[[i]]$name, "Sum Sq"] <- result[[i]]$ss
+      anova.table[result[[i]]$name, "Mean Sq"] <- result[[i]]$ms
+    }
+    
     #anova.table[result[[i]]$name, 2] <- result[[i]]$ss/result[[i]]$ndf
     
   }
