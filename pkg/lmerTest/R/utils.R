@@ -251,7 +251,7 @@ rhoInitJSS <- function(model)
   rho$model <- model
   rho$y <- getY(model) #model@y                   # store arguments and derived values
   rho$X <- getX(model) #model@X
-  ##chol(rho$XtX <- crossprod(rho$X))       # check for full column rank
+  chol(rho$XtX <- crossprod(rho$X))       # check for full column rank
   
   rho$REML <-  getREML(model)#model@dims['REML']
   #rho$Zt <- getZt(model)
@@ -422,7 +422,8 @@ calcSatterthJSS  <-  function(Lc, rho)
   PL <- t(svdec$vectors) %*% Lc
   
   #nu.m <- NULL
-  vss <- vcovJSS(rho$model)
+  #vss <- vcovJSS(rho$model)
+  vss <- vcovJSStheta(rho$model)
 #   for( m in 1:length(svdec$values) )
 #   {   
 #     g <- grad(function(x)  vss(t(PL[m,]), x), rho$opt)
@@ -431,7 +432,9 @@ calcSatterthJSS  <-  function(Lc, rho)
 #   }
   nu.m.fun <- function(m){
     #g <- grad(function(x)  vss(t(PL[m,]), x), rho$opt)#, method = "simple")
-    g <- mygrad(function(x)  vss(t(PL[m,]), x), rho$opt, method="forward")
+    #g <- mygrad(function(x)  vss(t(PL[m,]), x), rho$opt, method="forward")
+    #g <- mygrad(function(x)  vss(t(PL[m,]), x), c(rho$thopt, rho$sigma))
+    g <- grad(function(x)  vss(t(PL[m,]), x), c(rho$thopt, rho$sigma))
     #nu.m <- c(nu.m, 2*(svdec$values[m])^2/(t(g) %*% rho$A %*% g))
     2*(svdec$values[m])^2/(t(g) %*% rho$A %*% g)
   }
@@ -592,7 +595,7 @@ calculateTtest <- function(rho, Lc, nrow.res)
 ###############################################################################
 # function to calculate T test JSS
 ###############################################################################
-calculateTtestJSS <- function(rho, Lc, nrow.res)
+calculateTtestJSS <- function(rho, Lc, nrow.res, ddf="Satterthwaite")
 {
   #(Lc<-t(popMatrix(m, c("Product"))))
   #resultTtest <- matrix(0, nrow = ncol(Lc), ncol = 3)
@@ -603,21 +606,44 @@ calculateTtestJSS <- function(rho, Lc, nrow.res)
   #rownames(resultTtest) <- rownames(rho$s@coefs)
   
   #
-  vss <- vcovJSS(rho$model)
+  ##vss <- vcovJSS(rho$model)
+  if(ddf == "Kenward-Roger")
+    Va <- vcovAdj(rho$model)
+  else
+    vss <- vcovJSStheta(rho$model)
   for(i in 1:nrow.res)
   {
     #g <- grad(function(x) Ct.rhbc (rho, x, t(Lc[,i])) , rho$param$vec.matr, method = method.grad) 
-    g <- mygrad(function(x)  vss(t(Lc[,i]), x), rho$opt, method="forward")
-    
-    #denominator df
-    denom <- t(g) %*% rho$A %*% g
-    varcor <- vss(t(Lc[,i]), rho$opt)#Ct.rhbc(rho, rho$param$vec.matr, t(Lc[,i]))
-    #df
-    resultTtest[i,1] <- 2*(varcor)^2/denom
-    #statistics
-    resultTtest[i,2] <- (Lc[,i] %*%rho$fixEffs)/sqrt(varcor) #(Lc[,i] %*%rho$s@coefs[,1])/sqrt(varcor)
-    resultTtest[i,3] <- 2*(1 - pt(abs(resultTtest[i,2]), df = resultTtest[i,1]))
-    resultTtest[i,4] <- sqrt(varcor) 
+    #g <- mygrad(function(x)  vss(t(Lc[,i]), x), rho$opt, method="forward")
+    #g <- mygrad(function(x)  vss(t(Lc[,i]), x), c(rho$thopt, rho$sigma), method="forward")
+    if(ddf == "Kenward-Roger"){
+      L <- Lc[,i]
+      .ddf <- get_ddf_Lb(rho$model, L)      
+      b.hat <- rho$fixEffs
+      Lb.hat <- sum(L * b.hat)
+      Va.Lb.hat <- t(L) %*% Va %*% L
+      t.stat <- as.numeric(Lb.hat / sqrt(Va.Lb.hat))
+      p.value <- 2 * pt(abs(t.stat), df = .ddf, lower.tail = FALSE)
+      resultTtest[i,1] <- .ddf
+      resultTtest[i,2] <- t.stat
+      resultTtest[i,3] <- p.value
+      resultTtest[i,4] <- as.numeric(sqrt(Va.Lb.hat))
+    }
+    else{
+      g <- grad(function(x)  vss(t(Lc[,i]), x), c(rho$thopt, rho$sigma))
+      
+      #denominator df
+      denom <- t(g) %*% rho$A %*% g
+      #varcor <- vss(t(Lc[,i]), rho$opt)#Ct.rhbc(rho, rho$param$vec.matr, t(Lc[,i]))
+      varcor <- vss(t(Lc[,i]), c(rho$thopt, rho$sigma))
+      #df
+      resultTtest[i,1] <- 2*(varcor)^2/denom
+      #statistics
+      resultTtest[i,2] <- (Lc[,i] %*%rho$fixEffs)/sqrt(varcor) #(Lc[,i] %*%rho$s@coefs[,1])/sqrt(varcor)
+      resultTtest[i,3] <- 2*(1 - pt(abs(resultTtest[i,2]), df = resultTtest[i,1]))
+      resultTtest[i,4] <- sqrt(varcor) 
+    }
+   
   }
   
   return(resultTtest)
@@ -1195,7 +1221,7 @@ plotLSMEANS <- function(table, response,
       
       plot.new()
       legend("topright", c("ns","p < 0.05", "p < 0.01", "p < 0.001"), pch=15, 
-             col=c("grey","yellow","orange","red"), title="SIGNIFICANCE", 
+             col=c("grey","yellow","orange","red"), title="Significance", 
              bty="n", cex=cex)
       if(which.plot=="LSMEANS")
       {

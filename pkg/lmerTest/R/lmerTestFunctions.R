@@ -247,12 +247,23 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
         #       plsjss <- plsJSS(getME(model, "X"), getME(model, "y"), getME(model, "Zt"), 
         #                         getME(model, "Lambdat"), getME(model, "Lind"))
         #       h  <-  hessian(function(x) plsjss(x), rho$param$vec.matr)
-        dd <- devfun3(model, useSc = TRUE, signames = FALSE, getME(model, "is_REML"))
-        h <- hessian(dd, rho$opt)
+        
+        ## based on var cor parameters
+        ## quite frequently A is not positiv definite
+        ## because of VV_to_CV function probably
+        #dd <- devfun3(model, useSc = TRUE, signames = FALSE, getME(model, "is_REML"))
+        #h <- hessian(dd, rho$opt)
+        
+        ## based on theta pars
+        dd <- devfun4(model, useSc = TRUE, signames = FALSE, getME(model, "is_REML"))
+        h <- hessian(dd, c(rho$thopt, sigma = rho$sigma))
+        
       }
       else
         h  <-  hessian(function(x) Dev(rho,x), rho$param$vec.matr)
       #h  <-  myhess(function(x) Dev(rho,x), rho$param$vec.matr)
+
+      
       ch <- try(chol(h), silent=TRUE)
       if(inherits(ch, "try-error")) {
         message("Model is not identifiable...")
@@ -291,7 +302,7 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
     {
       if(!old){
         tsummary <- calculateTtestJSS(rho, diag(rep(1,length(rho$fixEffs))), 
-                                   length(rho$fixEffs))
+                                   length(rho$fixEffs), ddf = ddf)
       }
       else{
         tsummary <- calculateTtest(rho, diag(rep(1,length(rho$fixEffs))), 
@@ -728,7 +739,7 @@ setMethod("summary", signature(object = "merModLmerTest"),
             if(!is.null(ddf) && ddf=="lme4") return(cl)
             else
             {
-              tsum <- tryCatch( {totalAnovaRandLsmeans(model=object, ddf="Satterthwaite", isTtest=TRUE, old = old)$ttest}, error = function(e) { NULL })
+              tsum <- tryCatch( {totalAnovaRandLsmeans(model=object, ddf=ddf, isTtest=TRUE, old = old)$ttest}, error = function(e) { NULL })
               if(is.null(tsum)){
                 message("summary from lme4 is returned\nsome computational error has occurred in lmerTest")
                 return(cl)

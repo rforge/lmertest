@@ -141,6 +141,52 @@ devfun3 <- function (fm, useSc, signames, reml = TRUE)
 }
 
 
+## modified devfun3: now depends on theta and not covariate parameters
+devfun4 <- function (fm, useSc, signames, reml = TRUE) 
+{
+  stopifnot(is(fm, "merMod"))
+ 
+  vlist <- sapply(fm@cnms, length)
+ 
+  pp <- fm@pp$copy()
+  isCor <- checkCorr(fm)
+  
+  resp <- fm@resp$copy()
+  np <- length(pp$theta)
+  nf <- length(fixef(fm))
+  if (!isGLMM(fm)) 
+    np <- np + 1L
+  n <- nrow(pp$V)
+  if (isLMM(fm)) {
+    ans <- function(thpars) {
+      stopifnot(is.numeric(thpars), length(thpars) == np)
+      ## TO FIX: when the correlations are present then not execute the next line
+      #if(!isCor)
+      #  pars[which(pars < 0)] <- 0
+      #sigma2 <- thpars[np]^2
+      #thpars <- Vv_to_Cv(pars, n = vlist, s = sqrt(sigma2))
+      .Call("lmer_Deviance", pp$ptr(), resp$ptr(), thpars[-np], PACKAGE = "lme4")
+      sigsq <- thpars[np]^2
+      dev <- pp$ldL2() + (resp$wrss() + pp$sqrL(1))/sigsq + n * 
+        log(2 * pi * sigsq)      
+      if(reml){
+        p <- ncol(pp$RX())
+        dev <- dev + 2*determinant(pp$RX())$modulus - p * log(2 * pi * sigsq)              
+      }
+      return(dev)     
+    }
+  }
+  #attr(ans, "optimum") <- opt
+  #attr(ans, "basedev") <- basedev
+  attr(ans, "thopt") <- pp$theta
+  attr(ans, "isCor") <- isCor
+  #attr(ans, "stderr") <- stdErr
+  class(ans) <- "devfun4"
+  ans
+}
+
+
+
 devCritFun <- function(object, REML = NULL) 
 {
   if (isTRUE(REML) && !isLMM(object)) 
@@ -235,6 +281,46 @@ vcovJSS <- function(fm)
   class(ans) <- "vcovJSS"
   ans
 }
+
+## calc vcov of fixed effects based on theta parameters of random ## effects
+vcovJSStheta <- function(fm)
+{
+  stopifnot(is(fm, "merMod"))
+
+  vlist <- sapply(fm@cnms, length)
+  
+  pp <- fm@pp$copy()
+  isCor <- checkCorr(fm)
+  
+  resp <- fm@resp$copy()
+  np <- length(pp$theta)
+  nf <- length(fixef(fm))
+  if (!isGLMM(fm)) 
+    np <- np + 1L
+  n <- nrow(pp$V)
+  if (isLMM(fm)) {
+    ans <- function(Lc, thpars) {
+      stopifnot(is.numeric(thpars), length(thpars) == np)
+      ## TO FIX: when the correlations are present then not execute the next line
+      #if(!isCor)
+      #  pars[which(pars < 0)] <- 0
+      sigma2 <- thpars[np]^2
+      #thpars <- Vv_to_Cv(pars, n = vlist, s = sqrt(sigma2))
+      .Call("lmer_Deviance", pp$ptr(), resp$ptr(), thpars[-np], PACKAGE = "lme4")      
+      vcov_out <- sigma2 * tcrossprod(pp$RXi()) #chol2inv(pp$RX())
+      #return(as.matrix(vcov_out))
+      return(as.matrix(Lc %*% as.matrix(vcov_out) %*% t(Lc)))        
+    }
+  } 
+  #attr(ans, "optimum") <- opt
+  #attr(ans, "basedev") <- basedev
+  #attr(ans, "thopt") <- pp$theta
+  #attr(ans, "stderr") <- stdErr
+  attr(ans, "isCor") <- isCor
+  class(ans) <- "vcovJSStheta"
+  ans
+}
+
 
 
 
