@@ -1,7 +1,7 @@
 
-R Under development (unstable) (2014-07-21 r66220) -- "Unsuffered Consequences"
+R Under development (unstable) (2014-10-29 r66897) -- "Unsuffered Consequences"
 Copyright (C) 2014 The R Foundation for Statistical Computing
-Platform: i386-w64-mingw32/i386 (32-bit)
+Platform: x86_64-w64-mingw32/x64 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -25,8 +25,6 @@ Type 'q()' to quit R.
 Loading required package: Matrix
 Loading required package: lme4
 Loading required package: Rcpp
-KernSmooth 2.23 loaded
-Copyright M. P. Wand 1997-2009
 
 Attaching package: 'lmerTest'
 
@@ -65,7 +63,7 @@ The following object is masked from 'package:stats':
 
 Random effects:
                Chi.sq Chi.DF elim.num p.value
-Assessor         0.04      1        1  0.8416
+Assessor         0.03      1        1  0.8517
 Assessor:TVset  61.56      1     kept  <1e-07
 
 Fixed effects:
@@ -87,14 +85,14 @@ TVset  TV3  <2e-16 ***
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
  Differences of LSMEANS:
-              Estimate Standard Error   DF t-value Lower CI Upper CI p-value
-TVset TV1-TV2     -0.3         0.0602 21.0   -4.50   -0.396   -0.146   2e-04
-TVset TV1-TV3      0.0         0.0602 21.0    0.02   -0.124    0.126       1
-TVset TV2-TV3      0.3         0.0602 21.0    4.52    0.147    0.397   2e-04
-                 
-TVset TV1-TV2 ***
-TVset TV1-TV3    
-TVset TV2-TV3 ***
+                Estimate Standard Error   DF t-value Lower CI Upper CI p-value
+TVset TV1 - TV2     -0.3         0.0602 21.0   -4.50   -0.396   -0.146   2e-04
+TVset TV1 - TV3      0.0         0.0602 21.0    0.02   -0.124    0.126       1
+TVset TV2 - TV3      0.3         0.0602 21.0    4.52    0.147    0.397   2e-04
+                   
+TVset TV1 - TV2 ***
+TVset TV1 - TV3    
+TVset TV2 - TV3 ***
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -138,10 +136,10 @@ lme4::lmer(formula = log(Coloursaturation) ~ TVset + Picture +
 Analysis of Variance Table of type 3  with  Satterthwaite 
 approximation for degrees of freedom
                            Sum Sq Mean Sq NumDF DenDF F.value   Pr(>F)    
-Product                    91.807 30.6024     3   553  6.9865 0.000128 ***
-Information                 6.520  6.5201     1   553  1.4631 0.226959    
+Product                    92.322 30.7741     3   553  6.9865 0.000128 ***
+Information                 6.444  6.4445     1   553  1.4631 0.226959    
 Gender                      3.872  3.8715     1    79  0.8789 0.351350    
-Product:Information        10.387  3.4624     3   553  0.7897 0.499935    
+Product:Information        10.436  3.4787     3   553  0.7897 0.499935    
 Product:Gender              8.421  2.8071     3   553  0.6373 0.591241    
 Information:Gender          1.407  1.4075     1   553  0.3195 0.572120    
 Product:Information:Gender  5.992  1.9972     3   553  0.4534 0.714985    
@@ -160,10 +158,10 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 Analysis of Variance Table of type 3  with  Kenward-Roger 
 approximation for degrees of freedom
                            Sum Sq Mean Sq NumDF DenDF F.value   Pr(>F)    
-Product                    91.807 30.6024     3   553  6.9865 0.000128 ***
-Information                 6.520  6.5201     1   553  1.4631 0.226959    
+Product                    92.322 30.7741     3   553  6.9865 0.000128 ***
+Information                 6.444  6.4445     1   553  1.4631 0.226959    
 Gender                      3.872  3.8715     1    79  0.8789 0.351350    
-Product:Information        10.387  3.4624     3   553  0.7897 0.499935    
+Product:Information        10.436  3.4787     3   553  0.7897 0.499935    
 Product:Gender              8.421  2.8071     3   553  0.6373 0.591241    
 Information:Gender          1.407  1.4075     1   553  0.3195 0.572120    
 Product:Information:Gender  5.992  1.9972     3   553  0.4534 0.714985    
@@ -210,11 +208,11 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 Random effects:
                Chi.sq Chi.DF p.value
-sens2:Consumer      0      0 < 1e-07
+sens2:Consumer   6.99      2  0.0303
 
 Fixed effects:
           Sum Sq Mean Sq NumDF  DenDF F.value elim.num Pr(>F)
-sens2    58.6855 58.6855     1 102.01 54.8206     kept <1e-07
+sens2    58.6822 58.6822     1 102.01 54.8206     kept <1e-07
 Homesize  5.9790  5.9790     1 100.96  5.5855     kept   0.02
 
 Least squares means:
@@ -228,8 +226,10 @@ Homesize  3  <2e-16 ***
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
  Differences of LSMEANS:
-             Estimate Standard Error    DF t-value Lower CI Upper CI p-value  
-Homesize 1-3      0.2          0.105 101.0    2.36     0.04    0.458    0.02 *
+               Estimate Standard Error    DF t-value Lower CI Upper CI p-value
+Homesize 1 - 3      0.2          0.105 101.0    2.36     0.04    0.458    0.02
+                
+Homesize 1 - 3 *
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -264,20 +264,20 @@ lme4::lmer(formula = Preference ~ sens2 + Homesize + (1 + sens2 |
 > #calculate least squares means for interaction Gender:Information
 > difflsmeans(m1, test.effs="Gender:Information")
 Differences of LSMEANS:
-                             Estimate Standard Error    DF t-value Lower CI
-Gender:Information  1 1- 2 1      0.2         0.3095 153.6    0.49   -0.460
-Gender:Information  1 1- 1 2     -0.3         0.2347 565.0   -1.25   -0.754
-Gender:Information  1 1- 2 2      0.0         0.3095 153.6    0.14   -0.567
-Gender:Information  2 1- 1 2     -0.4         0.3095 153.6   -1.43   -1.055
-Gender:Information  2 1- 2 2     -0.1         0.2376 565.0   -0.45   -0.573
-Gender:Information  1 2- 2 2      0.3         0.3095 153.6    1.09   -0.274
-                             Upper CI p-value
-Gender:Information  1 1- 2 1    0.762     0.6
-Gender:Information  1 1- 1 2    0.168     0.2
-Gender:Information  1 1- 2 2    0.656     0.9
-Gender:Information  2 1- 1 2    0.168     0.2
-Gender:Information  2 1- 2 2    0.360     0.7
-Gender:Information  1 2- 2 2    0.949     0.3
+                               Estimate Standard Error    DF t-value Lower CI
+Gender:Information  1 1 -  2 1      0.2         0.3095 153.6    0.49   -0.460
+Gender:Information  1 1 -  1 2     -0.3         0.2347 565.0   -1.25   -0.754
+Gender:Information  1 1 -  2 2      0.0         0.3095 153.6    0.14   -0.567
+Gender:Information  2 1 -  1 2     -0.4         0.3095 153.6   -1.43   -1.055
+Gender:Information  2 1 -  2 2     -0.1         0.2376 565.0   -0.45   -0.573
+Gender:Information  1 2 -  2 2      0.3         0.3095 153.6    1.09   -0.274
+                               Upper CI p-value
+Gender:Information  1 1 -  2 1    0.762     0.6
+Gender:Information  1 1 -  1 2    0.168     0.2
+Gender:Information  1 1 -  2 2    0.656     0.9
+Gender:Information  2 1 -  1 2    0.168     0.2
+Gender:Information  2 1 -  2 2    0.360     0.7
+Gender:Information  1 2 -  2 2    0.949     0.3
 > 
 > #import TVbo data from lmerTest package
 > data(TVbo) 
@@ -314,10 +314,10 @@ Gender:Information  1 2- 2 2    0.949     0.3
 Analysis of Variance Table of type 3  with  Satterthwaite 
 approximation for degrees of freedom
                             Sum Sq Mean Sq NumDF DenDF F.value  Pr(>F)  
-Product                    17.3870  5.7957     3   316  3.5001 0.01584 *
-Information                 6.5201  6.5201     1   316  3.8702 0.05003 .
+Product                    17.4846  5.8282     3   316  3.5001 0.01584 *
+Information                 6.4445  6.4445     1   316  3.8702 0.05003 .
 Gender                      1.8306  1.8306     1   316  1.0993 0.29522  
-Product:Information        10.3873  3.4624     3   316  2.0891 0.10158  
+Product:Information        10.4360  3.4787     3   316  2.0891 0.10158  
 Product:Gender              1.5949  0.5316     3   316  0.3193 0.81145  
 Information:Gender          1.4075  1.4075     1   316  0.8452 0.35861  
 Product:Information:Gender  5.9915  1.9972     3   316  1.1994 0.31010  
@@ -335,10 +335,10 @@ Product:Consumer 202.35      1 < 1e-07
 
 Fixed effects:
                             Sum Sq Mean Sq NumDF DenDF F.value Pr(>F)
-Product                    17.3870  5.7957     3   316  3.5001 0.0158
-Information                 6.5201  6.5201     1   316  3.8702 0.0500
+Product                    17.4846  5.8282     3   316  3.5001 0.0158
+Information                 6.4445  6.4445     1   316  3.8702 0.0500
 Gender                      1.8306  1.8306     1   316  1.0993 0.2952
-Product:Information        10.3873  3.4624     3   316  2.0891 0.1016
+Product:Information        10.4360  3.4787     3   316  2.0891 0.1016
 Product:Gender              1.5949  0.5316     3   316  0.3193 0.8115
 Information:Gender          1.4075  1.4075     1   316  0.8452 0.3586
 Product:Information:Gender  5.9915  1.9972     3   316  1.1994 0.3101
@@ -362,22 +362,22 @@ Information  2     5.58     6.08  <2e-16 ***
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
  Differences of LSMEANS:
-                Estimate Standard Error    DF t-value Lower CI Upper CI p-value
-Product 1-2          0.7          0.330 316.0    2.15   0.0589    1.355   0.033
-Product 1-3         -0.3          0.330 316.0   -0.86  -0.9307    0.366   0.392
-Product 1-4         -0.1          0.330 316.0   -0.36  -0.7655    0.531   0.722
-Product 2-3         -1.0          0.330 316.0   -3.00  -1.6379   -0.341   0.003
-Product 2-4         -0.8          0.330 316.0   -2.50  -1.4727   -0.176   0.013
-Product 3-4          0.2          0.330 316.0    0.50  -0.4830    0.814   0.616
-Information 1-2     -0.2          0.101 316.0   -1.97  -0.3990    0.000   0.050
-                  
-Product 1-2     * 
-Product 1-3       
-Product 1-4       
-Product 2-3     **
-Product 2-4     * 
-Product 3-4       
-Information 1-2 * 
+                  Estimate Standard Error    DF t-value Lower CI Upper CI
+Product 1 - 2          0.7          0.330 316.0    2.15   0.0589    1.355
+Product 1 - 3         -0.3          0.330 316.0   -0.86  -0.9307    0.366
+Product 1 - 4         -0.1          0.330 316.0   -0.36  -0.7655    0.531
+Product 2 - 3         -1.0          0.330 316.0   -3.00  -1.6379   -0.341
+Product 2 - 4         -0.8          0.330 316.0   -2.50  -1.4727   -0.176
+Product 3 - 4          0.2          0.330 316.0    0.50  -0.4830    0.814
+Information 1 - 2     -0.2          0.101 316.0   -1.97  -0.3990    0.000
+                  p-value   
+Product 1 - 2       0.033 * 
+Product 1 - 3       0.392   
+Product 1 - 4       0.722   
+Product 2 - 3       0.003 **
+Product 2 - 4       0.013 * 
+Product 3 - 4       0.616   
+Information 1 - 2   0.050 * 
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -739,8 +739,8 @@ Days -0.184
 > # table with  p-values for the random effects
 > rand(m)
 Analysis of Random effects Table:
-               Chi.sq Chi.DF p.value    
-sens2:Consumer      0      0  <2e-16 ***
+               Chi.sq Chi.DF p.value  
+sens2:Consumer   6.99      2    0.03 *
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > 
@@ -871,7 +871,7 @@ Days -0.138
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  9.75 0.25 10.17 NA NA 
+Time elapsed:  9.4 0.35 9.84 NA NA 
 > grDevices::dev.off()
 null device 
           1 

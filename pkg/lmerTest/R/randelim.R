@@ -7,22 +7,22 @@ fillRowRandTable <- function(term, rand.table, elim.num, reduce.random)
 #   return(rand.table)
   
   #
-  nrow.term <- which(gsub(" ","",rownames(rand.table))==names(term$term))
-  rand.table[nrow.term, "Chi.sq"] <- term$chisq
-  rand.table[nrow.term, "Chi.DF"] <- term$chisq.df
-  rand.table[nrow.term, "p.value"] <- term$pv
+  nrow.term <- which(gsub(" ","",rownames(rand.table))==names(term))
+  rand.table[nrow.term, "Chi.sq"] <- term[[1]]$chisq
+  rand.table[nrow.term, "Chi.DF"] <- term[[1]]$chisq.df
+  rand.table[nrow.term, "p.value"] <- term[[1]]$pv
   if(reduce.random)
   {
     rand.table[nrow.term, "elim.num"] <- elim.num 
-    if(term$chisq.df==2 && elim.num!=0)
+    if(term[[1]]$chisq.df==2 && elim.num!=0)
     {
       rand.table.upd <- matrix(0,ncol=4, nrow=1)
       colnames(rand.table.upd) <- c("Chi.sq", "Chi.DF", "elim.num", "p.value")
      
       rownames(rand.table.upd) <- paste(paste(rep(" ", 
-                                            substring.location( names(term$term), 
-                                                                term$term[[1]]$gr.part)$first-2),
-                                            collapse=""), term$term[[1]]$gr.part, 
+                                            substring.location( names(term), 
+                                                                term[[1]]$term[[1]]$gr.part)$first-2),
+                                            collapse=""), term[[1]]$term[[1]]$gr.part, 
                                         collapse="")
       if(nrow.term==nrow(rand.table))
       {
@@ -58,7 +58,7 @@ updateRandTable <- function(infoForTerm, rand.table,
     for(i in 1:length(infoForTerm))
     {
        iterm <- infoForTerm[i]
-       rand.table <- fillRowRandTable(iterm[[1]], rand.table, 
+       rand.table <- fillRowRandTable(iterm, rand.table, 
                                      elim.num, reduce.random) 
     }
   }  
@@ -224,7 +224,7 @@ saveInfoForTerm <- function(term, chisq, chisq.df, pv, model.red = NULL)
   } 
   model.red <- updateModel(model, mf.final, getME(model, "is_REML"), 
                            l.lmerTest.private.contrast)
-  anova.red <- suppressMessages(anova(model, model.red))
+  anova.red <- suppressMessages(anova(model, model.red, refit = FALSE))
   #infoForTerms[[names(rnm)]] <- saveInfoForTerm(rnm, anova.red$Chisq[2], 
    #                                             anova.red$"Chi Df"[2] , 
    #                                             anova.red$'Pr(>Chisq)'[2])
@@ -234,7 +234,7 @@ saveInfoForTerm <- function(term, chisq, chisq.df, pv, model.red = NULL)
 
 .findElimTerm <- function(infoForTerms){  
   ind <- which.max(lapply(infoForTerms, function(x) x$pv))
-  return(infoForTerms[[ind]])  
+  return(infoForTerms[ind])  
 }
 
 ############################################################################
@@ -421,7 +421,7 @@ elimRandEffs <- function(model, data, alpha, reduce.random,
       break
     }
     
-    if(infoForTermElim$pv > alpha)
+    if(infoForTermElim[[1]]$pv > alpha)
     {
       rand.table <- updateRandTable(infoForTermElim, rand.table, elim.num, 
                                     reduce.random)
@@ -435,7 +435,7 @@ elimRandEffs <- function(model, data, alpha, reduce.random,
       break
     }
     
-    model <- infoForTermElim$model.red # model.final  
+    model <- infoForTermElim[[1]]$model.red # model.final  
     
   }
   return(list(model = model.last, TAB.rand = rand.table))

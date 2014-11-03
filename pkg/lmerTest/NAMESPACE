@@ -19,7 +19,7 @@ export(lsmeans)
 export(difflsmeans)
 export(step)
 export(lmer)
-export(devfun3)
+
 
 
 
