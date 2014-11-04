@@ -10,7 +10,7 @@ performs automatic backward elimination of all effects of linear mixed effect mo
 \usage{
 step(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, alpha.fixed = 0.05, 
 reduce.fixed = TRUE, reduce.random = TRUE, fixed.calc=TRUE, lsmeans.calc=TRUE,
-difflsmeans.calc=TRUE, test.effs=NULL, old = FALSE, cl = NULL ,  ...)
+difflsmeans.calc=TRUE, test.effs=NULL,  ...)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -23,7 +23,8 @@ difflsmeans.calc=TRUE, test.effs=NULL, old = FALSE, cl = NULL ,  ...)
 
 \item{ddf}{
     
-     approximation for denominator degrees of freedom. By default Satterthwaite's approximation. ddf="Kenward-Roger"" calculates Kenward-Roger approximation
+     approximation for denominator degrees of freedom. By default Satterthwaite's 
+     approximation. ddf="Kenward-Roger"" calculates Kenward-Roger approximation
 }
 
 \item{type}{
@@ -36,7 +37,6 @@ difflsmeans.calc=TRUE, test.effs=NULL, old = FALSE, cl = NULL ,  ...)
 }
 
 \item{alpha.fixed}{
-    
      significance level for elimination of the fixed part (for \code{F} test and \code{t}-test for least squares means)
 }
 
@@ -66,12 +66,10 @@ difflsmeans.calc=TRUE, test.effs=NULL, old = FALSE, cl = NULL ,  ...)
 
 \item{test.effs}{
     
-    charachter vector specifying the names of terms to be tested in LSMEANS. If NULL all the terms are tested. If \code{lsmeans.calc==FALSE} then LSMEANS are not calculated.
+    charachter vector specifying the names of terms to be tested in LSMEANS. 
+    If NULL all the terms are tested. If \code{lsmeans.calc==FALSE} then 
+    LSMEANS are not calculated.
 }
-
-\item{old}{if TRUE, then uses the old algorithm for calculating deviance and vcov. If FALSE then the C code from lme4 package is called for calculating deviance and vcov}
-
-\item{cl}{A vector identifying a cluster; is used for parallel computing}
 
 
   \item{\dots}{

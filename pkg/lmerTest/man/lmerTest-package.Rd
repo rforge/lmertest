@@ -61,6 +61,7 @@ anova(m)
 # denominator degrees of freedom and 
 # p-values calculated based on Kenward-Roger's approximations
 \dontrun{
+if(require(pbkrtest))
 anova(m, ddf = "Kenward-Roger")
 }
 

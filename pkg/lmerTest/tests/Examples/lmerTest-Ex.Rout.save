@@ -120,6 +120,7 @@ lme4::lmer(formula = log(Coloursaturation) ~ TVset + Picture +
 > ### Name: anova-methods
 > ### Title: Methods for function 'anova' in package 'lmerTest'
 > ### Aliases: anova,ANY-method anova,merModLmerTest-method
+> ###   anova.merModLmerTest
 > ### Keywords: methods
 > 
 > ### ** Examples
@@ -154,7 +155,11 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > 
 > # type3 anova table with additional F statistics and denominator degrees of freedom
 > # calculated based on Kenward-Roger's approximation
-> anova(m.ham, ddf = "Kenward-Roger")
+> if(require(pbkrtest))
++ anova(m.ham, ddf = "Kenward-Roger")
+Loading required package: pbkrtest
+Loading required package: MASS
+Loading required package: parallel
 Analysis of Variance Table of type 3  with  Kenward-Roger 
 approximation for degrees of freedom
                            Sum Sq Mean Sq NumDF DenDF F.value   Pr(>F)    
@@ -183,6 +188,9 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > 
 > 
 > cleanEx()
+
+detaching 'package:pbkrtest', 'package:parallel', 'package:MASS'
+
 > nameEx("carrots")
 > ### * carrots
 > 
@@ -423,6 +431,7 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > # anova table the same as of class merMod but with additional F statistics and  
 > # p-values calculated based on Kenward-Roger's approximations
 > ## Not run: 
+> ##D if(require(pbkrtest))
 > ##D anova(fm1, ddf="Kenward-Roger")
 > ##D 
 > ##D # anova table the same as of class merMod
@@ -547,6 +556,7 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > # denominator degrees of freedom and 
 > # p-values calculated based on Kenward-Roger's approximations
 > ## Not run: 
+> ##D if(require(pbkrtest))
 > ##D anova(m, ddf = "Kenward-Roger")
 > ## End(Not run)
 > 
@@ -672,6 +682,7 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > # type3 anova table with additional F statistics and denominator degrees of freedom
 > # calculated based on Kenward-Roger's approximation
 > ## Not run: 
+> ##D if(require(pbkrtest))
 > ##D anova(m, ddf="Kenward-Roger")
 > ## End(Not run)
 > 
@@ -787,7 +798,7 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > 
 > ### Name: summary-methods
 > ### Title: Methods for Function 'summary' in Package 'lmerTest'
-> ### Aliases: summary,merModLmerTest-method
+> ### Aliases: summary,merModLmerTest-method summary.merModLmerTest
 > ### Keywords: methods
 > 
 > ### ** Examples
@@ -807,8 +818,45 @@ Fixed Effects:
 (Intercept)         Days  
      251.41        10.47  
 > 
-> # will give you an additional column with p values for the t test
+> ## will give you an additional column with p values for the t test
 > summary(fm1)
+Linear mixed model fit by REML ['merModLmerTest']
+Formula: Reaction ~ Days + (Days | Subject)
+   Data: sleepstudy
+
+REML criterion at convergence: 1743.6
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.9536 -0.4634  0.0231  0.4634  5.1793 
+
+Random effects:
+ Groups   Name        Variance Std.Dev. Corr
+ Subject  (Intercept) 612.09   24.740       
+          Days         35.07    5.922   0.07
+ Residual             654.94   25.592       
+Number of obs: 180, groups:  Subject, 18
+
+Fixed effects:
+            Estimate Std. Error      df t value Pr(>|t|)    
+(Intercept)  251.405      6.825  17.000  36.838  < 2e-16 ***
+Days          10.467      1.546  17.000   6.771 3.26e-06 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+     (Intr)
+Days -0.138
+> 
+> ##using Kenward-Roger approximations to degrees of freedom
+> if(require(pbkrtest))
++ summary(fm1, ddf="Kenward-Roger")
+Loading required package: pbkrtest
+Loading required package: MASS
+Loading required package: parallel
+Note: method with signature 'sparseMatrix#ANY' chosen for function 'kronecker',
+ target signature 'dgCMatrix#ngCMatrix'.
+ "ANY#sparseMatrix" would also be valid
 Linear mixed model fit by REML ['merModLmerTest']
 Formula: Reaction ~ Days + (Days | Subject)
    Data: sleepstudy
@@ -871,7 +919,7 @@ Days -0.138
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  9.4 0.35 9.84 NA NA 
+Time elapsed:  10.18 0.26 10.45 NA NA 
 > grDevices::dev.off()
 null device 
           1 

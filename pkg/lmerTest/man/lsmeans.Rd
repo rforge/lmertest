@@ -8,7 +8,7 @@
  Produces a data frame which resembles to what SAS software gives in proc mixed statement. The approximation of degrees of freedom is Satterthwate's.
 }
 \usage{
-lsmeans(model, test.effs=NULL, old = FALSE, ...)
+lsmeans(model, test.effs=NULL,  ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -21,8 +21,6 @@ lsmeans(model, test.effs=NULL, old = FALSE, ...)
     
      charachter vector specyfying the names of terms to be tested. If NULL all the terms are tested.
 }
-
-\item{old}{if TRUE, then uses the old algorithm for calculating deviance and vcov. If FALSE then the C code from lme4 package is called for calculating deviance and vcov}
 
 
   \item{\dots}{

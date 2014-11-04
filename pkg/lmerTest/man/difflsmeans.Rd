@@ -8,7 +8,7 @@
  Produces a data frame which resembles to what SAS software gives in proc mixed statement. The approximation for degrees of freedom is Satterthwaite's.
 }
 \usage{
-difflsmeans(model, test.effs=NULL, old = FALSE,  ...)
+difflsmeans(model, test.effs=NULL,  ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -24,7 +24,6 @@ difflsmeans(model, test.effs=NULL, old = FALSE,  ...)
 }
 
 
-\item{old}{if TRUE, then uses the old algorithm for calculating deviance and vcov. If FALSE then the C code from lme4 package is called for calculating deviance and vcov}
 
   \item{\dots}{
      other potential arguments.

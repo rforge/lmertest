@@ -6,39 +6,17 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
                                   isAnova = FALSE, isRand = FALSE, 
                                   isLSMEANS = FALSE, 
                                   isDiffLSMEANS = FALSE, isTtest = FALSE, 
-                                  test.effs = NULL, 
-                                  old = FALSE, cl = NULL)
+                                  test.effs = NULL)
 {
-  #errors in specifying the parameters
-  if(!isRand && !(ddf %in% c("Satterthwaite","Kenward-Roger")))
-  {
-    print ('Error: parameter ddf is wrongly specified')
-    stop()
-  }
-  if(!isRand && !(type %in% c(1,3)))
-  {
-    print ('Error: parameter type is wrongly specified')
-    stop()
-  } 
   
-  ## check whether to use parallel processes 
-  .is.cluster <- !is.null(cl) && inherits(cl, "cluster")
-#   if(.is.cluster){
-#     clusterExport(cl, c("anova", "substring.location", "substring2", "getME",
-#                         "fmElimRandTerm", "getSlGrParts", "findSlopePart",
-#                         "checkPresRandTerms", "updateModel",
-#                         "fixef", "isGLMM", "isLMM", "makeContrastType3SAS", 
-#                         "relatives", "calcFpvalueSS", "calcSatterthJSS",
-#                         "vcovJSS", "llply", "mygrad", "Vv_to_Cv", "mlist2vec",
-#                         "vec2mlist", "get_clen", "safe_chol"), 
-#                   envir = .GlobalEnv)
-#     clusterSetRNGStream(cl) 
-#   }
-  
-  data <- model.frame(model) #summary(model,"lme4")@frame 
+  if(!isRand && !(type %in% c(1,3)))  
+    stop('Parameter type is wrongly specified') 
   
   
-  #update contrasts
+  
+  data <- model.frame(model) 
+  
+  #update contrasts for anova or step methods
   mm <- model.matrix(model)
   l.lmerTest.private.contrast<- attr(mm,"contrasts")
   contr <- l.lmerTest.private.contrast
@@ -51,8 +29,6 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
       names.facs <- names(contr)
       l.lmerTest.private.contrast <- as.list(rep("contr.SAS",length(names.facs)))
       names(l.lmerTest.private.contrast) <- names(contr)
-      #warning(" \nmodel has been refitted with contrasts=contr.SAS \n")
-      #model<-update(model,.~., data=data, contrasts=l)
 	    model <- updateModel(model, .~., getREML(model), l.lmerTest.private.contrast) 
     }    
   }
@@ -71,44 +47,34 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
   result <- NULL
   anova.table <- NULL
   
-  result$response <- rownames(attr(terms(model),"factors"))[1]#names(attr(terms(model),"dataClasses")[1])
+  result$response <- rownames(attr(terms(model),"factors"))[1]
   
-  #model<-lmer(formula=formula, data=data)
-  
-  #update model
-  # change unordered contrasts to contr.SAS
-  # change REML to TRUE
-  #options(contrasts=c(unordered="contr.SAS", ordered="contr.poly"))
   
   #model<-update(model, REML=TRUE)
   ## deleted because use ML for anova(m1, m2) for random effects
-#   if( isRand || isTotal || (ddf=="Kenward-Roger" && (isTotal || isAnova)) )
-#   {
-#     
-#       model<-
-#       if (getREML(model) == 1)
-#       {
-#         model
-#       }
-#       else
-#       {
-#         warning("\n model has been refitted with REML=TRUE \n")
-#         updateModel(model, .~., reml=TRUE, l.lmerTest.private.contrast)
-#       }
-#   }
-#   
+  if( isRand || isTotal || (ddf=="Kenward-Roger" && (isTotal || isAnova)) )
+  {
+    
+      model<-
+      if (getREML(model) == 1)
+      {
+        model
+      }
+      else
+      {
+        warning("\n model has been refitted with REML=TRUE \n")
+        updateModel(model, .~., reml=TRUE, l.lmerTest.private.contrast)
+      }
+  }
+  
   mf.final <- update.formula(formula(model),formula(model)) 
   
   
   
-  data <- data[complete.cases(data),]
+  ##data <- data[complete.cases(data),]
   
   
-  ## test TODO: uncomment  
-  #model <- updateModel(model, mf.final, getREML(model), l.lmerTest.private.contrast)
-  
-   
-  
+
   # save the call of the model              
   result$call <- model@call
   
@@ -116,14 +82,7 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
   result$corr.intsl <- checkCorr(model)  
   
   
- ## removed as elimRandEffs may do the same as elimZeroVarOrCorr, so no need
-  #if(isRand || isTotal)
- # {
- #   result.rand <- elimZeroVarOrCorr(model, data, l.lmerTest.private.contrast)
- #   model <- result.rand$model      
- # }    
-  
-  
+   
   #save results for fixed effects for model with only fixed effects
   if(class(model) == "lm" | class(model) == "gls")
   {
@@ -141,8 +100,7 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
     if(isRand)
       reduce.random <- FALSE
     result.rand <- elimRandEffs(model, data, alpha.random, reduce.random, 
-                                l.lmerTest.private.contrast, .is.cluster, 
-                                cl = cl)  
+                                l.lmerTest.private.contrast)  
    
     model <- result.rand$model
     #convert rand table to data frame
@@ -196,18 +154,21 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
         if(isTtest)
         {
           # save lmer outcome in rho environmental variable
-          rho <- rhoInit(model)     
+          rho <- rhoInitJSS(model)  
           
           # calculate asymptotic covariance matrix A
-          h  <-  hessian(function(x) Dev(rho,x), rho$param$vec.matr)
+          dd <- devfun4(model, useSc = TRUE, signames = FALSE, getME(model, "is_REML"))
+          h <- hessian(dd, c(rho$thopt, sigma = rho$sigma))
           
           rho$A <- 2*solve(h)
           #rho$A <- 2*ginv(h)
           
-          tsummary <- calculateTtest(rho, diag(rep(1,length(rho$fixEffs))),
-                                     length(rho$fixEffs))
-          result$ttest <- list(df=tsummary[,"df"], tvalue=tsummary[,"t value"], 
-                               tpvalue=tsummary[,"p-value"])
+                    
+          tsummary <- calculateTtestJSS(rho, diag(rep(1,length(rho$fixEffs))), 
+                                        length(rho$fixEffs), ddf = ddf)
+          
+          result$ttest <- list(df=tsummary[, "df"], tvalue=tsummary[, "t value"], 
+                               tpvalue=tsummary[, "p-value"])
         }
         result$model <- model
         result$anova.table <- anova(model, ddf="lme4")
@@ -219,51 +180,23 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
     
     
     # save lmer outcome in rho environmental variable
-    if(old)
-      rho <- rhoInit(model)
-    else
-      rho <- rhoInitJSS(model)
+    rho <- rhoInitJSS(model)
+  
     
-    ###### test
-    #system.time(Dev(rho, rho$param$vec.matr))
-    #mkLmerDevfun(formula = formula(model), data = data)
-    #devianceFunction <- do.call(mkLmerDevfun, lFormula(formula = formula(model), 
-    #                                                   data = data))
-    #system.time(devianceFunction(rho$param$vec.matr[-1])) 
-    #rho <- environment(devianceFunction)
-    #hessian(function(x) devianceFunction(x), rho$param$vec.matr[-1])
-    
-    #plstest <- plsJSS(getME(model, "X"), getME(model, "y"), getME(model, "Zt"), 
-    #                  getME(model, "Lambdat"), getME(model, "Lind"))
-    #system.time(plstest(rho$param$vec.matr))
-    #system.time(h1  <-  hessian(function(x) Dev(rho,x), rho$param$vec.matr))
-    #system.time(h2  <-  hessian(function(x) plstest(x), rho$param$vec.matr))
-    #all.equal(h1, h2)
-    ######
-    
-    # calculate asymptotic covariance matrix A
+    # calculate asymptotic covariance matrix A??
     if(!(ddf == "Kenward-Roger" && isAnova)){
-      if(!old){
-        #       plsjss <- plsJSS(getME(model, "X"), getME(model, "y"), getME(model, "Zt"), 
-        #                         getME(model, "Lambdat"), getME(model, "Lind"))
-        #       h  <-  hessian(function(x) plsjss(x), rho$param$vec.matr)
-        
+  
         ## based on var cor parameters
         ## quite frequently A is not positiv definite
         ## because of VV_to_CV function probably
         #dd <- devfun3(model, useSc = TRUE, signames = FALSE, getME(model, "is_REML"))
         #h <- hessian(dd, rho$opt)
         
-        ## based on theta pars
-        dd <- devfun4(model, useSc = TRUE, signames = FALSE, getME(model, "is_REML"))
-        h <- hessian(dd, c(rho$thopt, sigma = rho$sigma))
-        
-      }
-      else
-        h  <-  hessian(function(x) Dev(rho,x), rho$param$vec.matr)
-      #h  <-  myhess(function(x) Dev(rho,x), rho$param$vec.matr)
+      ## based on theta pars
+      dd <- devfun4(model, useSc = TRUE, signames = FALSE, getME(model, "is_REML"))
+      h <- hessian(dd, c(rho$thopt, sigma = rho$sigma))
 
-      
+    
       ch <- try(chol(h), silent=TRUE)
       if(inherits(ch, "try-error")) {
         message("Model is not identifiable...")
@@ -283,14 +216,6 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
       if(!isposA)
       {
         print("Asymptotic covariance matrix A is not positive!")
-        #previous code: return ERROR
-        #print("ERROR: asymptotic covariance matrix A is not positive!")
-        #result$model <- model
-        #TABs <- emptyAnovaLsmeansTAB()
-        #result$anova.table <- TABs$TAB.fixed
-        #result$lsmeans.table <- TABs$TAB.lsmeans
-        #result$diffs.lsmeans.table <- TABs$TAB.lsmeans
-        #return(result)
       }
       
       
@@ -300,14 +225,11 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
     #calculate ttest and p-values for summary
     if(isTtest)
     {
-      if(!old){
-        tsummary <- calculateTtestJSS(rho, diag(rep(1,length(rho$fixEffs))), 
-                                   length(rho$fixEffs), ddf = ddf)
-      }
-      else{
-        tsummary <- calculateTtest(rho, diag(rep(1,length(rho$fixEffs))), 
-                                   length(rho$fixEffs))
-      }
+      
+      tsummary <- calculateTtestJSS(rho, diag(rep(1,length(rho$fixEffs))), 
+                                  length(rho$fixEffs), ddf = ddf)
+      
+      
       
       result$ttest <- list(df=tsummary[, "df"], tvalue=tsummary[, "t value"], 
                            tpvalue=tsummary[, "p-value"])
@@ -323,7 +245,7 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
         lsmeans.tab <- calcLSMEANS(model, data, rho, alpha.fixed, 
                                    test.effs=test.effs,
                                    lsmeansORdiff=TRUE, 
-                                   l.lmerTest.private.contrast, old = old)
+                                   l.lmerTest.private.contrast)
         result$lsmeans.table <- lsmeans.tab$summ.data
         result$diffs.lsmeans.table <- NULL
       }
@@ -332,7 +254,7 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
         lsmeans.tab <- calcLSMEANS(model, data, rho, alpha.fixed, 
                                    test.effs=test.effs,
                                    lsmeansORdiff=FALSE, 
-                                   l.lmerTest.private.contrast, old = old)
+                                   l.lmerTest.private.contrast)
         result$diffs.lsmeans.table <- lsmeans.tab$summ.data
         result$lsmeans.table <- NULL
       }
@@ -347,21 +269,14 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
     names.design.withLevels <- X.design.list$names.design.withLevels
     
     
-    #save full coefficients in rho
-    ## old code, worked with dummy.coef
-    #nums.dummy.coefs <- getNumsDummyCoefs(model, data, l)
-    #rho$nums.zeroCoefs <- nums.dummy.coefs$nums.zeroCoefs
-    #rho$nums.Coefs <- nums.dummy.coefs$nums.Coefs
-    #fullCoefs <- rep(0, ncol(X.design))
-    #fullCoefs[rho$nums.Coefs] <- rho$fixEffs
-    #fullCoefs <- setNames(fullCoefs, names.design.withLevels) 
+   
     ###new code with X.design matrix
     fullCoefs <- rep(0, ncol(X.design))
     fullCoefs <- setNames(fullCoefs, names.design.withLevels) 
     names(fullCoefs)[1] <- "(Intercept)"
     fullCoefs[names(rho$fixEffs)] <- rho$fixEffs
     rho$nums.Coefs <- which(names(fullCoefs) %in% names(rho$fixEffs))
-      #unique(c(which(names(fullCoefs)=="(Intercept)"),which(names(fullCoefs) %in% names(rho$fixEffs))))
+   
     rho$nums.Coefs <- setNames(rho$nums.Coefs, names(fullCoefs[rho$nums.Coefs]))
     #define the terms that are to be tested
     test.terms <- attr(terms(model),"term.labels")
@@ -379,11 +294,9 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
       L <- calcGeneralSetForHypothesis(X.design, rho)  
     
     
-    # calculate type 1 hypothesis matrices for each term
-    # TODO: fix bug with noint sens1 + Homesize
+    # calculate type 1 hypothesis matrices for each term   
     if( type==1 )
     {
-      #X <- model.matrix(model)
       X <- X.design
       p <- ncol(X)
       XtX <- crossprod(X)
@@ -395,35 +308,12 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
 
     }
  
-    #calculate ss F value ddf and p value for each term 
-#    resultFpvalueSS <- lapply(test.terms, calcFpvalueMAIN, L=L, X.design=X.design,
-#                               fullCoefs=fullCoefs, model=model, rho=rho, ddf=ddf,
-#                               method.grad=method.grad, type=type, old = old)
-    
   
-    if (!.is.cluster){
       resultFpvalueSS <- llply(test.terms, calcFpvalueMAIN, L=L, X.design=X.design,
                                fullCoefs=fullCoefs, model=model, rho=rho, ddf=ddf,
-                               type=type, old = old)
-    }
-    #else{
-#       clusterExport(cl, c("fixef", "isGLMM", "isLMM", "makeContrastType3SAS", 
-#                           "relatives", "calcFpvalueSS", "calcSatterthJSS",
-#                           "vcovJSS", "llply", "mygrad", "Vv_to_Cv", "mlist2vec",
-#                           "vec2mlist", "get_clen", "safe_chol"), envir = .GlobalEnv)
-#       clusterSetRNGStream(cl) 
-      #ref <- unlist( clusterCall(cl, fun=.merMod_refDist, largeModel, smallModel, nsim=nsim.cl) )
-     # system.time(resultFpvalueSS <- clusterApply(cl, test.terms, 
-     #                                             fun = calcFpvalueMAIN, L = L, 
-     #                                             X.design = X.design, 
-     #                                             fullCoefs = fullCoefs,
-     #                                             model = model, rho = rho, 
-     #                                             ddf = ddf, 
-     #                                             method.grad = method.grad, 
-     #                                             type = type, jss = jss))       
-      #stopCluster(cl)
-   # }
-    
+                               type=type)
+
+       
     #fill anova table
     anova.table <- fillAnovaTable(resultFpvalueSS,  anova.table)
     
@@ -469,7 +359,7 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
     lsmeans.tab <- calcLSMEANS(model, data, rho, alpha.fixed, 
                                test.effs = test.effs,
                                lsmeansORdiff = TRUE, 
-                               l.lmerTest.private.contrast, old = old)
+                               l.lmerTest.private.contrast)
     result$lsmeans.table <- lsmeans.tab$summ.data
   }
   else
@@ -481,7 +371,7 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
     lsmeans.tab <- calcLSMEANS(model, data, rho, alpha.fixed, 
                                test.effs = test.effs, 
                                lsmeansORdiff=FALSE, 
-                               l.lmerTest.private.contrast, old = old)
+                               l.lmerTest.private.contrast)
     result$diffs.lsmeans.table <- lsmeans.tab$summ.data
   }
   else
@@ -489,12 +379,7 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
     result$diffs.lsmeans.table <- NULL
   }
   
-  ## TODO: UNCOMMENT? it is in CRAN - ttest for the final model
-#   tsummary <- calculateTtest(rho, diag(rep(1,length(rho$fixEffs))), 
-#                              length(rho$fixEffs), method.grad)
-#   result$ttest <- list(df=tsummary[,"df"], tvalue=tsummary[,"t value"], 
-#                        tpvalue=tsummary[,"p-value"])
-  
+    
   #format anova.table and random.table according to elim.num column
   result$anova.table <- formatElimNumTable(result$anova.table) 
   result$rand.table <- formatElimNumTable(result$rand.table) 
@@ -506,342 +391,10 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
   #save model
   if(inherits(model, "merMod"))
     model <- as(model,"merModLmerTest")
-  #else if (inherits(model, "mer"))    
-  #  model <- as(model,"merLmerTest")
-  #if(class(model)=="merLmerTest")
-  #  model@t.pval <- result$ttest$tpvalue
+  
   result$model <- model
   return(result)
 }
 
 
-step <- function(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, 
-                 alpha.fixed = 0.05, reduce.fixed = TRUE, reduce.random = TRUE, 
-                 fixed.calc=TRUE ,lsmeans.calc=TRUE, difflsmeans.calc=TRUE, 
-                 test.effs=NULL, old = FALSE, cl = NULL, 
-                 ...)
-{  
-  if(!inherits(model, "lmerMod"))
-    stop("The model is not linear mixed effects model")
 
-  result <- totalAnovaRandLsmeans(model = model, ddf = ddf , type = type,  
-                                  alpha.random = alpha.random, 
-                                  alpha.fixed = alpha.fixed,
-                                  reduce.fixed = reduce.fixed, 
-                                  reduce.random = reduce.random,
-                                  fixed.calc = fixed.calc, 
-                                  lsmeans.calc = lsmeans.calc,
-                                  difflsmeans.calc = difflsmeans.calc, 
-                                  isTotal = TRUE, 
-                                  isTtest = FALSE, test.effs = test.effs, 
-                                  old = old, cl = cl)
-  class(result) <- "step"
-  result
-}
-
-#step.merModLmerTest <- function(object, scope, scale = 0,
-#direction = c("both", "backward", "forward"),
-#trace = 1, keep = NULL, steps = 1000, k = 2, ...)
-  #function(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, alpha.fixed = 0.05, reduce.fixed = TRUE, reduce.random = TRUE, lsmeans.calc=TRUE, difflsmeans.calc=TRUE, test.effs=NULL, method.grad="simple", ...)
-#{  
-#  if(!inherits(object, "lmerMod"))
-#    stop("The model is not linear mixed effects model")
- # result <- totalAnovaRandLsmeans(model=model, ddf=ddf , type=type,  alpha.random=alpha.random, alpha.fixed=alpha.fixed, reduce.fixed=reduce.fixed, reduce.random=reduce.random, lsmeans.calc=lsmeans.calc, difflsmeans.calc=difflsmeans.calc, isTotal=TRUE, isTtest=FALSE, test.effs=test.effs, method.grad=method.grad)
-#  result <- 2
-#  class(result) <- "step.merModLmerTest"
-#  result
-#}
-
-### UNUSED function
-#totalAnalysis.formula <- function(formula, data, ...)
-#{
-#  model <- lmer(formula=formula, data=data)
-#  resAnalysis<-totalAnalysis.default(model, data, ...)
-#  resAnalysis$call<-match.call()
-#  resAnalysis
-#}
-
- print.step <- function(x, ...)
- {
-   
-   if(!is.null(x$rand.table))
-   {
-     cat("\nRandom effects:\n") 
-     x$rand.table[,"p.value"] <- format.pval(x$rand.table[,"p.value"], digits=4, 
-                                             eps=1e-7)
-     x$rand.table[,"Chi.sq"] <- round(x$rand.table[,"Chi.sq"], 2)
-     print(x$rand.table)     
-   } 
-   if(is.null(x$anova.table)){
-     
-   }else{
-     if(nrow(x$anova.table) != 0)
-     {
-       if(class(x$model) == "lm" | class(x$model) == "gls")
-       {
-         cat("\nFixed effects:\n")
-         print(x$anova.table)
-         cat("\nLeast squares means:\n")
-         print(x$lsmeans.table) 
-         cat("\nFinal model:\n")
-         print(x$model)
-         return()
-       }
-       else
-       {
-         cat("\nFixed effects:\n")
-         x$anova.table[,"Pr(>F)"] <- format.pval(x$anova.table[,"Pr(>F)"], 
-                                                 digits=4, eps=1e-7)
-         x$anova.table[,c("Sum Sq","Mean Sq", "F.value")] <- 
-           round(x$anova.table[,c("Sum Sq","Mean Sq", "F.value")],4)
-         x$anova.table[,"DenDF"] <- round(x$anova.table[,"DenDF"],2)
-         print(x$anova.table)          
-         if(!is.null(x$lsmeans.table))
-         {
-           cat("\nLeast squares means:\n")
-           printCoefmat(x$lsmeans.table, dig.tst=3 ,
-                        tst.ind=c(1:(which(colnames(x$lsmeans.table)=="Estimate")-1),
-                                  which(colnames(x$lsmeans.table)=="DF")), 
-                        digits=3 , P.values = TRUE, has.Pvalue=TRUE)
-         }
-         if(!is.null(x$diffs.lsmeans.table))
-         {
-           cat("\n Differences of LSMEANS:\n")
-           printCoefmat(x$diffs.lsmeans.table, dig.tst=1  ,
-                        tst.ind=c(1:(which(colnames(x$diffs.lsmeans.table)==
-                                             "Estimate")-1),
-                                  which(colnames(x$diffs.lsmeans.table)=="DF")),
-                        digits=3 , P.values = TRUE, has.Pvalue=TRUE)
-         }
-         
-       }    
-     }
-     else
-       print(x$anova.table)
-   }
-   
-   cat("\nFinal model:\n")
-   print(x$model@call) 
- }
- 
- 
- plot.step <- function(x, main = NULL, cex = 1.4, ...)
- {
-   if(!is.null(x$lsmeans.table) && nrow(x$lsmeans.table)>0)
-     plotLSMEANS(x$lsmeans.table, x$response, "LSMEANS", main = main, cex = cex)     
-   if(!is.null(x$diffs.lsmeans.table) && nrow(x$diffs.lsmeans.table)>0)
-     plotLSMEANS(x$diffs.lsmeans.table, x$response, "DIFF of LSMEANS", 
-                 main = main, cex = cex)
- }
-
-# lmer <-
-#   function(formula, data, family = NULL, REML = TRUE,
-#            control = list(), start = NULL, verbose = FALSE, doFit = TRUE,
-#            subset, weights, na.action, offset, contrasts = NULL,
-#            model = TRUE, x = TRUE, ...)
- lmer <- function(formula, data = NULL, REML = TRUE,
-          control = lmerControl(), start = NULL, verbose = 0L,
-          subset, weights, na.action, offset, contrasts = NULL,
-          devFunOnly = FALSE, ...)
-  {
-    mc <- match.call()
-    mc[[1]] <- quote(lme4::lmer)
-    model <- eval.parent(mc)
-    if(inherits(model, "merMod"))
-      model <- as(model,"merModLmerTest")
-    #else if (inherits(model, "mer"))    
-    #  model <- as(model,"merLmerTest")   
-    #model <- as(model,"merLmerTest")
-#     if(class(model) == "lmerMod")
-#      model <- as(model,"merModLmerTest")
-#     else if (class(model) == "mer")
-#      model <- as(model,"merLmerTest")
-    #tryCatch(  { result = glm( y~x , family = binomial( link = "logit" ) ) } , error = function(e) { print("test") } )
-    #t.pval <- tryCatch( {totalAnovaRandLsmeans(model=model, ddf="Satterthwaite", isTtest=TRUE)$ttest$tpvalue}, error = function(e) { NULL })
-    #if(!is.null(t.pval))
-    #{
-    #  model@t.pval  <- t.pval
-    #}
-    #else
-    #{
-    #  model <- as(model,"lmerMod")
-    #}
-    return(model)
-  }
-
-
-
-
-setMethod("anova", signature(object="merModLmerTest"),
-          function(object, ..., ddf="Satterthwaite", type=3, 
-                   old = FALSE, cl = NULL)  
-          {
-            
-            mCall <- match.call(expand.dots = TRUE)
-            dots <- list(...)
-            modp <- if (length(dots))
-              sapply(dots, is, "merModLmerTest") | sapply(dots, is, "merMod") | 
-              sapply(dots, is, "lm") else logical(0)
-            if (any(modp)) {
-              return(callNextMethod())
-            }
-            else
-            {
-              cnm <- callNextMethod()
-              if(!is.null(ddf) &&  ddf=="lme4") 
-                return(cnm)              
-              {
-                  table <- cnm          
-                  
-                  an.table <- tryCatch({totalAnovaRandLsmeans(model=object, 
-                                                              ddf=ddf, 
-                                                              type=type,
-                                                              isAnova=TRUE, 
-                                                              reduce.random=FALSE,
-                                                              reduce.fixed=FALSE, 
-                                                              old = old, cl=cl)$anova.table}
-                                       , error = function(e) { NULL })
-                  if(!is.null(an.table))
-                  {
-                    table <- an.table
-#                     rnames <- rownames(table)
-#                     if(nrow(an.table)>0)
-#                     {
-#                       
-#                       table <- as.data.frame(cbind(table$Df, table$"Sum Sq", table$"Mean Sq", an.table[,"F.value"], an.table[,"DenDF"], an.table[,"Pr(>F)"]))
-#                       colnames(table) <- c("Df", "Sum Sq", "Mean Sq", "F value", "Denom", "Pr(>F)")
-#                       dimnames(table) <- list(rnames,
-#                                               c("Df", "Sum Sq", "Mean Sq", "F value", "Denom", "Pr(>F)"))
-#                     }
-#                     else                    
-#                       table <- an.table
-                    
-                    attr(table, "heading") <- paste("Analysis of Variance Table of type", type ," with ", ddf, "\napproximation for degrees of freedom")
-                  }
-                  else
-                    message("anova from lme4 is returned\nsome computational error has occurred in lmerTest")
-                  
-                  
-                  
-                  class(table) <- c("anova", "data.frame")
-                  return(table)
-                }  
-              
-            }
-            
-          })
-
-setMethod("summary", signature(object = "merModLmerTest"),
-          function(object, ddf="Satterthwaite", old = FALSE, ...)
-          {
-            
-            cl <- callNextMethod()
-            if(!is.null(ddf) && ddf=="lme4") return(cl)
-            else
-            {
-              tsum <- tryCatch( {totalAnovaRandLsmeans(model=object, ddf=ddf, isTtest=TRUE, old = old)$ttest}, error = function(e) { NULL })
-              if(is.null(tsum)){
-                message("summary from lme4 is returned\nsome computational error has occurred in lmerTest")
-                return(cl)
-              }
-              coefs.satt <- cbind(cl$coefficients[,1:2, drop=FALSE], tsum$df, tsum$tvalue, tsum$tpvalue)               
-                cl$coefficients <- coefs.satt
-                colnames(cl$coefficients)[3:5] <- c("df","t value","Pr(>|t|)")              
-            }   
-            
-            return(cl)
-          }
-          
-)
-
-#randTAB.default<-function(model, data, ...)
-rand <- function(model, ...)
-{
-  if(!inherits(model, "lmerMod"))
-    stop("The model is not linear mixed effects model")
-  result <- totalAnovaRandLsmeans(model=model, isRand=TRUE, reduce.random=FALSE)  
-  res <- list(rand.table=result$rand.table, isCorr = result$corr.intsl)
-  class(res) <- "rand"
-  res
-}
-
-print.rand <- function(x, ...)
-{
-  
-  cat("Analysis of Random effects Table:\n")
-  if(!is.null(x$rand.table))
-    printCoefmat(x$rand.table, digits=3 , dig.tst=1  ,
-                 tst.ind=c(which(colnames(x$rand.table)=="Chi.DF"),
-                           which(colnames(x$rand.table)=="elim.num")), 
-                 P.values=TRUE, has.Pvalue=TRUE)        
-}
-
-
-
-
-
-lsmeans <- function(model, test.effs=NULL, old = FALSE,...)
-{
-  if(!inherits(model, "lmerMod"))
-    stop("The model is not linear mixed effects model")
-  result <- totalAnovaRandLsmeans(model = model, ddf = "Satterthwaite", 
-                                  isLSMEANS = TRUE, test.effs = test.effs, 
-                                  reduce.random = FALSE, reduce.fixed = FALSE, 
-                                  old = old)  
-  res <- list(lsmeans.table=result$lsmeans.table, response=result$response)
-  class(res) <- "lsmeans"
-  res 
-}
-
-print.lsmeans <- function(x, ...)
-{
-  
-  cat("Least Squares Means table:\n")
-  printCoefmat(data.matrix(x$lsmeans.table), dig.tst=1, 
-               tst.ind=c(1:(which(colnames(x$lsmeans.table)=="Estimate")-1),
-                         which(colnames(x$lsmeans.table)=="DF")), digits=3 , 
-               P.values=TRUE, has.Pvalue=TRUE)       
-}
-
-plot.lsmeans <- function(x, main = NULL, cex = 1.4, ...)
-{
-  
-  #plots for LSMEANS
-  if(!is.null(x$lsmeans.table) && nrow(x$lsmeans.table)>0)
-    plotLSMEANS(x$lsmeans.table, x$response, "LSMEANS", main = main, cex = cex)     
-}
-
-difflsmeans <- function(model, test.effs=NULL, 
-                        old = FALSE, ...)
-{
-  if(!inherits(model, "lmerMod"))
-    stop("The model is not linear mixed effects model")
-  result <- totalAnovaRandLsmeans(model = model, ddf = "Satterthwaite", 
-                                  isDiffLSMEANS = TRUE, test.effs = test.effs, 
-                                  reduce.random = FALSE, reduce.fixed = FALSE, 
-                                  old = old)  
-  res <- list(diffs.lsmeans.table=result$diffs.lsmeans.table, 
-              response=result$response)
-  class(res) <- "difflsmeans"
-  res 
-}
-
-print.difflsmeans <- function(x, ...)
-{
-  
-  cat("Differences of LSMEANS:\n")
-  printCoefmat(data.matrix(x$diffs.lsmeans.table), dig.tst=1, 
-               tst.ind=c(1:(which(colnames(x$diffs.lsmeans.table)=="Estimate")-1),
-                         which(colnames(x$diffs.lsmeans.table)=="DF")), digits=3 ,
-               P.values=TRUE, has.Pvalue=TRUE)
-  
-}
-
-plot.difflsmeans <- function(x, main = NULL, cex = 1.4, ...)
-{
-  
-  #plots for DIFF of LSMEANS
-  if(!is.null(x$diffs.lsmeans.table) && nrow(x$diffs.lsmeans.table)>0)
-    plotLSMEANS(x$diffs.lsmeans.table, x$response, "DIFF of LSMEANS", 
-                main = main, cex = cex)   
-}

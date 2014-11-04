@@ -1,3 +1,8 @@
+################################################################################
+## functions related to testing random effects
+################################################################################
+
+
 
 ### fill a row for the random matrix
 fillRowRandTable <- function(term, rand.table, elim.num, reduce.random)
@@ -67,14 +72,6 @@ updateRandTable <- function(infoForTerm, rand.table,
 
 
 
-### get the random terms out of a model formula
-# getRandTerms <- function(fmodel)
-# {
-#   terms.fm <- attr(terms(fmodel),"term.labels")
-#   ind.rand.terms <- which(unlist(lapply(terms.fm,
-#                             function(x) substring.location(x, "|")$first))!=0)
-#   return(terms.fm[ind.rand.terms])
-# }
 
 ### function get the slope part of a random term
 findSlopePart <- function(term)
@@ -237,111 +234,10 @@ saveInfoForTerm <- function(term, chisq, chisq.df, pv, model.red = NULL)
   return(infoForTerms[ind])  
 }
 
-############################################################################
-#get formula for model 
-############################################################################
-# getFormula <- function(model, withRand=TRUE)
-# {
-#   fmodel <- formula(model)
-#   terms.fm <- attr(terms.formula(fmodel),"term.labels")
-#   ind.rand.terms <- which(unlist(lapply(terms.fm,function(x) substring.location(x, "|")$first))!=0)
-#   terms.fm[ind.rand.terms] <- unlist(lapply(terms.fm[ind.rand.terms],function(x) paste("(",x,")",sep="")))
-#   fm <- paste(fmodel)
-#   if(withRand)
-#     fm[3] <- paste(terms.fm,collapse=" + ")
-#   else
-#     fm[3] <- paste(terms.fm[-ind.rand.terms],collapse=" + ")
-#   
-#   if(fm[3]=="")
-#     fo <- as.formula(paste(fm[2],fm[1],1, sep=""))
-#   else
-#     fo <- as.formula(paste(fm[2],fm[1],fm[3], sep=""))
-#   return(fo)
-# }
-
-
-# refitLM <- function(obj, l="contr.SAS") {
-#   #   cl <- match.call()
-#   #   bits <- getME(obj,c("X","y","offset"))
-#   #   w <- weights(obj)
-#   #   m <- if (!all(w==1)) {
-#   #     with(bits,lm.fit(X,y,offset=offset, contrasts=l))
-#   #   } else {
-#   #     with(bits,lm.wfit(X,y,w,offset=offset))
-#   #   }
-#   #   class(m) <- "lm"
-#   #   m$offset <- offset
-#   #   m$call <- cl
-#   #   m
-#   
-#   #mm <- model.frame.fixed(obj)
-#   mm <- model.frame(obj)
-#   colnames(mm)[1] <- "y"
-#   fo <- getFormula(obj, withRand=FALSE)# formula(obj,fixed.only=TRUE)
-#   if(fo != as.formula(.~.))
-#   {
-#     inds <-  names(l) %in% attr(terms(fo), "term.labels")
-#     #update contrast l
-#     l <- l[inds]
-#   }
-#   fo <- update(fo, y ~ .)
-#   lm(fo, data=mm, contrasts = l)
-# }
-
-
-# ### compare mixed model versus fixed
-# compareMixVSFix <- function(model, mf.final, data, name.term, rand.table, alpha, elim.num, reduce.random)
-# {
-#   #library(nlme)
-#   #return(NULL)
-#   #mframe <- model.frame(mf.final, data=data, na.action=na.pass)
-#   #if(length(which(names(mframe) %in% names(data)==FALSE))!=0)
-#   # {
-#   #   data$response <- mframe[,1]
-#   #   fm <- paste(mf.final)
-#   #   fm[2] <- "response"
-#   #   mf.final <-  as.formula(paste(fm[2],fm[1],fm[3], sep=""))
-#   #   mf.final <- update.formula(mf.final,mf.final)       
-#   # }
-#   
-#   #model.red <- gls(model = mf.final, data=data, method = "REML", na.action=na.omit)
-#   #model.red  <-  lm(formula(model,fixed.only=TRUE), data=model.frame.fixed(model))#lm(model, data=summary(model,"lme4")@frame)
-#   model.red <- refitLM(model)
-#   
-#   l.fix <- -2*logLik(model)[1]
-#   l.red <- -2*logLik(model.red, REML=TRUE)[1]
-#   
-#   p.chisq <- 1 - pchisq (l.red -l.fix ,1)
-#   infoForTerm <- saveInfoForTerm(name.term, l.red -l.fix, 1, p.chisq)
-#   #detach(package:nlme)
-#   
-#   if(infoForTerm$pv > alpha)
-#   {    
-#     rand.table <- updateRandTable(infoForTerm, rand.table, elim.num=elim.num, reduce.random=reduce.random)
-#     model.last <- model.red
-#   }
-#   else
-#   {
-#     rand.table <- updateRandTable(infoForTerm, rand.table, reduce.random=reduce.random)
-#     model.last <- model    
-#   }
-#   return(list(model=model.last, TAB.rand=rand.table))   
-# }
-
-
-### check if there are no random terms in the model
-# checkPresRandTerms <- function(mf.final)
-# {
-#   sub.loc.rand <- substring.location(paste(mf.final)[3], "|")
-#   if(sub.loc.rand$first==0 && sub.loc.rand$last==0)
-#     return(FALSE)
-#   return(TRUE)
-# }
-
 
 ### eliminate NS random terms 
 elimRandEffs <- function(model, data, alpha, reduce.random, 
-                         l.lmerTest.private.contrast, .is.cluster, cl = NULL)
+                         l.lmerTest.private.contrast)
 {
   
   
@@ -361,54 +257,12 @@ elimRandEffs <- function(model, data, alpha, reduce.random,
       isInitRand <- FALSE
     }      
     
-    fm <- paste(fmodel)
-    #pv.max <- 0
-    #infoForTerms <- vector("list", length(rand.terms.table))
-    #names(infoForTerms) <- names(rand.terms.table)  
-    
-#     for(i in 1:length(rand.terms.table))
-#     {
-#       rnm <- rand.terms.table[i]
-#       fm <- paste(fmodel)
-#       mf.final <- fmElimRandTerm(rnm, rand.terms, fm)
-#       is.present.rand <- checkPresRandTerms(mf.final)
-#       
-#       # no more random terms in the model
-#       if(!is.present.rand)
-#       {
-#         return(compareMixVSFix(model, mf.final, data, rnm, rand.table, alpha,
-#                                elim.num, reduce.random))
-#         
-#       } 
-#       model.red <- updateModel(model, mf.final, getME(model, "is_REML"), 
-#                                l.lmerTest.private.contrast)
-#       anova.red <- suppressMessages(anova(model, model.red))
-#       infoForTerms[[names(rnm)]] <- saveInfoForTerm(rnm, anova.red$Chisq[2], 
-#                                                     anova.red$"Chi Df"[2], 
-#                                                     anova.red$'Pr(>Chisq)'[2])
-#       if(((anova.red$'Pr(>Chisq)'[2] >= pv.max) || 
-#             abs(1 - anova.red$'Pr(>Chisq)'[2]) < 1e-6) && reduce.random)
-#       { 
-#         pv.max <- anova.red$'Pr(>Chisq)'[2]
-#         infoForTermElim <- infoForTerms[[names(rnm)]]
-#         model.final <- model.red 
-#         #if(anova.red$'Pr(>Chisq)'[2]==1)
-#         #  break
-#       }
-#     }
-    
+    fm <- paste(fmodel)    
      
-    if(!.is.cluster)
-     infoForTerms <- llply(rand.terms.table, .fun = .doLRT, rand.terms, fmodel, model, l.lmerTest.private.contrast)
-#     else{
-#        clusterExport(cl, c("anova", "substring.location", "substring2", "getME",
-#                            "fmElimRandTerm", "getSlGrParts", "findSlopePart",
-#                            "checkPresRandTerms"), 
-#                      envir = .GlobalEnv)
-#        clusterSetRNGStream(cl) 
-#       infoForTerms <- clusterApply(cl = cl, x = rand.terms.table, fun = .doLRT, rand.terms, fmodel, model)
-#     }
-    
+   
+    infoForTerms <- llply(rand.terms.table, .fun = .doLRT, rand.terms, fmodel, 
+                           model, l.lmerTest.private.contrast)
+  
 
     
     ## find the maximal p-value if the reduction is required

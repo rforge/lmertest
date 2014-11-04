@@ -7,7 +7,7 @@ import(methods)
 importFrom(MASS, ginv)
 import(Hmisc)
 importFrom(gplots, barplot2)
-import(pbkrtest)
+#import(pbkrtest)
 #importFrom(stats, step)
 
 
