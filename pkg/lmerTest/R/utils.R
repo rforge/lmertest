@@ -58,11 +58,12 @@ rhoInitJSS <- function(model)
   
   
   ## get the optima
-  pp <- model@pp$copy()
-  vlist <- sapply(model@cnms, length)
-  opt <- Cv_to_Vv(pp$theta, n = vlist, s = rho$sigma)
-  rho$opt <- opt
-  rho$thopt <- pp$theta
+  ## To UNCOMMENT
+  #pp <- model@pp$copy()  
+  #opt <- Cv_to_Vv(pp$theta, n = vlist, s = rho$sigma)
+  #rho$opt <- opt
+  rho$thopt <- getME(model, "theta")
+  rho$param <- as.data.frame(VarCorr(model))[, "sdcor"]
   return(rho)  
 }
 
@@ -95,7 +96,7 @@ calcSatterthJSS  <-  function(Lc, rho)
   PL <- t(svdec$vectors) %*% Lc
   
   
-  vss <- vcovJSStheta(rho$model)
+  vss <- vcovJSStheta2(rho$model)
 
   nu.m.fun <- function(m){    
     g <- grad(function(x)  vss(t(PL[m,]), x), c(rho$thopt, rho$sigma))    
@@ -238,7 +239,7 @@ calculateTtestJSS <- function(rho, Lc, nrow.res, ddf="Satterthwaite")
     Va <- pbkrtest::vcovAdj(rho$model)
   }
   else
-    vss <- vcovJSStheta(rho$model)
+    vss <- vcovJSStheta2(rho$model)
   for(i in 1:nrow.res)
   {
     
@@ -441,9 +442,6 @@ getNSFixedTerm <- function(model, anova.table, data, alpha)
     return(NULL)  
 }
   
-getNAterm <- function(anova.table, terms){
-  return(terms[!terms %in% rownames(anova.table)])
-} 
 
 
 ###############################################################################
@@ -658,16 +656,6 @@ emptyAnovaLsmeansTAB <- function()
 
 
 
-
-### get names of terms out of rownames of rand.table
-getTermsRandtable <- function(names.rand.table)
-{
-  return(unlist(lapply(names.rand.table, 
-                       function(x) substring2(x,substring.location(x,"(")$first, 
-                                              nchar(x)))))
-}
-
-
 ### check if there are no random terms in the model
 checkPresRandTerms <- function(mf.final)
 {
@@ -698,32 +686,6 @@ compareMixVSFix <- function(model, mf.final, data, name.term)
 }
 
 
-### check if the correlation between intercept and slopes is present
-isCorrInt <- function(term)
-{  
-  if(substring.location(term,"+ 1 +")$last !=0)
-    return(TRUE)
-  if(substring.location(term,"(1 +")$last !=0)
-    return(TRUE)
-  if(substring.location(term,"+ 1 |")$last !=0)
-    return(TRUE)
-  sbstr <- substr(term,substring.location(term,"(")$first + 1,substring.location(term,"|")$last - 1)
-  if(length(grep("1", sbstr))==0 && length(grep("0", sbstr))==0)
-    return(TRUE)
-  return(FALSE)  
-}
-
-### check if the correlation between slopes is present
-isCorrSlope <- function(term)
-{  
-  if(substring.location(term,"+ 0 +")$last !=0)
-    return(TRUE)
-  if(substring.location(term,"(0 +")$last !=0)
-    return(TRUE)
-  if(substring.location(term,"+ 0 |")$last !=0)
-    return(TRUE)
-  return(FALSE)  
-}
 
 #create reduce slopes model
 createModelRedSlopes <- function(x, term, fm, model, l.lmerTest.private.contrast)
@@ -737,66 +699,7 @@ createModelRedSlopes <- function(x, term, fm, model, l.lmerTest.private.contrast
   return(model.red)
 }
 
-# find the NS slope term in the model
-findNSslopesTerm <- function(term, isCorr, fm, model, l.lmerTest.private.contrast)
-{
-  redModels <- sapply(getRedSlopeTerms(term, isCorr), 
-                      function(x) createModelRedSlopes(x, term, fm, model, 
-                                                       l.lmerTest.private.contrast))
-  
-}
 
-getRedSlopeTerms <- function(term, isCorr)
-{
-  sub.loc.div <- substring.location(term," |")
-  slopepart <- substring2(term,2,sub.loc.div$first)
-  grouppart <- substring2(term,sub.loc.div$last, nchar(term))
-  parts <- unlist(strsplit(slopepart, "\\+"))
-  if(isCorr)
-  {
-    ind.int <- if(length(which(parts==" 1 "))!=0) which(parts==" 1 ") else which(parts=="1 ") 
-    if(length(ind.int) == 0)
-      new.terms <- c(paste("(",paste(c(slopepart, " 0 "), collapse="+"),grouppart, sep=""),paste("(1 ",grouppart,sep=""))
-    else
-      new.terms <-  sapply(parts[-ind.int], function(x) paste("(",paste(c("1 ", x), collapse="+"),grouppart, sep=""))
-  }
-  else
-  {
-    new.terms <- NULL
-    ind.int <- if(length(which(parts==" 0 "))!=0) which(parts==" 0 ") else which(parts=="0 ")
-    for(part in parts[-ind.int])
-      new.terms <- c(new.terms,paste("(",paste(c(part, " 0 "), collapse="+"),grouppart, sep=""))
-    new.terms <- c(new.terms,paste("(1 ",grouppart,sep=""))
-  }
-  return(new.terms) 
-}
-
-# modify (reduce) the random part when there are slopes 
-changeSlopePart <- function(term, isCorr)
-{
-  sub.loc.div <- substring.location(term," |")
-  slopepart <- substring2(term,2,sub.loc.div$first)
-  grouppart <- substring2(term,sub.loc.div$last, nchar(term))
-  parts <- unlist(strsplit(slopepart, "\\+"))
-  
-  if(isCorr)
-  {
-    ind.int <- if(length(which(parts==" 1 "))!=0) which(parts==" 1 ") else which(parts=="1 ") 
-    if(length(ind.int) == 0)
-      new.terms <- c(paste("(",paste(c(slopepart, " 0 "), collapse="+"),grouppart, sep=""),paste("(1 ",grouppart,sep=""))
-    else
-      new.terms <- c(paste("(",paste(c(parts[-ind.int], " 0 "), collapse="+"),grouppart, sep=""),paste("(1 ",grouppart,sep=""))
-  }
-  else
-  {
-    new.terms <- NULL
-    ind.int <- if(length(which(parts==" 0 "))!=0) which(parts==" 0 ") else which(parts=="0 ")
-    for(part in parts[-ind.int])
-      new.terms <- c(new.terms,paste("(",paste(c(part, " 0 "), collapse="+"),grouppart, sep=""))
-    new.terms <- c(new.terms,paste("(1 ",grouppart,sep=""))
-  }
-  return(new.terms)      
-}
 
 # ### get the random terms
 getRandTerms <- function(fmodel)
@@ -806,138 +709,6 @@ getRandTerms <- function(fmodel)
   return(unlist(lapply(terms.fm[ind.rand.terms],function(x) paste("(",x,")",sep=""))))
 }
 
-### get names of variables of the slope and group part of random term
-getGrSlrand <- function(rand.term)
-{
-  # find the names of variables for slope part sl and for group part gr
-  rand.term1 <- substring2(rand.term, 2, nchar(rand.term)-1)
-  splGrSl <- unlist(strsplit(rand.term1, "|", fixed = TRUE))
-  gr <- substring2(splGrSl[2],2,nchar(splGrSl[2]))
-  sl <- unlist(strsplit(splGrSl[1], "+", fixed = TRUE))
-  for(i in 1:length(sl))
-  {
-    if(i==1)
-      sl[i] <- substring2(sl[i],1,nchar(sl[i])-1)
-    else
-    {
-      sl[i] <- substring2(sl[i],2,nchar(sl[i])-1)
-    }
-  }
-  # change 1 to (Intercept) or eliminate 0 in slope part
-  sl[which(sl=="1")] <- "(Intercept)"
-  if(length(which(sl=="0"))!=0)
-    sl <- sl[-which(sl=="0")]
-  return(list(gr=gr,sl=sl))
-}
-
-findGroupForRandomTerm <- function(vcr, randomGroup)
-{
-  randomGroup2 <- paste(unlist(strsplit(randomGroup, ":")), collapse=".")
-  which(names(vcr) %in% c(randomGroup, unlist(lapply(1:100, function(x) paste(randomGroup, ".", sep="",x))), randomGroup2,  unlist(lapply(1:100, function(x) paste(randomGroup2, ".", sep="",x))))==TRUE)
-}
-
-
-### Find Index of the random term in VarCorr matrix
-findIndTerm <- function(vcr, GrSl)
-{
-  #indsGr <- which(names(vcr)==GrSl$gr)
-  # for lme4 >1.0
-  indsGr <- findGroupForRandomTerm(vcr, GrSl$gr)
-  if(length(indsGr)==1)
-    return(indsGr)
-  for(indGr in indsGr)
-  {
-    if(length(which((names(attr(vcr[[indGr]],"stddev"))==GrSl$sl)==FALSE))==0)
-      return(indGr)
-  }
-}
-
-#### check if the term has zero variance or correlation equal to +-1
-checkIsZeroVarOrCorr <- function(model, rand.term, isCorr)
-{
- 
-  vcr <- VarCorr(model)
-  ind.term <- findIndTerm(vcr, getGrSlrand(rand.term))
-  if(isCorr)
-  {
-    matcorr <- attr(vcr[[ind.term]],"correlation")
-    if(length(which(abs(abs(matcorr[lower.tri(matcorr)])-1)<1e-07 || matcorr[lower.tri(matcorr)]=="NaN"))!=0)
-      return(TRUE)      
-  }
-  else
-  {
-    stddev <- attr(vcr[[ind.term]],"stddev")
-    if(abs(stddev)<1e-07)
-      return(TRUE)
-  }
-  return(FALSE)
-}
-
-#### eliminate components with zero variance or correlation +-1, NaN
-elimZeroVarOrCorr <- function(model, data, l.lmerTest.private.contrast)
-{
-  stop=FALSE
-  while(!stop)
-  {
-    fmodel <- formula(model)    
-    rand.terms <- getRandTerms(fmodel)
-    for(rand.term in rand.terms)
-    {
-      
-      isCorr.int <- isCorrInt(rand.term)
-      isCorr.slope <- isCorrSlope(rand.term)
-      if(checkIsZeroVarOrCorr(model, rand.term, isCorr.int || 
-                                (isCorr.slope && 
-                                   length(substring.location(rand.term,"+")$first)>1)))
-      {
-              
-        fm <- paste(fmodel)
-        if(isCorr.int || (isCorr.slope && length(substring.location(rand.term,"+")$first)>1)) 
-        {
-          new.terms <- changeSlopePart(rand.term, isCorr.int)
-          fm[3] <- paste(fm[3], "-", rand.term, "+" , paste(new.terms,collapse="+"))
-          #print(paste("Random term",rand.term, "was eliminated because of having correlation +-1 or NaN", sep=" "))
-          message(paste("Random term", rand.term, 
-                        "was eliminated because of having correlation +-1 or NaN \n", 
-                        sep=" "))
-        }
-        else
-        {
-          fm[3] <- paste(fm[3], "-", rand.term)
-          message(paste("Random term",rand.term, 
-                        "was eliminated because of standard deviation being equal to 0 \n", 
-                        sep=" "))
-        }
-          
-        mf.final <-  as.formula(paste(fm[2], fm[1], fm[3], sep=""))
-        mf.final <- update.formula(mf.final, mf.final)
-        is.present.rand <- checkPresRandTerms(mf.final)
-        if(!is.present.rand)
-        {
-          #library(nlme)
-          #model=gls(model = mf.final, data=data, method = "REML", na.action=na.omit)
-          #detach(package:nlme)
-          #model  <-  lm(formula(model,fixed.only=TRUE), data=model.frame.fixed(model))#lm(model, data=summary(model,"lme4")@frame)
-          model <- refitLM(model)
-          return(list(model=model, TAB.rand=NULL))
-        }
-        #update model
-        #if(!is.null(l))
-        #  model <- eval(substitute(lmer(mf.final, data=data, REML=model@dims[["REML"]], contrasts=l),list(mf.final=mf.final)))
-        #else
-        #  model <- eval(substitute(lmer(mf.final, data=data, REML=model@dims[["REML"]]),list(mf.final=mf.final)))
-        model <- updateModel(model, mf.final, getME(model, "is_REML"), 
-                             l.lmerTest.private.contrast)
-        elimZero <- TRUE
-        break       
-      }
-      else
-        elimZero <- FALSE      
-    }
-    if(!elimZero)
-      return(list(model=model, TAB.rand=NULL))
-  }
-}
 
 
 
@@ -968,7 +739,9 @@ getREML <- function(model)
 }
 
 #update model
-updateModel <- function(model, mf.final, reml, l.lmerTest.private.contrast)
+updateModel <- function(model, mf.final, reml.lmerTest.private, 
+                        l.lmerTest.private.contrast, 
+                        devFunOnly.lmerTest.private = FALSE)
 {
   #if(!mf.final == as.formula(.~.))
   if(!mf.final == as.formula(paste(".~.")))
@@ -980,11 +753,13 @@ updateModel <- function(model, mf.final, reml, l.lmerTest.private.contrast)
     l.lmerTest.private.contrast <- l.lmerTest.private.contrast[inds]
   }
   
- nfit <- update(object=model, formula.=mf.final
-                , REML=reml ,contrasts=l.lmerTest.private.contrast, evaluate=FALSE)
+ nfit <- update(object=model, formula.=mf.final, REML=reml.lmerTest.private ,
+                contrasts=l.lmerTest.private.contrast, 
+                devFunOnly = devFunOnly.lmerTest.private, evaluate=FALSE)
  env <- environment(formula(model))
  assign("l.lmerTest.private.contrast", l.lmerTest.private.contrast, envir=env)
- assign("reml", reml, envir=env)
+ assign("reml.lmerTest.private", reml.lmerTest.private, envir=env)
+ assign("devFunOnly.lmerTest.private", devFunOnly.lmerTest.private, envir=env)
  nfit <- eval(nfit, envir = env) 
  return(nfit)   
 }
@@ -1034,7 +809,7 @@ doolittle <- function(x, eps = 1e-6) {
   list( L=L, U=U )
 }
 
-
+## UNUSED FUNCTION
 model.frame.fixed <- function(model) {
   fo.fixed <- getFormula(model, withRand=FALSE)
   fo.rand <- getFormula(model, withRand=TRUE)

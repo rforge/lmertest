@@ -177,6 +177,14 @@ setMethod("summary", signature(object = "merModLmerTest"),
             if(!is.null(ddf) && ddf=="lme4") return(cl)
             else
             {
+              #errors in specifying the parameters
+              ddfs <- c("Satterthwaite", "Kenward-Roger")
+              ind.ddf <- pmatch(tolower(ddf), tolower(ddfs))
+              if(is.na(ind.ddf))  
+                stop('Parameter ddf is wrongly specified')  
+              else
+                ddf <- ddfs[ind.ddf]
+              
               tsum <- tryCatch( {totalAnovaRandLsmeans(model=object, 
                                                        ddf=ddf, 
                                                        isTtest=TRUE)$ttest}, 
@@ -191,6 +199,7 @@ setMethod("summary", signature(object = "merModLmerTest"),
               colnames(cl$coefficients)[3:5] <- c("df","t value","Pr(>|t|)")              
             }   
             
+            cl$methTitle <- paste(cl$methTitle,  "\nt-tests use ", ddf, "approximations to degrees of freedom")
             return(cl)
           }
           

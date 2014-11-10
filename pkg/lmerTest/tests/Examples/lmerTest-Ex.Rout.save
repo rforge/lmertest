@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2014-10-29 r66897) -- "Unsuffered Consequences"
+R Under development (unstable) (2014-11-05 r66942) -- "Unsuffered Consequences"
 Copyright (C) 2014 The R Foundation for Statistical Computing
 Platform: x86_64-w64-mingw32/x64 (64-bit)
 
@@ -98,8 +98,8 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 Final model:
 lme4::lmer(formula = log(Coloursaturation) ~ TVset + Picture + 
-    (1 | Assessor:TVset) + TVset:Picture, data = TVbo, REML = reml, 
-    contrasts = l.lmerTest.private.contrast)
+    (1 | Assessor:TVset) + TVset:Picture, data = TVbo, REML = reml.lmerTest.private, 
+    contrasts = l.lmerTest.private.contrast, devFunOnly = devFunOnly.lmerTest.private)
 > ## End Don't show
 > 
 > ## Not run: 
@@ -243,7 +243,8 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 Final model:
 lme4::lmer(formula = Preference ~ sens2 + Homesize + (1 + sens2 | 
-    Consumer), data = carrots, REML = reml, contrasts = l.lmerTest.private.contrast)
+    Consumer), data = carrots, REML = reml.lmerTest.private, 
+    contrasts = l.lmerTest.private.contrast, devFunOnly = devFunOnly.lmerTest.private)
 > 
 > 
 > 
@@ -393,7 +394,8 @@ Final model:
 lme4::lmer(formula = Informed.liking ~ Product + Information + 
     Gender + (1 | Product:Consumer) + Product:Information + Product:Gender + 
     Information:Gender + Product:Information:Gender, data = ham, 
-    REML = reml, contrasts = l.lmerTest.private.contrast)
+    REML = reml.lmerTest.private, contrasts = l.lmerTest.private.contrast, 
+    devFunOnly = devFunOnly.lmerTest.private)
 > 
 > 
 > 
@@ -441,7 +443,8 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > # gives summary of merModLmerTest class. The same as of class merMod but with
 > # additional p-values calculated based on Satterthwate's approximations
 > summary(fm1)
-Linear mixed model fit by REML ['merModLmerTest']
+Linear mixed model fit by REML t-tests use Satterthwaite approximations to
+  degrees of freedom [merModLmerTest]
 Formula: Reaction ~ Days + (Days | Subject)
    Data: sleepstudy
 
@@ -504,7 +507,8 @@ Days -0.138
 > # gives summary of lmer object. The same as of class merMod but with 
 > # additional p-values calculated based on Satterthwate's approximations
 > summary(m)
-Linear mixed model fit by REML ['merModLmerTest']
+Linear mixed model fit by REML t-tests use Satterthwaite approximations to
+  degrees of freedom [merModLmerTest]
 Formula: Informed.liking ~ Gender + Information + Product + (1 | Consumer)
    Data: ham
 
@@ -695,7 +699,8 @@ Days  1  29442   29442  45.047
 > # summary of merModLmerTest object. Returns the same as merMod object but with an 
 > #additional column of p values for the t test. 
 > summary(m)
-Linear mixed model fit by REML ['merModLmerTest']
+Linear mixed model fit by REML t-tests use Satterthwaite approximations to
+  degrees of freedom [merModLmerTest]
 Formula: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject)
    Data: sleepstudy
 
@@ -820,7 +825,8 @@ Fixed Effects:
 > 
 > ## will give you an additional column with p values for the t test
 > summary(fm1)
-Linear mixed model fit by REML ['merModLmerTest']
+Linear mixed model fit by REML t-tests use Satterthwaite approximations to
+  degrees of freedom [merModLmerTest]
 Formula: Reaction ~ Days + (Days | Subject)
    Data: sleepstudy
 
@@ -857,7 +863,8 @@ Loading required package: parallel
 Note: method with signature 'sparseMatrix#ANY' chosen for function 'kronecker',
  target signature 'dgCMatrix#ngCMatrix'.
  "ANY#sparseMatrix" would also be valid
-Linear mixed model fit by REML ['merModLmerTest']
+Linear mixed model fit by REML t-tests use Kenward-Roger approximations to
+  degrees of freedom [merModLmerTest]
 Formula: Reaction ~ Days + (Days | Subject)
    Data: sleepstudy
 
@@ -919,7 +926,7 @@ Days -0.138
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  10.18 0.26 10.45 NA NA 
+Time elapsed:  11.73 0.34 12.12 NA NA 
 > grDevices::dev.off()
 null device 
           1 

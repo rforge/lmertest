@@ -63,7 +63,8 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
       else
       {
         warning("\n model has been refitted with REML=TRUE \n")
-        updateModel(model, .~., reml=TRUE, l.lmerTest.private.contrast)
+        updateModel(model, .~., reml.lmerTest.private=TRUE, 
+                    l.lmerTest.private.contrast)
       }
   }
   
@@ -157,7 +158,7 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
           rho <- rhoInitJSS(model)  
           
           # calculate asymptotic covariance matrix A
-          dd <- devfun4(model, useSc = TRUE, signames = FALSE, getME(model, "is_REML"))
+          dd <- devfun5(model,  getME(model, "is_REML"))
           h <- hessian(dd, c(rho$thopt, sigma = rho$sigma))
           
           rho$A <- 2*solve(h)
@@ -193,10 +194,24 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
         #h <- hessian(dd, rho$opt)
         
       ## based on theta pars
-      dd <- devfun4(model, useSc = TRUE, signames = FALSE, getME(model, "is_REML"))
+      #dd <- devfun4(model, useSc = TRUE, signames = FALSE, getME(model, "is_REML"))
+      
+      ##1515.9964  960.4566 
+      
+      dd <- devfun5(model,  getME(model, "is_REML"))
       h <- hessian(dd, c(rho$thopt, sigma = rho$sigma))
-
-    
+      
+#       devFun.1 <- update(model, devFunOnly=TRUE)
+#       devFun.2 <- function(param, devFun, vlist) {
+#         do.call(devFun, list(Sv_to_Cv(param, n = vlist, s = param[length(param)])))
+#       }
+#       devFun.2(rho$param, devFun.1, vlist = rho$vlist)
+#       h <- hessian(devFun.2, rho$param, devFun = devFun.1, vlist = rho$vlist)
+# 
+#       dd2 <- devFunRune(model)
+#       h <- hessian(dd, rho$opt)
+      
+      
       ch <- try(chol(h), silent=TRUE)
       if(inherits(ch, "try-error")) {
         message("Model is not identifiable...")

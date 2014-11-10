@@ -2,7 +2,7 @@ Package: lmerTest
 Type: Package
 Title: Tests for random and fixed effects for linear mixed effect
         models (lmer objects of lme4 package).
-Version: 2.0-15
+Version: 2.0-16
 Date: 2012-01-09
 Authors@R: c(person("Alexandra", "Kuznetsova", role = c("aut", "cre"),
                           email = "alku@dtu.dk"),
