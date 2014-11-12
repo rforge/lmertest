@@ -18,16 +18,16 @@ get_models2 <- function(variables, data1) {
   })
 }
 
-# mlist <- get_models(variables)
-# ls1 <- lapply(mlist, anova)
-# stopifnot("Pr(>F)" %in% colnames(ls1[[1]]))
+ mlist <- get_models(variables)
+ ls1 <- lapply(mlist, anova)
+ stopifnot("Pr(>F)" %in% colnames(ls1[[1]]))
 
-# 
-# 
-# mlist <- get_models2(variables, data=cltlike)
-# ls2 <- lapply(mlist, anova, type=1)
-# stopifnot("Pr(>F)" %in% colnames(ls2[[1]]))
-# 
+
+
+mlist <- get_models2(variables, data=cltlike)
+ls2 <- lapply(mlist, anova, type=1)
+stopifnot("Pr(>F)" %in% colnames(ls2[[1]]))
+
 # 
 # update_call <- function (object, formula., ...) {
 #   call <- object@call

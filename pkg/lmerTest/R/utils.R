@@ -54,7 +54,7 @@ rhoInitJSS <- function(model)
   
   rho$fixEffs <- fixef(model)
   rho$sigma <- sigma(model)
-  
+  rho$vlist <- sapply(model@cnms, length)
   
   
   ## get the optima
@@ -64,6 +64,8 @@ rhoInitJSS <- function(model)
   #rho$opt <- opt
   rho$thopt <- getME(model, "theta")
   rho$param <- as.data.frame(VarCorr(model))[, "sdcor"]
+  rho$vars <- Cv_to_Vv(rho$thopt, n = rho$vlist, 
+                       s = rho$sigma)
   return(rho)  
 }
 
@@ -95,11 +97,16 @@ calcSatterthJSS  <-  function(Lc, rho)
   
   PL <- t(svdec$vectors) %*% Lc
   
-  
+  ## based on theta parameters and sigma
+  ## also correct
   vss <- vcovJSStheta2(rho$model)
+  ## based on var cor parameters
+  #vss <- vcovJSStheta2.var(rho$model)
 
   nu.m.fun <- function(m){    
-    g <- grad(function(x)  vss(t(PL[m,]), x), c(rho$thopt, rho$sigma))    
+    g <- grad(function(x)  vss(t(PL[m,]), x), c(rho$thopt, rho$sigma))  
+    ## based on var cor parameters
+    #g <- grad(function(x)  vss(t(PL[m,]), x), rho$vars) 
     2*(svdec$values[m])^2/(t(g) %*% rho$A %*% g)
   }
   nu.m <- unlist(llply(1:length(svdec$values), .fun = nu.m.fun))
@@ -238,8 +245,13 @@ calculateTtestJSS <- function(rho, Lc, nrow.res, ddf="Satterthwaite")
       stop("pbkrtest package required for Kenward-Roger's approximations")
     Va <- pbkrtest::vcovAdj(rho$model)
   }
-  else
+  else{
+    # based on theta parameters
     vss <- vcovJSStheta2(rho$model)
+    # based on variance parameters
+    #vss <- vcovJSStheta2.var(rho$model)
+  }
+    
   for(i in 1:nrow.res)
   {
     
@@ -257,11 +269,17 @@ calculateTtestJSS <- function(rho, Lc, nrow.res, ddf="Satterthwaite")
       resultTtest[i,4] <- as.numeric(sqrt(Va.Lb.hat))
     }
     else{
+      ## based on theta parameters
       g <- grad(function(x)  vss(t(Lc[,i]), x), c(rho$thopt, rho$sigma))
+      ## based on var cor parameters
+      #g <- grad(function(x)  vss(t(Lc[,i]), x), rho$vars)
       
       #denominator df
       denom <- t(g) %*% rho$A %*% g
+      ## for the theta and sigma parameters
       varcor <- vss(t(Lc[,i]), c(rho$thopt, rho$sigma))
+      ## for var cor parameters
+      #varcor <- vss(t(Lc[,i]), rho$vars)
       #df
       resultTtest[i,1] <- 2*(varcor)^2/denom
       #statistics

@@ -10,14 +10,16 @@ devfun5 <- function (fm,  reml = TRUE)
   
   resp <- fm@resp$copy()
   np <- length(pp$theta)
-  nf <- length(fixef(fm))
+  nf <- length(fixef(fm)) 
   if (!isGLMM(fm)) 
     np <- np + 1L
   n <- nrow(pp$V)
   
-  ff <- tryCatch({update(fm, devFunOnly = TRUE)}
-                 , error = function(e) { update(fm, devFunOnly = TRUE, 
-                                                data = model.frame(fm)) })
+
+  
+  ff <- updateModel(fm, .~., getREML(fm), 
+                    attr(model.matrix(fm),"contrasts"), 
+                    devFunOnly.lmerTest.private = TRUE) 
   
   envff <- environment(ff)
   
@@ -63,9 +65,12 @@ vcovJSStheta2 <- function(fm)
   if (!isGLMM(fm)) 
     np <- np + 1L
   
-  ff2 <- tryCatch({update(fm, devFunOnly = TRUE)}
-                  , error = function(e) { update(fm, devFunOnly = TRUE, 
-                                                 data = model.frame(fm)) })
+
+  
+  ff2 <- updateModel(fm, .~., getREML(fm), 
+                     attr(model.matrix(fm),"contrasts"), 
+                    devFunOnly.lmerTest.private = TRUE) 
+  
   envff2 <- environment(ff2)
   
   if (isLMM(fm)) {

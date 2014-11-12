@@ -198,8 +198,15 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
       
       ##1515.9964  960.4566 
       
+      ## based on theta parameters and sigma
+      # also correct
       dd <- devfun5(model,  getME(model, "is_REML"))
       h <- hessian(dd, c(rho$thopt, sigma = rho$sigma))
+      
+      
+      ## based on var cor parameters
+      #dd <- devfun5.vars(model,  getME(model, "is_REML"))
+      #h <- hessian(dd, rho$vars)
       
 #       devFun.1 <- update(model, devFunOnly=TRUE)
 #       devFun.2 <- function(param, devFun, vlist) {

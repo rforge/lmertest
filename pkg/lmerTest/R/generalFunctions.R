@@ -6,6 +6,13 @@ step <- function(model, ddf="Satterthwaite", type=3, alpha.random = 0.1,
   if(!inherits(model, "lmerMod"))
     stop("The model is not linear mixed effects model")
   
+  ddfs <- c("Satterthwaite", "Kenward-Roger")
+  ind.ddf <- pmatch(tolower(ddf), tolower(ddfs))
+  if(is.na(ind.ddf))  
+    stop('Parameter ddf is wrongly specified')  
+  else
+    ddf <- ddfs[ind.ddf]
+  
   result <- totalAnovaRandLsmeans(model = model, ddf = ddf , type = type,  
                                   alpha.random = alpha.random, 
                                   alpha.fixed = alpha.fixed,

@@ -244,20 +244,20 @@ Cv_to_Sv <- function(v,n=NULL,s=1) {
     attr(r,"clen") <- get_clen(v,n)
     r
 }
-
-if (FALSE) {
-    cvec1 <- 1:6
-    Cv_to_Vv(cvec1)
-    Vv_to_Cv(Cv_to_Vv(0))
-    Cv_to_Vv(cvec1,s=2)
-    Sv_to_Cv(Cv_to_Sv(cvec1))
-    Vv_to_Cv(Cv_to_Vv(cvec1))
-    ## for length-1 matrices, Cv_to_Sv should be equivalent
-    ##   to multiplying Cv by sigma and appending sigma ....
-    clist2 <- list(matrix(1),matrix(2),matrix(3))
-    cvec2 <- mlist2vec(clist2)
-    all((cvec3 <- Cv_to_Sv(cvec2,s=2))==c(cvec2*2,2))
-    all(Sv_to_Cv(cvec3,n=rep(1,3),s=2)==
-        cvec3[-length(cvec3)]/cvec3[length(cvec3)])
-}
-
+# 
+# if (FALSE) {
+#     cvec1 <- 1:6
+#     Cv_to_Vv(cvec1)
+#     Vv_to_Cv(Cv_to_Vv(0))
+#     Cv_to_Vv(cvec1,s=2)
+#     Sv_to_Cv(Cv_to_Sv(cvec1))
+#     Vv_to_Cv(Cv_to_Vv(cvec1))
+#     ## for length-1 matrices, Cv_to_Sv should be equivalent
+#     ##   to multiplying Cv by sigma and appending sigma ....
+#     clist2 <- list(matrix(1),matrix(2),matrix(3))
+#     cvec2 <- mlist2vec(clist2)
+#     all((cvec3 <- Cv_to_Sv(cvec2,s=2))==c(cvec2*2,2))
+#     all(Sv_to_Cv(cvec3,n=rep(1,3),s=2)==
+#         cvec3[-length(cvec3)]/cvec3[length(cvec3)])
+# }
+# 

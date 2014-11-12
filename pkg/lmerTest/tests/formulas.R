@@ -15,3 +15,11 @@ fm3 <- lmer(Preference ~ poly(sens1, 3)+ Homesize +
               +             (1+sens2|Consumer), data=carrots)
 
 anova(fm3)
+
+
+s.lmerTest <- summary(fm3)
+
+s.lme4<- summary(fm3, ddf="lme4")
+
+all.equal(coefficients(s.lmerTest)[, "t value"], 
+          coefficients(s.lme4)[, "t value"])

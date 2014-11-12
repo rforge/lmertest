@@ -1,7 +1,7 @@
 
-R Under development (unstable) (2014-07-21 r66220) -- "Unsuffered Consequences"
+R Under development (unstable) (2014-11-05 r66942) -- "Unsuffered Consequences"
 Copyright (C) 2014 The R Foundation for Statistical Computing
-Platform: i386-w64-mingw32/i386 (32-bit)
+Platform: x86_64-w64-mingw32/x64 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -20,8 +20,6 @@ Loading required package: lmerTest
 Loading required package: Matrix
 Loading required package: lme4
 Loading required package: Rcpp
-KernSmooth 2.23 loaded
-Copyright M. P. Wand 1997-2009
 
 Attaching package: 'lmerTest'
 
@@ -47,6 +45,9 @@ Days  29442   29442     1 18.156  45.046 2.594e-06 ***
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > 
 > anova(m, ddf="Kenward-Roger")
+Loading required package: pbkrtest
+Loading required package: MASS
+Loading required package: parallel
 Analysis of Variance Table of type 3  with  Kenward-Roger 
 approximation for degrees of freedom
      Sum Sq Mean Sq NumDF  DenDF F.value    Pr(>F)    
@@ -71,38 +72,35 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > m.ham <- lmer(Informed.liking ~ Product*Information*Gender 
 +               + (1|Consumer), data = ham)
 > 
-> anova(m.ham, type = 1)
-Analysis of Variance Table of type 1  with  Satterthwaite 
-approximation for degrees of freedom
-                           Sum Sq Mean Sq NumDF DenDF F.value    Pr(>F)    
-Product                    91.807 30.6024     3   553  6.9475 0.0001351 ***
-Information                 6.520  6.5201     1   553  1.4802 0.2242582    
-Gender                      3.872  3.8715     1    79  0.8789 0.3513501    
-Product:Information        10.387  3.4624     3   553  0.7861 0.5020073    
-Product:Gender              8.421  2.8071     3   553  0.6373 0.5912406    
-Information:Gender          1.407  1.4075     1   553  0.3195 0.5721200    
-Product:Information:Gender  5.992  1.9972     3   553  0.4534 0.7149855    
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+> an.lmerTest <- anova(m.ham, type = 1)
 > 
-> anova(m.ham, ddf = "lme4")
-Analysis of Variance Table
-                           Df Sum Sq Mean Sq F value
-Product                     3 91.807 30.6024  6.9475
-Information                 1  6.520  6.5201  1.4802
-Gender                      1  3.872  3.8715  0.8789
-Product:Information         3 10.387  3.4624  0.7861
-Product:Gender              3  8.421  2.8071  0.6373
-Information:Gender          1  1.407  1.4075  0.3195
-Product:Information:Gender  3  5.992  1.9972  0.4534
+> an.lme4 <- anova(m.ham, ddf = "lme4")
+> 
+> ## check that F values and so SS and MS agree in lmerTest and lme4
+> stopifnot(all.equal(an.lmerTest[,"F.value"], an.lme4[, "F value"]),
++           all.equal(an.lmerTest[,"Sum Sq"], an.lme4[, "Sum Sq"]),
++           all.equal(an.lmerTest[,"Mean Sq"], an.lme4[, "Mean Sq"]))
 > 
 > fm2 <- lmer(Preference ~ sens2 + I(sens1^2)  +
 +               (1+sens2|Consumer), data=carrots)
 > 
 > ## from lmer
 > fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
-> fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy)
+> fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0 + Days|Subject), sleepstudy)
 > 
+> an.sleep <- anova(fm1, type = 1)
+> an.sleep2 <- anova(fm2, type = 1)
+> 
+> ## check with SAS
+> TOL <- 1e-6
+> stopifnot(all.equal(an.sleep[, "F.value"], 45.8530, tol = TOL))
+> stopifnot(all.equal(an.sleep[, "DenDF"], 17, tol = TOL))
+> 
+> ## for model withut correlations
+> stopifnot(all.equal(an.sleep[, "F.value"], 45.8530, tol = TOL))
+> stopifnot(all.equal(an.sleep[, "DenDF"], 17, tol = TOL))
+> 
+> ## check KR works
 > anova(fm1, ddf="Kenward-Roger")
 Note: method with signature 'sparseMatrix#ANY' chosen for function 'kronecker',
  target signature 'dgCMatrix#ngCMatrix'.
@@ -132,4 +130,4 @@ object  6 1763.9 1783.1 -875.97   1751.9 0.0639      1     0.8004
 > 
 > proc.time()
    user  system elapsed 
-   4.86    0.17    5.11 
+   5.38    0.21    5.60 
