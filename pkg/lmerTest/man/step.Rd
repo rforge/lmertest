@@ -8,9 +8,9 @@ Performs backward elimination of non-significant effects of linear mixed effects
 performs automatic backward elimination of all effects of linear mixed effect model. First backward elimination of the random part is performed following by backward elimination of the fixed part. Finally LSMEANS (population means) and differences of LSMEANS for the fixed part of the model are calculated and the final model is provided. The \verb{p}-values for the fixed effects are calculated from \verb{F} test based on Sattethwaite's or Kenward-Roger approximation), \verb{p}-values for the random effects are based on likelihood ratio test.  All analysis may be performed on \code{lmer} object of \pkg{lme4} package. 
 }
 \usage{
-step(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, alpha.fixed = 0.05, 
-reduce.fixed = TRUE, reduce.random = TRUE, fixed.calc=TRUE, lsmeans.calc=TRUE,
-difflsmeans.calc=TRUE, test.effs=NULL,  ...)
+step(model, ddf = "Satterthwaite", type = 3, alpha.random = 0.1, alpha.fixed = 0.05, 
+reduce.fixed = TRUE, reduce.random = TRUE, fixed.calc = TRUE, lsmeans.calc = TRUE,
+difflsmeans.calc = TRUE, test.effs = NULL,  keep.effs = NULL, ...)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -71,6 +71,12 @@ difflsmeans.calc=TRUE, test.effs=NULL,  ...)
     LSMEANS are not calculated.
 }
 
+\item{keep.effs}{
+    
+    charachter vector specifying the names of terms to be kept in the model
+    even if being non-significant
+}
+
 
   \item{\dots}{
      other potential arguments.
@@ -99,7 +105,7 @@ Alexandra Kuznetsova, Per Bruun Brockhoff, Rune Haubo Bojesen Christensen
 }
 
 \note{
-  For the random coefficient models: in the random part if correlation is present between slope and intercept, then the simplified model will contain just an intercept. That is if the random part of the initial model is \code{(1+c|f)}, where \code{c} is a covariate, then this model is compared to \code{(1|f)} by using LRT. If there are multiple slopes, then the the slope with the highest \verb{p}-value (and higher then alpha level) is eliminated. That is if the random part of the initial model has the following form \code{(1+c1+c2|f)}, where \code{c1} and \code{c2} are covariates, then two simplified models are constracted and compared to the initial one: the first one has \code{(1+c1|f)} in the random part and the second one has: \code{(1+c2|f)}. The simplification of the random part does not consider the cases where \code{c} is a factor (is left for the future implementation).
+  For the random coefficient models: in the random part if correlation is present between slope and intercept, then the simplified model will contain just an intercept. That is if the random part of the initial model is \code{(1+c|f)}, then this model is compared to \code{(1|f)} by using LRT. If there are multiple slopes, then the the slope with the highest \verb{p}-value (and higher then alpha level) is eliminated. That is if the random part of the initial model has the following form \code{(1+c1+c2|f)}, then two simplified models are constracted and compared to the initial one: the first one has \code{(1+c1|f)} in the random part and the second one has: \code{(1+c2|f)}. 
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
@@ -120,6 +126,12 @@ s <- step(m)
 
 #plot of post-hoc analysis of the final model
 plot(s)
+
+m <- lmer(Coloursaturation ~ TVset*Picture+
+(1|Assessor)+(1|Assessor:TVset), data=TVbo)
+
+step(m, keep.effs = "Assessor")
+
 }
 
 

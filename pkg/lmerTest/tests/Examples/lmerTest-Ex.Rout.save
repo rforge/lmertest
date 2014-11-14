@@ -788,6 +788,12 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > ##D 
 > ##D #plot of post-hoc analysis of the final model
 > ##D plot(s)
+> ##D 
+> ##D m <- lmer(Coloursaturation ~ TVset*Picture+
+> ##D (1|Assessor)+(1|Assessor:TVset), data=TVbo)
+> ##D 
+> ##D step(m, keep.effs = "Assessor")
+> ##D 
 > ## End(Not run)
 > 
 > 
@@ -822,6 +828,7 @@ Number of obs: 180, groups:  Subject, 18
 Fixed Effects:
 (Intercept)         Days  
      251.41        10.47  
+> 
 > 
 > ## will give you an additional column with p values for the t test
 > summary(fm1)
@@ -926,7 +933,7 @@ Days -0.138
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  11.73 0.34 12.12 NA NA 
+Time elapsed:  11.11 0.39 11.51 NA NA 
 > grDevices::dev.off()
 null device 
           1 

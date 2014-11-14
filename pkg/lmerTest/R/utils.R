@@ -398,7 +398,7 @@ orderterms <- function(anova.table)
 # get terms to compare in anova.table
 ###############################################################################
 #getTermsToCompare <- function(model)
-getTermsToCompare <- function(anova.table)
+getTermsToCompare <- function(anova.table, keep.effs = NULL)
 {
   
   #order.terms <- attr(terms(model),"order")
@@ -427,13 +427,14 @@ getTermsToCompare <- function(anova.table)
     else
       terms.compare <- c(allterms[ind.hoi], allterms.rest)
   }
-  return( terms.compare )
+  
+  return(setdiff(terms.compare, keep.effs))
 }
 
 ###############################################################################
 # find NS effect from the model (starting from highest order interactions)
 ###############################################################################
-getNSFixedTerm <- function(model, anova.table, data, alpha)
+getNSFixedTerm <- function(model, anova.table, data, alpha, keep.effs = NULL)
 {
   
   pv.max <- 0
@@ -441,7 +442,8 @@ getNSFixedTerm <- function(model, anova.table, data, alpha)
    if(length(which(anova.table[,"elim.num"]==0))==1)
     terms.compare <- rownames(anova.table)[anova.table[,"elim.num"]==0]
   else
-    terms.compare <- getTermsToCompare(anova.table[anova.table[,"elim.num"]==0,])
+    terms.compare <- getTermsToCompare(anova.table[anova.table[,"elim.num"]==0,], 
+                                       keep.effs)
   
   for(tcmp in terms.compare)
   {
@@ -463,12 +465,13 @@ getNSFixedTerm <- function(model, anova.table, data, alpha)
 
 
 ###############################################################################
-# eliminate NS effect from the model
+# eliminate NS fixed effect from the model
 ############################################################################### 
 elimNSFixedTerm <- function(model, anova.table, data, alpha, elim.num, 
-                            l.lmerTest.private.contrast)
+                            l.lmerTest.private.contrast, keep.effs = NULL)
 {
-  ns.term <- getNSFixedTerm(model, anova.table, data, alpha)
+  ns.term <- getNSFixedTerm(model, anova.table, data, alpha, 
+                            keep.effs = keep.effs)
   if( is.null(ns.term) )
     return(NULL)
   anova.table[ns.term, "elim.num"] <- elim.num
@@ -899,3 +902,72 @@ updateAnovaTable <- function(resNSelim){
     as.matrix(anm[, c("Sum Sq", "Mean Sq", "Df")])
   anova.table
 }
+
+## UNUSED function
+## check if keep.effs is part of the model
+# .checkKeepEffs <- function(keep.effs, modelEffs){
+#   if(keep.effs %in% unlist(modelEffs))
+#     return(TRUE)
+#   FALSE
+# }
+
+.getKeepInter <- function(model.eff, split.keep.eff){
+  if(setequal(unlist(strsplit(model.eff, ":")), split.keep.eff))
+    return(model.eff)
+}
+
+.findKeepEff <- function(keep.eff, model.effs){
+ 
+  ## for main terms
+  if(length(grep(":", keep.eff)) == 0){
+    if(keep.eff %in% model.effs)
+      return(keep.eff)
+  }
+  else{
+    ## for interaction terms
+    return(unlist(lapply(model.effs, .getKeepInter, 
+                         unlist(strsplit(keep.eff, ":")))))
+  }   
+}
+
+.findKeepEffSlope <- function(keep.eff, randTermsSl){
+  
+  ind.Slope <- unlist(lapply(randTermsSl, function(x) x$sl.part == keep.eff)) 
+  if(sum(ind.Slope) == 0){
+    ind.Gr <- unlist(lapply(randTermsSl, function(x) x$gr.part == keep.eff)) 
+    if(sum(ind.Gr) > 0)
+      return(c(names(randTermsSl[ind.Slope]), keep.eff))
+  } 
+  c(names(randTermsSl[ind.Slope]))
+}
+
+.findKeepRandEff <- function(keep.eff, model.effs){
+  randTerms <- getRandTermsTable(names(model.effs))
+  is.scalar <- unlist(lapply(randTerms, function(x) x$sl.part == "1"))
+  randTermsScal <- randTerms[is.scalar]
+  randTermsSl <- randTerms[!is.scalar]
+  keep.eff.scal <- .findKeepEff(keep.eff, names(randTermsScal))
+  keep.eff.slope <- .findKeepEffSlope(keep.eff, randTermsSl)
+  c(keep.eff.scal, keep.eff.slope)  
+}
+
+.getKeepEffs <- function(keep.effs, model.effs){
+  #rand.terms.table <- getRandTermsTable(rand.terms)
+  randeffs <- unlist(lapply(keep.effs, .findKeepRandEff, unlist(model.effs$randeffs)))
+  fixedeffs <- unlist(lapply(keep.effs, .findKeepEff, unlist(model.effs$fixedeffs)))
+  return(list(randeffs = randeffs, fixedeffs = fixedeffs))
+}
+
+
+## the same function is in SensMixed package
+## list of random and fixed terms of the model
+.fixedrand <- function(model)
+{  
+  effs <- attr(terms(formula(model)), "term.labels")
+  neffs <- length(effs)
+  randeffs <- effs[grep(" | ", effs)]
+  randeffs <- sapply(randeffs, function(x) substring(x, 5, nchar(x)))
+  fixedeffs <- effs[!(effs %in% names(randeffs))]
+  return(list(randeffs=randeffs, fixedeffs=fixedeffs))
+}
+

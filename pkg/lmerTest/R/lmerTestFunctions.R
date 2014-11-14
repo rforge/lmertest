@@ -6,12 +6,25 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
                                   isAnova = FALSE, isRand = FALSE, 
                                   isLSMEANS = FALSE, 
                                   isDiffLSMEANS = FALSE, isTtest = FALSE, 
-                                  test.effs = NULL)
+                                  test.effs = NULL, keep.effs = NULL)
 {
   
+  ## check type of hypothesis
   if(!isRand && !(type %in% c(1,3)))  
     stop('Parameter type is wrongly specified') 
   
+  ## check keep.effs 
+  if(!isTotal)
+    keep.effs <- NULL
+  else{
+    if(!is.null(keep.effs)){
+      model.effs <- .fixedrand(model)
+      keep.effs1 <- .getKeepEffs(keep.effs, model.effs) 
+      if(length(unlist(keep.effs1)) == 0)
+        message(paste("No ", keep.effs, "exist among effects in the model"))
+      keep.effs <- keep.effs1
+    }    
+  }
   
   
   data <- model.frame(model) 
@@ -20,24 +33,28 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
   mm <- model.matrix(model)
   l.lmerTest.private.contrast<- attr(mm,"contrasts")
   contr <- l.lmerTest.private.contrast
-  ### change contrasts for F tests calculations
-  #list of contrasts for factors
-  if( isAnova || isTotal )
-  {    
-    if( length(which(unlist(contr)!="contr.SAS")) > 0 )
-    {
-      names.facs <- names(contr)
-      l.lmerTest.private.contrast <- as.list(rep("contr.SAS",length(names.facs)))
-      names(l.lmerTest.private.contrast) <- names(contr)
-	    model <- updateModel(model, .~., getREML(model), l.lmerTest.private.contrast) 
-    }    
-  }
-  else
-  {
-    #update model to mer class
-	model <- updateModel(model, .~., getREML(model), l.lmerTest.private.contrast)
-  }
   
+  ## THE FOLLOWING UPDATE CONTRASTS CODE IS TRANSFERRED AFTER THE REDUCTION
+  ## OF THE RAND EFFECTS - THE CHANGE OF THE CONTRASTS INFLUENCED 
+  ## THE LRT FOR RANDOM EFFECTS - EXAMPLE IN testContrasts.R
+#   ### change contrasts for F tests calculations
+#   #list of contrasts for factors
+#   if( isAnova || isTotal )
+#   {    
+#     if( length(which(unlist(contr)!="contr.SAS")) > 0 )
+#     {
+#       names.facs <- names(contr)
+#       l.lmerTest.private.contrast <- as.list(rep("contr.SAS",length(names.facs)))
+#       names(l.lmerTest.private.contrast) <- names(contr)
+# 	    model <- updateModel(model, .~., getREML(model), l.lmerTest.private.contrast) 
+#     }    
+#   }
+#   else
+#   {
+#     #update model to mer class
+# 	model <- updateModel(model, .~., getREML(model), l.lmerTest.private.contrast)
+#   }
+#   
   
   
   
@@ -101,7 +118,7 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
     if(isRand)
       reduce.random <- FALSE
     result.rand <- elimRandEffs(model, data, alpha.random, reduce.random, 
-                                l.lmerTest.private.contrast)  
+                                l.lmerTest.private.contrast, keep.effs$randeffs)  
    
     model <- result.rand$model
     #convert rand table to data frame
@@ -117,12 +134,30 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
     }
       
   }
-  
-  
-    
+      
   #save results for fixed effects for model with only fixed effects
   if(class(model) == "lm" | class(model) == "gls")
     return(saveResultsFixModel(result, model))
+
+
+  ### change contrasts for F tests calculations
+  #list of contrasts for factors
+  if( isAnova || isTotal )
+  {    
+    if( length(which(unlist(contr)!="contr.SAS")) > 0 )
+    {
+      names.facs <- names(contr)
+      l.lmerTest.private.contrast <- as.list(rep("contr.SAS",length(names.facs)))
+      names(l.lmerTest.private.contrast) <- names(contr)
+      model <- updateModel(model, .~., getREML(model), l.lmerTest.private.contrast) 
+    }    
+  }
+  else
+  {
+    #update model to mer class
+    model <- updateModel(model, .~., getREML(model), l.lmerTest.private.contrast)
+  }
+
   
   
   #perform reduction of fixed effects for model with mixed effects
@@ -345,7 +380,7 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
     else
     {
       resNSelim <- elimNSFixedTerm(model, anova.table, data, alpha.fixed, elim.num,
-                                   l.lmerTest.private.contrast)
+                                   l.lmerTest.private.contrast, keep.effs$fixedeffs)
       if(is.null(resNSelim))
         break
       else

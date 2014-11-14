@@ -1,7 +1,7 @@
 step <- function(model, ddf="Satterthwaite", type=3, alpha.random = 0.1, 
                  alpha.fixed = 0.05, reduce.fixed = TRUE, reduce.random = TRUE, 
                  fixed.calc=TRUE ,lsmeans.calc=TRUE, difflsmeans.calc=TRUE, 
-                 test.effs=NULL, ...)
+                 test.effs=NULL, keep.effs = NULL,...)
 {  
   if(!inherits(model, "lmerMod"))
     stop("The model is not linear mixed effects model")
@@ -22,7 +22,8 @@ step <- function(model, ddf="Satterthwaite", type=3, alpha.random = 0.1,
                                   lsmeans.calc = lsmeans.calc,
                                   difflsmeans.calc = difflsmeans.calc, 
                                   isTotal = TRUE, 
-                                  isTtest = FALSE, test.effs = test.effs)
+                                  isTtest = FALSE, test.effs = test.effs,
+                                  keep.effs = keep.effs)
   class(result) <- "step"
   result
 }

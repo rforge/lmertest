@@ -229,15 +229,16 @@ saveInfoForTerm <- function(term, chisq, chisq.df, pv, model.red = NULL)
                          anova.red$'Pr(>Chisq)'[2], model.red))
 }
 
-.findElimTerm <- function(infoForTerms){  
-  ind <- which.max(lapply(infoForTerms, function(x) x$pv))
-  return(infoForTerms[ind])  
+.findElimTerm <- function(infoForTerms, keep.effs){  
+  infoForTermsUpd <- infoForTerms[setdiff(names(infoForTerms), keep.effs)]
+  ind <- which.max(lapply(infoForTermsUpd, function(x) x$pv))
+  return(infoForTermsUpd[ind])  
 }
 
 
 ### eliminate NS random terms 
 elimRandEffs <- function(model, data, alpha, reduce.random, 
-                         l.lmerTest.private.contrast)
+                         l.lmerTest.private.contrast, keep.effs = NULL)
 {
   
   
@@ -267,7 +268,7 @@ elimRandEffs <- function(model, data, alpha, reduce.random,
     
     ## find the maximal p-value if the reduction is required
     if(reduce.random)     
-      infoForTermElim <- .findElimTerm(infoForTerms)    
+      infoForTermElim <- .findElimTerm(infoForTerms, keep.effs)    
     else{
       rand.table <- updateRandTable(infoForTerms, rand.table, 
                                     reduce.random = reduce.random)
@@ -275,7 +276,7 @@ elimRandEffs <- function(model, data, alpha, reduce.random,
       break
     }
     
-    if(infoForTermElim[[1]]$pv > alpha)
+    if(length(infoForTermElim)!=0 && infoForTermElim[[1]]$pv > alpha)
     {
       rand.table <- updateRandTable(infoForTermElim, rand.table, elim.num, 
                                     reduce.random)
