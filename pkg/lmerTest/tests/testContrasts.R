@@ -43,5 +43,5 @@ modelHam.treat <- lmer(Informed.liking ~
 
 stopifnot(all.equal(logLik(modelHam.sas), logLik(modelHam.treat)))
 stopifnot(all.equal(VarCorr(modelHam.sas), VarCorr(modelHam.treat), 
-                    tol = 1e-6))
+                    tol = 1e-4))
 
