@@ -1,5 +1,8 @@
+## TODO: load data tree here
+
 require(lmerTest)
 
+load(system.file("testdata", "tree.RData", package="lmerTest"))
 
 modelCarrots.treat <- lme4::lmer(Preference ~
                                    sens2*sens1*Homesize*Age
@@ -43,5 +46,14 @@ modelHam.treat <- lmer(Informed.liking ~
 
 stopifnot(all.equal(logLik(modelHam.sas), logLik(modelHam.treat)))
 stopifnot(all.equal(VarCorr(modelHam.sas), VarCorr(modelHam.treat), 
-                    tol = 1e-4))
+                    tol = 1e-6))
+
+## check that lsmeans is the same whether the contrasts for the models are differenr
+lmer4 <- lmer(increase ~ treat + (1|block), data = tree,  
+              contrasts = list(treat = "contr.treatment"))
+
+lmer5 <- lmer(increase ~ treat+ (1|block), data = tree,  
+              contrasts = list(treat = "contr.SAS"))
+
+all.equal(lsmeans(lmer4), lsmeans(lmer5))
 

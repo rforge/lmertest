@@ -290,7 +290,13 @@ elimRandEffs <- function(model, data, alpha, reduce.random,
       break
     }
     
-    model <- infoForTermElim[[1]]$model.red # model.final  
+    model <- infoForTermElim[[1]]$model.red # model.final 
+    
+    if(is(model, "lm")){
+      model.last <- model
+      break
+    }
+      
     
   }
   return(list(model = model.last, TAB.rand = rand.table))

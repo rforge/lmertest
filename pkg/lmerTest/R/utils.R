@@ -312,9 +312,14 @@ for(i in 1:length(fixed.term))
      
 }
 
-names.design.withLevels <- c("(Intercept)", colnames(X.design))
-X.design <- cbind(rep(1,dim(X.design)[1]),X.design)
-names.design <- c("(Intercept)", names.design)
+if(attr(model.term, "intercept") != 0){
+  names.design.withLevels <- c("(Intercept)", colnames(X.design))
+  X.design <- cbind(rep(1,dim(X.design)[1]),X.design)
+  names.design <- c("(Intercept)", names.design)
+}
+else
+  names.design.withLevels <- colnames(X.design)
+
 colnames(X.design) <- names.design
 return(list(X.design=X.design, names.design.withLevels=names.design.withLevels))
 }
@@ -622,22 +627,35 @@ makeContrastType3SAS <- function(model, term, L)
 getFormula <- function(model, withRand=TRUE)
 {
   fmodel <- formula(model)
-  terms.fm <- attr(terms.formula(fmodel),"term.labels")
-  ind.rand.terms <- which(unlist(lapply(terms.fm,function(x) 
-    substring.location(x, "|")$first))!=0)
-  terms.fm[ind.rand.terms] <- unlist(lapply(terms.fm[ind.rand.terms],
-                                            function(x) paste("(",x,")",sep="")))
-  fm <- paste(fmodel)
-  if(withRand)
-    fm[3] <- paste(terms.fm,collapse=" + ")
-  else
-    fm[3] <- paste(terms.fm[-ind.rand.terms],collapse=" + ")
   
-  if(fm[3]=="")
-    fo <- as.formula(paste(fm[2],fm[1],1, sep=""))
-  else
-    fo <- as.formula(paste(fm[2],fm[1],fm[3], sep=""))
-  return(fo)
+  ## OLD VERSION
+#   terms.fm <- attr(terms.formula(fmodel),"term.labels")
+#   ind.rand.terms <- which(unlist(lapply(terms.fm,function(x) 
+#     substring.location(x, "|")$first))!=0)
+#   terms.fm[ind.rand.terms] <- unlist(lapply(terms.fm[ind.rand.terms],
+#                                             function(x) paste("(",x,")",sep="")))
+#   fm <- paste(fmodel)
+#   if(withRand)
+#     fm[3] <- paste(terms.fm,collapse=" + ")
+#   else
+#     fm[3] <- paste(terms.fm[-ind.rand.terms],collapse=" + ")
+#   
+#   if(fm[3]=="")
+#     fo <- as.formula(paste(fm[2],fm[1],1, sep=""))
+#   else
+#     fo <- as.formula(paste(fm[2],fm[1],fm[3], sep=""))
+#   return(fo)
+  if(withRand)
+    return(fmodel)
+  
+  fm <- paste(fmodel)
+  fmodel.red <- paste(fm[2],fm[1], 
+                        paste(fm[3], 
+                              paste(unlist(lapply(names(.fixedrand(model)$randeffs),
+                                                  function(x) paste("(",x, ")"))), 
+                                    collapse = " - "), 
+                              sep = "-"))
+  return(update(fmodel, fmodel.red))
 }
 
 
@@ -734,9 +752,13 @@ getRandTerms <- function(fmodel)
 
 
 #####save results for fixed effects for model with only fixed effects
-saveResultsFixModel <- function(result, model)
+saveResultsFixModel <- function(result, model, type = 3)
 {
-  result$anova.table <- anova(model)
+  if(type==3)
+    result$anova.table <- drop1(model, test="F")
+  else{
+    result$anova.table <- anova(model)
+  }
   result$model <- model
   lsmeans.summ <-  matrix(ncol=7,nrow=0)
   colnames(lsmeans.summ) <- c("Estimate","Standard Error", "DF", "t-value", 

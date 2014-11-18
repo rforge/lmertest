@@ -207,7 +207,8 @@ setMethod("summary", signature(object = "merModLmerTest"),
               colnames(cl$coefficients)[3:5] <- c("df","t value","Pr(>|t|)")              
             }   
             
-            cl$methTitle <- paste(cl$methTitle,  "\nt-tests use ", ddf, "approximations to degrees of freedom")
+            cl$methTitle <- paste(cl$methTitle,  "\nt-tests use ", ddf, 
+                                  "approximations to degrees of freedom")
             return(cl)
           }
           

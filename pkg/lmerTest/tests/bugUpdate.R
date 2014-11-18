@@ -5,3 +5,6 @@ m <- lmer(Coloursaturation ~ TVset*Picture +
 m2 <- update(m)
 tools::assertError(stopifnot(class(m)==class(m2), TRUE), TRUE)
 
+
+
+

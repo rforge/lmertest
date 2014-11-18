@@ -16,7 +16,7 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
   ## check keep.effs 
   if(!isTotal)
     keep.effs <- NULL
-  else{
+  else{    
     if(!is.null(keep.effs)){
       model.effs <- .fixedrand(model)
       keep.effs1 <- .getKeepEffs(keep.effs, model.effs) 
@@ -137,7 +137,7 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
       
   #save results for fixed effects for model with only fixed effects
   if(class(model) == "lm" | class(model) == "gls")
-    return(saveResultsFixModel(result, model))
+    return(saveResultsFixModel(result, model, type))
 
 
   ### change contrasts for F tests calculations
@@ -330,7 +330,8 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
     ###new code with X.design matrix
     fullCoefs <- rep(0, ncol(X.design))
     fullCoefs <- setNames(fullCoefs, names.design.withLevels) 
-    names(fullCoefs)[1] <- "(Intercept)"
+    if("(Intercept)" %in% names.design.withLevels)
+      names(fullCoefs)[1] <- "(Intercept)"
     fullCoefs[names(rho$fixEffs)] <- rho$fixEffs
     rho$nums.Coefs <- which(names(fullCoefs) %in% names(rho$fixEffs))
    
