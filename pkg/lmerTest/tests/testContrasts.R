@@ -22,7 +22,7 @@ tools::assertError(stopifnot(all.equal(logLik(modelCarrots.treat),
                                        logLik(modelCarrots.sas))))
 
 tools::assertError(stopifnot(all.equal(VarCorr(modelCarrots.treat), 
-                                       VarCorr(modelCarrots.sas), tol = 1e-6)))
+                                       VarCorr(modelCarrots.sas), tol = 1e-5)))
 
 
                               
@@ -46,7 +46,7 @@ modelHam.treat <- lmer(Informed.liking ~
 
 stopifnot(all.equal(logLik(modelHam.sas), logLik(modelHam.treat)))
 stopifnot(all.equal(VarCorr(modelHam.sas), VarCorr(modelHam.treat), 
-                    tol = 1e-6))
+                    tol = 1e-5))
 
 ## check that lsmeans is the same whether the contrasts for the models are differenr
 lmer4 <- lmer(increase ~ treat + (1|block), data = tree,  
