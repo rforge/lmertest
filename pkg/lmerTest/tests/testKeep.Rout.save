@@ -232,7 +232,7 @@ No  sens1:Consumer exist among effects in the model
 Random effects:
                Chi.sq Chi.DF elim.num p.value
 sens1:Consumer   0.69      2        1  0.7094
-      Consumer  70.99      1     kept  <1e-07
+      Consumer  75.12      1     kept  <1e-07
 
 Fixed effects:
                           Sum Sq Mean Sq NumDF   DenDF F.value elim.num Pr(>F)
@@ -281,7 +281,7 @@ No  dfgsdfg exist among effects in the model
 Random effects:
                Chi.sq Chi.DF elim.num p.value
 sens1:Consumer   0.69      2        1  0.7094
-      Consumer  70.99      1     kept  <1e-07
+      Consumer  75.12      1     kept  <1e-07
 
 Fixed effects:
                           Sum Sq Mean Sq NumDF   DenDF F.value elim.num Pr(>F)
@@ -336,7 +336,7 @@ lme4::lmer(formula = Preference ~ sens2 + Homesize + (1 | Consumer),
 Random effects:
                Chi.sq Chi.DF elim.num p.value
 Assessor:TVset   0.00      1        1       1
-Assessor        50.36      1     kept  <1e-07
+Assessor        48.47      1     kept  <1e-07
 
 Fixed effects:
                 Sum Sq Mean Sq NumDF DenDF F.value elim.num Pr(>F)
@@ -551,4 +551,4 @@ lme4::lmer(formula = Dimglasseffect ~ TVset + Picture + (1 |
 > 
 > proc.time()
    user  system elapsed 
-  56.86    0.23   57.19 
+  57.11    0.20   57.36 

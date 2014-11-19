@@ -710,9 +710,9 @@ compareMixVSFix <- function(model, mf.final, data, name.term)
  
   model.red <- refitLM(model)
   
-  l.fix <- -2*logLik(model, REML=FALSE)[1]
+  l.fix <- -2*logLik(model, REML=TRUE)[1]
   #l.red <- -2*logLik(model.red, REML=TRUE)[1]
-  l.red <- -2*logLik(model.red, REML=FALSE)[1]
+  l.red <- -2*logLik(model.red, REML=TRUE)[1]
   
   p.chisq <- 1 - pchisq (l.red -l.fix ,1)
   infoForTerm <- saveInfoForTerm(name.term, l.red -l.fix, 1, p.chisq, 
