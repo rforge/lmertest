@@ -1,5 +1,5 @@
 testSat <- TRUE
-testKen <- FALSE
+testKen <- TRUE
 
 if(testSat){
   ## checking on big data sets
@@ -24,7 +24,7 @@ if(testSat){
   
   if(testKen){
     an.kenw <- anova(testFirstR02.test, ddf="kenw")
-    stopifnot(ncol(an.kenw) == 4)
+    stopifnot(ncol(an.kenw) == 6)
   }  
     
 }

@@ -1,5 +1,8 @@
 require(lmerTest)
+testType1 <- TRUE
 
+
+#if(testType1){
 ## from merModLmerTest
 m <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject),
           data = sleepstudy)
@@ -33,8 +36,10 @@ fm2 <- lmer(Preference ~ sens2 + I(sens1^2)  +
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0 + Days|Subject), sleepstudy)
 
+
 an.sleep <- anova(fm1, type = 1)
 an.sleep2 <- anova(fm2, type = 1)
+
 
 ## check with SAS
 TOL <- 1e-6
@@ -52,3 +57,5 @@ anova(fm1, ddf="Kenward-Roger")
 anova(fm1, ddf="lme4")
 
 anova(fm1, fm2)
+
+#}

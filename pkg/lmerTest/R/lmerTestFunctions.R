@@ -9,8 +9,10 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
                                   test.effs = NULL, keep.effs = NULL)
 {
   
+  change.contr <- TRUE
+  
   ## check type of hypothesis
-  if(!isRand && !(type %in% c(1,3)))  
+  if(!isRand && !(type %in% c(1,2,3)))  
     stop('Parameter type is wrongly specified') 
   
   ## check keep.effs 
@@ -111,7 +113,7 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
   
   
   
- 
+
   #analysis of the random part  
   if(isRand || isTotal)
   {
@@ -140,6 +142,8 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
     return(saveResultsFixModel(result, model, type))
 
 
+## remove update the contrasts
+if(change.contr){
   ### change contrasts for F tests calculations
   #list of contrasts for factors
   if( isAnova || isTotal )
@@ -157,7 +161,7 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
     #update model to mer class
     model <- updateModel(model, .~., getREML(model), l.lmerTest.private.contrast)
   }
-
+}
   
   
   #perform reduction of fixed effects for model with mixed effects
@@ -194,7 +198,7 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
           
           # calculate asymptotic covariance matrix A
           dd <- devfun5(model,  getME(model, "is_REML"))
-          h <- hessian(dd, c(rho$thopt, sigma = rho$sigma))
+          h <- myhess(dd, c(rho$thopt, sigma = rho$sigma))
           
           rho$A <- 2*solve(h)
           #rho$A <- 2*ginv(h)
@@ -348,12 +352,12 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
     }
     
     # calculate general set matrix for type 3 hypothesis
-    if( type==3 )
+    if(type == 3)
       L <- calcGeneralSetForHypothesis(X.design, rho)  
     
     
     # calculate type 1 hypothesis matrices for each term   
-    if( type==1 )
+    if(type == 1 || type == 2)
     {
       X <- X.design
       p <- ncol(X)
@@ -363,13 +367,12 @@ totalAnovaRandLsmeans <- function(model, ddf = "Satterthwaite", type = 3,
       for(i in 1:nrow(U))
         if(d[i] > 0) U[i, ] <- U[i, ] / d[i]
       L <- U
-
     }
- 
   
-      resultFpvalueSS <- llply(test.terms, calcFpvalueMAIN, L=L, X.design=X.design,
-                               fullCoefs=fullCoefs, model=model, rho=rho, ddf=ddf,
-                               type=type)
+      resultFpvalueSS <- llply(test.terms, calcFpvalueMAIN, L = L, 
+                               X.design = X.design,
+                               fullCoefs = fullCoefs, model = model, rho = rho, 
+                               ddf = ddf, type = type)
 
        
     #fill anova table

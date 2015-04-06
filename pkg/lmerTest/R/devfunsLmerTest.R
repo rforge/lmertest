@@ -91,3 +91,48 @@ vcovJSStheta2 <- function(fm)
   class(ans) <- "vcovJSStheta2"
   ans
 }
+
+
+## not calling the C code
+vcovJSStheta2.temp <- function(fm)
+{
+  stopifnot(is(fm, "merMod"))
+  
+  vlist <- sapply(fm@cnms, length)
+  
+  pp <- fm@pp$copy()
+  
+  
+  resp <- fm@resp$copy()
+  np <- length(pp$theta)
+  nf <- length(fixef(fm))
+  if (!isGLMM(fm)) 
+    np <- np + 1L
+  
+  
+  
+  ff2 <- updateModel(fm, .~., getREML(fm), 
+                     attr(model.matrix(fm),"contrasts"), 
+                     devFunOnly.lmerTest.private = TRUE) 
+  
+  envff2 <- environment(ff2)
+  
+  if (isLMM(fm)) {
+    ans <- function(thpars) {
+      stopifnot(is.numeric(thpars), length(thpars) == np)
+      
+      sigma2 <- thpars[np]^2
+      ff2(thpars[-np])
+      
+      
+      #.Call("lmer_Deviance", pp$ptr(), resp$ptr(), thpars[-np], PACKAGE = "lme4")      
+      vcov_out <- sigma2 * tcrossprod(envff2$pp$RXi()) 
+      
+      return(as.matrix(vcov_out))      
+    }
+  } 
+  
+  class(ans) <- "vcovJSStheta2.temp"
+  ans
+}
+

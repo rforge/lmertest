@@ -77,10 +77,11 @@ rhoInitJSS <- function(model)
 calcSatterthJSS  <-  function(Lc, rho)
 {
   # F statistics for tested term
+  vcov.final <- as.matrix(vcov(rho$model))
   if(is.vector(Lc))
-    C.theta.optim <- as.matrix(t(Lc) %*% as.matrix(vcov(rho$model)) %*% Lc)    
+    C.theta.optim <- as.matrix(t(Lc) %*% vcov.final %*% Lc)    
   else
-    C.theta.optim <- as.matrix(Lc %*% as.matrix(vcov(rho$model)) %*% t(Lc))    
+    C.theta.optim <- as.matrix(Lc %*% vcov.final %*% t(Lc))    
   #invC.theta<-ginv(C.theta.optim)
   
   invC.theta <- tryCatch({solve(C.theta.optim)}, error = function(e) { NULL })
@@ -99,16 +100,40 @@ calcSatterthJSS  <-  function(Lc, rho)
   
   ## based on theta parameters and sigma
   ## also correct
-  vss <- vcovJSStheta2(rho$model)
-  ## based on var cor parameters
-  #vss <- vcovJSStheta2.var(rho$model)
-
+#  vss <- vcovJSStheta2(rho$model)
+  vss2 <- vcovJSStheta2.temp(rho$model)
+  # based on var cor parameters
+ # vss <- vcovJSStheta2.var(rho$model)
+  theopt <- c(rho$thopt, rho$sigma)
+  g <- mygrad(function(x)  vss2(x), theopt)
+  #app <- apply(g, 2, function(x) matrix(x, ncol = ncol(vcov.final), nrow = nrow(vcov.final)))
+  if(class(g) == "numeric")
+    mat.grad <- llply(1:length(theopt), function(x) matrix(g[x], 
+                                                           ncol = ncol(vcov.final), 
+                                                           nrow = nrow(vcov.final)))
+  else
+    mat.grad <- llply(1:length(theopt), function(x) matrix(g[, x], 
+                                                         ncol = ncol(vcov.final), 
+                                                        nrow = nrow(vcov.final)))
+  
   nu.m.fun <- function(m){    
-    g <- grad(function(x)  vss(t(PL[m,]), x), c(rho$thopt, rho$sigma))  
+    #g <- mygrad(function(x)  vss(t(PL[m,]), x), c(rho$thopt, rho$sigma))  
+    #g <- grad(function(x)  vss2(x), c(rho$thopt, rho$sigma))
+    den.nu <- unlist(llply(1:length(mat.grad), function(x) 
+      as.matrix(t(PL[m,]) %*% mat.grad[[x]] %*% PL[m,])))
     ## based on var cor parameters
     #g <- grad(function(x)  vss(t(PL[m,]), x), rho$vars) 
-    2*(svdec$values[m])^2/(t(g) %*% rho$A %*% g)
+    2*(svdec$values[m])^2/(t(den.nu) %*% rho$A %*% den.nu)
   }
+
+#   nu.m.fun <- function(m){    
+#     g <- mygrad(function(x)  vss(t(PL[m,]), x), c(rho$thopt, rho$sigma))  
+#     #g <- grad(function(x)  vss2(x), c(rho$thopt, rho$sigma)) 
+#     ## based on var cor parameters
+#     #g <- grad(function(x)  vss(t(PL[m,]), x), rho$vars) 
+#     2*(svdec$values[m])^2/(t(g) %*% rho$A %*% g)
+#   }
+
   nu.m <- unlist(llply(1:length(svdec$values), .fun = nu.m.fun))
 
   nu.m[which(abs(2 - nu.m) < 1e-5)] <- 2.00001
@@ -128,9 +153,9 @@ calcSatterthJSS  <-  function(Lc, rho)
   }
   
   ## calculate ss from camp method proc glm
-  #ss <- getSS(Lc, rho$fixEffs ,ginv(rho$XtX)) 
+  ## ss <- getSS(Lc, rho$fixEffs ,ginv(rho$XtX)) 
   return( list(ss = ss, ms = ms, denom = nu.F, Fstat = F.stat, 
-               pvalue = pvalueF, ndf=q) )  
+               pvalue = pvalueF, ndf=q))  
 }
 
 
@@ -185,7 +210,7 @@ calcFpvalueSS <- function(term, Lc, fullCoefs, X.design, model, rho, ddf,
     ## calculate ms and ss
     ms <- res.KR$test[1,"stat"] * rho$sigma^2
     ss <- ms * res.KR$test[1,"ndf"]
-    #ss <- getSS(Lc, rho$fixEffs ,ginv(rho$XtX)) 
+    ## ss <- getSS(Lc, rho$fixEffs ,ginv(rho$XtX)) 
  
     return( list(denom = res.KR$test[1,"ddf"], Fstat = res.KR$test[1,"stat"], 
                  pvalue =  res.KR$test[1,"p.value"], ndf = res.KR$test[1,"ndf"], 
@@ -211,7 +236,8 @@ calcFpvalueMAIN <- function(term, L, X.design, fullCoefs, model, rho, ddf,
       Lc <- makeContrastType3SAS(model, term, L)    
       #non identifiable because of rank deficiency
       if(!length(Lc))
-        result.fstat <- list(denom=0, Fstat=NA, pvalue=NA, ndf=NA, ss = NA, ms = NA)
+        result.fstat <- list(denom=0, Fstat=NA, pvalue=NA, ndf=NA, ss = NA, 
+                             ms = NA)
       else
         result.fstat <- calcFpvalueSS(term, Lc, fullCoefs, X.design, model, rho, 
                                       ddf, type)           
@@ -225,6 +251,12 @@ calcFpvalueMAIN <- function(term, L, X.design, fullCoefs, model, rho, ddf,
       result.fstat <- calcFpvalueSS(term, Lc, fullCoefs, X.design, model, rho, 
                                     ddf, type)      
     } 
+    if(type == 2){
+      Lc <- makeContrastType2(model, term, L, X.design, rho, fullCoefs) 
+      result.fstat <- calcFpvalueSS(term, Lc, fullCoefs, X.design, model, rho, 
+                                    ddf, type)
+    }
+      
    
 
    c(result.fstat,list(name=term)) 
@@ -270,7 +302,7 @@ calculateTtestJSS <- function(rho, Lc, nrow.res, ddf="Satterthwaite")
     }
     else{
       ## based on theta parameters
-      g <- grad(function(x)  vss(t(Lc[,i]), x), c(rho$thopt, rho$sigma))
+      g <- mygrad(function(x)  vss(t(Lc[,i]), x), c(rho$thopt, rho$sigma))
       ## based on var cor parameters
       #g <- grad(function(x)  vss(t(Lc[,i]), x), rho$vars)
       
@@ -556,10 +588,10 @@ makeContrastType3SAS <- function(model, term, L)
   model.term <- terms(model)
   fac <- attr(model.term,"factors")
   names <- attr(model.term,"term.labels")
-  classes.term <- attr(model.term,"dataClasses")
+  classes.term <- attr(terms(model, FALSE), "dataClasses")#attr(model.term,"dataClasses")
   
   cols.eff <- which(colnames(L)==term)
-  num.relate <- relatives(classes.term,term,names,fac)
+  num.relate <- relatives(classes.term, term, names, fac)
   if( length(num.relate)==0 )
     colnums <- setdiff(1:ncol(L),cols.eff)
   if( length(num.relate)>0 )
@@ -619,6 +651,39 @@ makeContrastType3SAS <- function(model, term, L)
   nums <- which(apply(L,1,function(y) sum(abs(y)))!=0) 
   L <- L[nums,]
   return(L)
+}
+
+makeContrastType2 <- function(model, term, L, X.design, rho, fullCoefs){
+  #find all effects that contain term effect
+  model.term <- terms(model)
+  fac <- attr(model.term,"factors")
+  names <- attr(model.term,"term.labels")
+  classes.term <- attr(terms(model, FALSE), "dataClasses")#attr(model.term,"dataClasses")
+  
+  find.term <- which(colnames(X.design) == term)
+  #Lc <- L[find.term[which(find.term %in% rho$nums.Coefs)],]   
+  #cols.eff <- which(colnames(L)==term)
+  num.relate <- relatives(classes.term, term, names, fac)
+  contain <- names[num.relate]
+  if(length(contain) == 0 && (which(names == term) == length(names))){
+    Lc <- L[find.term[which(find.term %in% rho$nums.Coefs)],]            
+  }
+  else{
+    ind.indep <- which(colnames(X.design) != term & !(colnames(X.design) %in% contain))
+    new.X <- cbind(X.design[,ind.indep], X.design[,-ind.indep])
+    XtX <- crossprod(new.X)
+    U <- doolittle(XtX)$U
+    d <- diag(U)
+    for(i in 1:nrow(U))
+      if(d[i] > 0) U[i, ] <- U[i, ] / d[i]
+    L <- U
+    colnames(L) <- rownames(L) <-  
+      c(names(fullCoefs)[ind.indep], names(fullCoefs)[-ind.indep])
+    Lc <- L[which(colnames(new.X) == term), , drop = FALSE]
+    Lc <- Lc[which(rownames(Lc) %in% names(rho$nums.Coefs)), , drop = FALSE]
+    Lc <- Lc[, names(fullCoefs), drop = FALSE]
+  }  
+  return(Lc)
 }
 
 ############################################################################
