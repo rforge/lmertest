@@ -1,3 +1,5 @@
+## THESE FUNCTIONS ARE NOT USED IN THE LMERTEST PACKAGE
+
 ##deviance function
 ## parameter  -  covariate parameters
 devfun5.vars <- function(fm,  reml = TRUE) 

@@ -388,60 +388,6 @@ plotLSMEANS <- function(table, response,
         ylab(response) + xlab(names.plot)
     }
   }
-  #####################################
-  #axis.title.x=element_blank()
-  
-  ## OLD CODE DOES NOT USED ggplot2
-#   for(i in 1:length(un.names))
-#   {
-#     inds.eff <- namesForPlot %in% un.names[i]
-#     split.eff  <-  unlist(strsplit(un.names[i],":"))
-#     col.bars <-  lapply(table[inds.eff,][,"p-value"], calc.cols)
-#       
-#     layout(matrix(c(rep(2,2),3,rep(2,2),3,rep(2,2),3, rep(1,2),3), 4, 3, 
-#                   byrow = TRUE), 
-#            heights=c(0.2, 1 , 1.2), widths = c(3, 3, 2.5))
-#     plot.new()
-#     if(which.plot == "LSMEANS")
-#       barplot2(table[inds.eff,"Estimate"],col=unlist(col.bars), 
-#                ci.l=table[inds.eff,ncol(table)-2], 
-#                ci.u=table[inds.eff,ncol(table)-1], plot.ci=TRUE, 
-#                names.arg=namesForLevels[inds.eff], 
-#                ylab=response, 
-#                main = ifelse(!is.null(main), main, 
-#                              paste("Least squares means with 95% confidence intervals for \n", 
-#                                    un.names[i])), las=2, cex.names = cex,
-#                cex.axis = cex, cex.main = cex, cex.lab = cex, font.lab = 2)
-#     else
-#       barplot2(table[inds.eff,"Estimate"],col=unlist(col.bars), 
-#                ci.l=table[inds.eff,ncol(table)-2], 
-#                ci.u=table[inds.eff,ncol(table)-1], plot.ci=TRUE, 
-#                names.arg=namesForLevels[inds.eff], 
-#                ylab=response, 
-#                main = ifelse(!is.null(main), main, 
-#                              paste("Differences of least squares means \n with 95% confidence intervals for \n", un.names[i])), las=2, cex.names = cex,
-#                cex.axis = cex, cex.main = cex, cex.lab = cex, font.lab = 2)
-#     
-#     plot.new()
-#     legend("topright", c("ns","p < 0.05", "p < 0.01", "p < 0.001"), pch=15, 
-#            col=c("grey","yellow","orange","red"), title="Significance", 
-#            bty="n", cex=cex)
-#     if(which.plot=="LSMEANS")
-#     {
-#       if(length(split.eff)==2)
-#       {
-#         par(mfrow=c(1,1))
-#         #windows()
-#         interaction.plot(table[inds.eff,split.eff[1]], 
-#                          table[inds.eff,split.eff[2]], 
-#                          table[inds.eff,"Estimate"], 
-#                          xlab=split.eff[1], ylab=response, 
-#                          trace.label=paste(split.eff[2]), 
-#                          main="2-way Interaction plot", 
-#                          col=1:nlevels(table[inds.eff,split.eff[2]]))
-#       }
-#     }             
-#   }
 }
 
 

@@ -1,3 +1,6 @@
+## THESE fUNCTIONS COME FROM THE LME4 PACKAGE AND ARE NOT USED IN THE LMERTEST
+
+
 ## These files are not currently exported; we are still trying to figure
 ## out the most appropriate user interface/naming convention/etc
 ## These functions will become more important, and need to be
