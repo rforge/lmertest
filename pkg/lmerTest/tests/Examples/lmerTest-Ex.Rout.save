@@ -1,6 +1,6 @@
 
-R version 3.1.2 (2014-10-31) -- "Pumpkin Helmet"
-Copyright (C) 2014 The R Foundation for Statistical Computing
+R Under development (unstable) (2015-04-08 r68161) -- "Unsuffered Consequences"
+Copyright (C) 2015 The R Foundation for Statistical Computing
 Platform: x86_64-w64-mingw32/x64 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -21,22 +21,9 @@ Type 'q()' to quit R.
 > source(file.path(R.home("share"), "R", "examples-header.R"))
 > options(warn = 1)
 > options(pager = "console")
-> base::assign(".ExTimings", "lmerTest-Ex.timings", pos = 'CheckExEnv')
-> base::cat("name\tuser\tsystem\telapsed\n", file=base::get(".ExTimings", pos = 'CheckExEnv'))
-> base::assign(".format_ptime",
-+ function(x) {
-+   if(!is.na(x[4L])) x[1L] <- x[1L] + x[4L]
-+   if(!is.na(x[5L])) x[2L] <- x[2L] + x[5L]
-+   options(OutDec = '.')
-+   format(x[1L:3L], digits = 7L)
-+ },
-+ pos = 'CheckExEnv')
-> 
-> ### * </HEADER>
 > library('lmerTest')
 Loading required package: Matrix
 Loading required package: lme4
-Warning: package 'lme4' was built under R version 3.1.3
 Loading required package: Rcpp
 
 Attaching package: 'lmerTest'
@@ -57,7 +44,6 @@ The following object is masked from 'package:stats':
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: TVbo
 > ### Title: TV dataset
 > ### Aliases: TVbo
@@ -114,7 +100,7 @@ Final model:
 lme4::lmer(formula = log(Coloursaturation) ~ TVset + Picture + 
     (1 | Assessor:TVset) + TVset:Picture, data = TVbo, REML = reml.lmerTest.private, 
     contrasts = l.lmerTest.private.contrast, devFunOnly = devFunOnly.lmerTest.private)
-> ## End Don't show
+> ## End(Don't show)
 > 
 > ## Not run: 
 > ##D m <- lmer(Coloursaturation ~ TVset*Picture+
@@ -125,15 +111,12 @@ lme4::lmer(formula = log(Coloursaturation) ~ TVset + Picture +
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("TVbo", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 > nameEx("anova-methods")
 > ### * anova-methods
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: anova-methods
 > ### Title: Methods for function 'anova' in package 'lmerTest'
 > ### Aliases: anova,ANY-method anova,merModLmerTest-method
@@ -198,12 +181,10 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > ##D fm2 <- lmer(Preference ~ sens2 + I(sens1^2)  +
 > ##D                            (1+sens2|Consumer), data=carrots)
 > ## End(Not run)
-> ## End Don't show
+> ## End(Don't show)
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("anova-methods", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 
 detaching 'package:pbkrtest'
@@ -213,7 +194,6 @@ detaching 'package:pbkrtest'
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: carrots
 > ### Title: Consumer preference mapping of carrots
 > ### Aliases: carrots
@@ -266,15 +246,12 @@ lme4::lmer(formula = Preference ~ sens2 + Homesize + (1 + sens2 |
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("carrots", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 > nameEx("difflsmeans")
 > ### * difflsmeans
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: difflsmeans
 > ### Title: Calculates Differences of Least Squares Means and Confidence
 > ###   Intervals for the factors of a fixed part of mixed effects model of
@@ -318,15 +295,12 @@ Gender:Information  1 2 -  2 2    0.949     0.3
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("difflsmeans", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 > nameEx("ham")
 > ### * ham
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: ham
 > ### Title: Conjoint study of dry cured ham
 > ### Aliases: ham
@@ -424,15 +398,12 @@ lme4::lmer(formula = Informed.liking ~ Product + Information +
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("ham", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 > nameEx("lmer")
 > ### * lmer
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: lmer
 > ### Title: Fit Linear Mixed-Effects Models
 > ### Aliases: lmer
@@ -460,7 +431,7 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > # anova table the same as of class merMod but with additional F statistics and  
 > # p-values calculated based on Kenward-Roger's approximations
 > ## Not run: 
-> ##D if(require(pbkrtest))
+> ##D if(requireNamespace("pbkrtest", quitly = TRUE))
 > ##D anova(fm1, ddf="Kenward-Roger")
 > ##D 
 > ##D # anova table the same as of class merMod
@@ -506,18 +477,15 @@ Days -0.138
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("lmer", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 > nameEx("lmerTest-package")
 > ### * lmerTest-package
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: lmerTest-package
 > ### Title: The package performs different kinds of tests on lmer objects,
-> ###   such as F tests of type 3/type 1 hypotheses for the fixed part,
+> ###   such as F tests of types I - III hypotheses for the fixed part,
 > ###   likelihood ratio tests for the random part, least squares means
 > ###   (population means) and differences of least squares means for the
 > ###   factors of the fixed part with corresponding plots. The package also
@@ -590,7 +558,7 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > # denominator degrees of freedom and 
 > # p-values calculated based on Kenward-Roger's approximations
 > ## Not run: 
-> ##D if(require(pbkrtest))
+> ##D if(requireNamespace("pbkrtest", quitly = TRUE))
 > ##D anova(m, ddf = "Kenward-Roger")
 > ## End(Not run)
 > 
@@ -610,15 +578,12 @@ Product      3 91.807 30.6024  6.9979
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("lmerTest-package", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 > nameEx("lsmeans")
 > ### * lsmeans
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: lsmeans
 > ### Title: Calculates Least Squares Means and Confidence Intervals for the
 > ###   factors of a fixed part of mixed effects model of lmer object.
@@ -670,15 +635,12 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("lsmeans", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 > nameEx("merModLmerTest-class")
 > ### * merModLmerTest-class
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: merModLmerTest-class
 > ### Title: Mixed Model Representations
 > ### Aliases: merModLmerTest-class
@@ -722,7 +684,7 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > # type3 anova table with additional F statistics and denominator degrees of freedom
 > # calculated based on Kenward-Roger's approximation
 > ## Not run: 
-> ##D if(require(pbkrtest))
+> ##D if(requireNamespace("pbkrtest", quitly = TRUE))
 > ##D anova(m, ddf="Kenward-Roger")
 > ## End(Not run)
 > 
@@ -767,15 +729,12 @@ Days -0.184
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("merModLmerTest-class", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 > nameEx("rand")
 > ### * rand
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: rand
 > ### Title: Performs likelihood ratio test on random effects of linear mixed
 > ###   effects model.
@@ -801,15 +760,12 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("rand", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 > nameEx("step")
 > ### * step
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: step
 > ### Title: Performs backward elimination of non-significant effects of
 > ###   linear mixed effects model:
@@ -843,15 +799,12 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("step", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 > nameEx("summary-methods")
 > ### * summary-methods
 > 
 > flush(stderr()); flush(stdout())
 > 
-> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
 > ### Name: summary-methods
 > ### Title: Methods for Function 'summary' in Package 'lmerTest'
 > ### Aliases: summary,merModLmerTest-method summary.merModLmerTest
@@ -972,13 +925,11 @@ Days -0.138
 > 
 > 
 > 
-> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("summary-methods", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > ### * <FOOTER>
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  11.45 0.17 11.81 NA NA 
+Time elapsed:  10.37 0.17 10.7 NA NA 
 > grDevices::dev.off()
 null device 
           1 

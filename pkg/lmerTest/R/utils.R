@@ -47,8 +47,8 @@ rhoInitJSS <- function(model)
   #rho$opt <- opt
   rho$thopt <- getME(model, "theta")
   rho$param <- as.data.frame(VarCorr(model))[, "sdcor"]
-  rho$vars <- Cv_to_Vv(rho$thopt, n = rho$vlist, 
-                       s = rho$sigma)
+#   rho$vars <- Cv_to_Vv(rho$thopt, n = rho$vlist, 
+#                        s = rho$sigma)
   return(rho)  
 }
 
@@ -170,7 +170,7 @@ calcFpvalueSS <- function(term, Lc, fullCoefs, X.design, model, rho, ddf,
    
   if( ddf=="Kenward-Roger" )
   {
-    if (!require(pbkrtest)) 
+    if (!requireNamespace("pbkrtest", quitly = TRUE)) 
       stop("pbkrtest package required for Kenward-Roger's approximations")
     if(is.vector(Lc))
       res.KR <- pbkrtest::KRmodcomp( model, t(as.matrix(Lc)) )
@@ -243,7 +243,7 @@ calculateTtestJSS <- function(rho, Lc, nrow.res, ddf="Satterthwaite")
   colnames(resultTtest) <- c("df", "t value", "p-value", "sqrt.varcor")
   
   if(ddf == "Kenward-Roger"){
-    if (!require(pbkrtest)) 
+    if (!requireNamespace("pbkrtest", quitly = TRUE)) 
       stop("pbkrtest package required for Kenward-Roger's approximations")
     Va <- pbkrtest::vcovAdj(rho$model)
   }
@@ -628,11 +628,9 @@ makeContrastType2 <- function(model, term, L, X.design, rho, fullCoefs){
   model.term <- terms(model)
   fac <- attr(model.term,"factors")
   names <- attr(model.term,"term.labels")
-  classes.term <- attr(terms(model, FALSE), "dataClasses")#attr(model.term,"dataClasses")
+  classes.term <- attr(terms(model, FALSE), "dataClasses")
   
   find.term <- which(colnames(X.design) == term)
-  #Lc <- L[find.term[which(find.term %in% rho$nums.Coefs)],]   
-  #cols.eff <- which(colnames(L)==term)
   num.relate <- relatives(classes.term, term, names, fac)
   contain <- names[num.relate]
   if(length(contain) == 0 && (which(names == term) == length(names))){

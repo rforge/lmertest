@@ -9,12 +9,14 @@ m <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject),
 
 anova(m, type=1)
 
-anova(m, ddf="Kenward-Roger")
+if(require(pbkrtest))
+  anova(m, ddf="Kenward-Roger")
 
 ## from lmerTest
 m <- lmer(Informed.liking ~ Gender+Information+Product +(1|Consumer), data=ham)
 
-anova(m, ddf = "Kenward-Roger")
+if(require(pbkrtest))
+  anova(m, ddf="Kenward-Roger")
 
 ## from anova methods
 m.ham <- lmer(Informed.liking ~ Product*Information*Gender 

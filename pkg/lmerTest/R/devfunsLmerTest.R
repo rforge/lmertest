@@ -1,3 +1,7 @@
+## the modified devfun functions of the lme4 package
+## in order to calculate hessian at the optima theta
+## the modified vcov function - in order to calculate gradient at the optima theta
+
 
 ## modified devfun3: now depends on theta and not covariance parameters
 devfun5 <- function (fm,  reml = TRUE) 
@@ -48,7 +52,7 @@ devfun5 <- function (fm,  reml = TRUE)
 }
 
 
-
+## NOT USED 
 ## not calling the C code
 vcovJSStheta2 <- function(fm)
 {

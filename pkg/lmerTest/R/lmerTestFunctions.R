@@ -198,35 +198,14 @@ if(change.contr){
     # calculate asymptotic covariance matrix A??
     if(!(ddf == "Kenward-Roger" && isAnova)){
   
-      ## based on var cor parameters
-      ## quite frequently A is not positiv definite
-      ## because of VV_to_CV function probably
-      #dd <- devfun3(model, useSc = TRUE, signames = FALSE, getME(model, "is_REML"))
-      #h <- hessian(dd, rho$opt)        
-      ## based on theta pars
-      #dd <- devfun4(model, useSc = TRUE, signames = FALSE, getME(model, "is_REML"))
-      
+    
     
       ## based on theta parameters and sigma
       # also correct
       dd <- devfun5(model,  getME(model, "is_REML"))
-      h <- hessian(dd, c(rho$thopt, sigma = rho$sigma))
+      h <- myhess(dd, c(rho$thopt, sigma = rho$sigma))  
       
-      
-      ## based on var cor parameters
-      #dd <- devfun5.vars(model,  getME(model, "is_REML"))
-      #h <- hessian(dd, rho$vars)
-      
-      #devFun.1 <- update(model, devFunOnly=TRUE)
-      #devFun.2 <- function(param, devFun, vlist) {
-      #do.call(devFun, list(Sv_to_Cv(param, n = vlist, s = param[length(param)])))
-      #}
-      #devFun.2(rho$param, devFun.1, vlist = rho$vlist)
-      #h <- hessian(devFun.2, rho$param, devFun = devFun.1, vlist = rho$vlist)
-      # 
-      #dd2 <- devFunRune(model)
-      #h <- hessian(dd, rho$opt)
-      
+           
       
       ch <- try(chol(h), silent=TRUE)
       if(inherits(ch, "try-error")) {

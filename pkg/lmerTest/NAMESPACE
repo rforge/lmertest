@@ -1,6 +1,6 @@
 #useDynLib(lmerTest, .registration=TRUE)
 import(lme4)
-importFrom(numDeriv, hessian, grad)
+#importFrom(numDeriv, hessian, grad)
 importFrom(plyr, llply)
 import(Matrix)
 import(methods)

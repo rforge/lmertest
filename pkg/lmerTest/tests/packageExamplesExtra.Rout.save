@@ -1,6 +1,6 @@
 
-R version 3.1.2 (2014-10-31) -- "Pumpkin Helmet"
-Copyright (C) 2014 The R Foundation for Statistical Computing
+R Under development (unstable) (2015-04-08 r68161) -- "Unsuffered Consequences"
+Copyright (C) 2015 The R Foundation for Statistical Computing
 Platform: x86_64-w64-mingw32/x64 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -31,8 +31,6 @@ The following object is masked from 'package:stats':
 
     step
 
-Warning message:
-package 'lme4' was built under R version 3.1.3 
 > testType1 <- TRUE
 > 
 > 
@@ -49,7 +47,8 @@ Days  29442   29442     1 18.156  45.046 2.594e-06 ***
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > 
-> anova(m, ddf="Kenward-Roger")
+> if(require(pbkrtest))
++   anova(m, ddf="Kenward-Roger")
 Loading required package: pbkrtest
 Analysis of Variance Table of type III  with  Kenward-Roger 
 approximation for degrees of freedom
@@ -61,7 +60,8 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > ## from lmerTest
 > m <- lmer(Informed.liking ~ Gender+Information+Product +(1|Consumer), data=ham)
 > 
-> anova(m, ddf = "Kenward-Roger")
+> if(require(pbkrtest))
++   anova(m, ddf="Kenward-Roger")
 Analysis of Variance Table of type III  with  Kenward-Roger 
 approximation for degrees of freedom
             Sum Sq Mean Sq NumDF DenDF F.value    Pr(>F)    
@@ -137,4 +137,4 @@ object  6 1763.9 1783.1 -875.97   1751.9 0.0639      1     0.8004
 > 
 > proc.time()
    user  system elapsed 
-   5.36    0.26    5.80 
+   3.33    0.14    3.52 

@@ -1,8 +1,8 @@
 Package: lmerTest
 Type: Package
 Title: Tests for random and fixed effects for linear mixed effect
-        models (lmer objects of lme4 package).
-Version: 2.0-23
+        models (lmer objects of lme4 package)
+Version: 2.0-24
 Date: 2012-01-09
 Authors@R: c(person("Alexandra", "Kuznetsova", role = c("aut", "cre"),
                           email = "alku@dtu.dk"),
@@ -10,10 +10,10 @@ Authors@R: c(person("Alexandra", "Kuznetsova", role = c("aut", "cre"),
                    person("Rune", "Haubo Bojesen Christensen", role = "aut"))
 Maintainer: Alexandra Kuznetsova <alku@dtu.dk>
 Depends: R (>= 3.0.0), Matrix, stats, methods, lme4 (>= 1.0)
-Imports: plyr, numDeriv, MASS, Hmisc, ggplot2
+Imports: plyr, MASS, Hmisc, ggplot2
 Suggests: pbkrtest
 Description: The package provides different kinds of tests on lmer
-        objects (of lme4 package). The tests comprise type 3 and type 1 F tests for
+        objects (of lme4 package). The tests comprise types I - III F tests for
         fixed effects, LRT tests for random effects, calculation of
         population means for fixed factors with confidence intervals
         and corresponding plots. Package also provides backward
