@@ -958,8 +958,10 @@ updateAnovaTable <- function(resNSelim){
 
 .getKeepEffs <- function(keep.effs, model.effs){
   #rand.terms.table <- getRandTermsTable(rand.terms)
-  randeffs <- unlist(lapply(keep.effs, .findKeepRandEff, unlist(model.effs$randeffs)))
-  fixedeffs <- unlist(lapply(keep.effs, .findKeepEff, unlist(model.effs$fixedeffs)))
+  randeffs <- unlist(lapply(keep.effs, .findKeepRandEff, 
+                            unlist(model.effs$randeffs)))
+  fixedeffs <- unlist(lapply(keep.effs, .findKeepEff, 
+                             unlist(model.effs$fixedeffs)))
   return(list(randeffs = randeffs, fixedeffs = fixedeffs))
 }
 

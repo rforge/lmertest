@@ -52,7 +52,7 @@ devfun5 <- function (fm,  reml = TRUE)
 }
 
 
-## NOT USED 
+
 ## not calling the C code
 vcovJSStheta2 <- function(fm)
 {

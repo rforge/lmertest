@@ -358,6 +358,7 @@ plotLSMEANS <- function(table, response,
   ttplot$col.bars <-  unlist(lapply(ttplot[,"pvalue"], calc.cols2))
   ttplot <- ttplot[,c("levels", "Estimate", "col.bars", "lci", "uci", 
                       "namesforplots")]
+  uci <- lci <- col.bars <- Estimate <- NULL
   
   if(mult)
     ggplot(ttplot, aes(x=levels, y = Estimate, fill = col.bars)) + 
