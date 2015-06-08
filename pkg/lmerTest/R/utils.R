@@ -32,8 +32,8 @@ rhoInitJSS <- function(model)
   chol(rho$XtX <- crossprod(rho$X))       # check for full column rank
   
   rho$REML <-  getREML(model)#model@dims['REML']
-    
-  rho$s <- summary(model, ddf="lme4")
+  if(class(model) == "lmerMod") 
+    rho$s <- summary(model)#, ddf="lme4")
   
   rho$fixEffs <- fixef(model)
   rho$sigma <- sigma(model)
@@ -236,7 +236,7 @@ calcFpvalueMAIN <- function(term, L, X.design, fullCoefs, model, rho, ddf,
 ###############################################################################
 # function to calculate T test JSS
 ###############################################################################
-calculateTtestJSS <- function(rho, Lc, nrow.res, ddf="Satterthwaite")
+calculateTtestJSS <- function(rho, Lc, nrow.res, ddf = "Satterthwaite")
 {
 
   resultTtest <- matrix(0, nrow = nrow.res, ncol = 4)

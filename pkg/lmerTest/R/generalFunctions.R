@@ -186,11 +186,17 @@ setMethod("anova", signature(object="merModLmerTest"),
 setMethod("summary", signature(object = "merModLmerTest"),
           function(object, ddf="Satterthwaite", ...)
           {
-            
-            cl <- callNextMethod()
-            if(!is.null(ddf) && ddf=="lme4") return(cl)
-            else
-            {
+                      
+            if(!is.null(ddf) && ddf=="lme4"){
+              if(class(object) == "merModLmerTest")
+                return(summary(as(object, "lmerMod")))
+              #return(cl)
+            }else{
+              ## commented callNextMethod
+              ## since it produces warning, cannot have multiple arguments
+              ##cl <- callNextMethod()
+              if(class(object) == "merModLmerTest")
+                cl <- summary(as(object, "lmerMod"))
               #errors in specifying the parameters
               ddfs <- c("Satterthwaite", "Kenward-Roger")
               ind.ddf <- pmatch(tolower(ddf), tolower(ddfs))
