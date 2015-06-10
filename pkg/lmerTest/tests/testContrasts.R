@@ -21,11 +21,12 @@ modelCarrots.sas <- lme4::lmer(Preference ~
                                                Age = "contr.SAS"))
 
 ## here an error produces
-tools::assertError(stopifnot(all.equal(logLik(modelCarrots.treat), 
-                                       logLik(modelCarrots.sas))))
-
-tools::assertError(stopifnot(all.equal(VarCorr(modelCarrots.treat), 
-                                       VarCorr(modelCarrots.sas), tol = 1e-5)))
+## NO MORE in lme4 1.1-8
+# tools::assertError(stopifnot(all.equal(logLik(modelCarrots.treat), 
+#                                        logLik(modelCarrots.sas))))
+# 
+# tools::assertError(stopifnot(all.equal(VarCorr(modelCarrots.treat), 
+#                                        VarCorr(modelCarrots.sas), tol = 1e-5)))
 
 
                               

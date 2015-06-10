@@ -193,7 +193,7 @@ setMethod("summary", signature(object = "merModLmerTest"),
               #return(cl)
             }else{
               ## commented callNextMethod
-              ## since it produces warning, cannot have multiple arguments
+              ## since it produces warning, summary cannot have multiple arguments
               ##cl <- callNextMethod()
               if(class(object) == "merModLmerTest")
                 cl <- summary(as(object, "lmerMod"))
@@ -213,7 +213,7 @@ setMethod("summary", signature(object = "merModLmerTest"),
                 message("summary from lme4 is returned\nsome computational error has occurred in lmerTest")
                 return(cl)
               }
-              coefs.satt <- cbind(cl$coefficients[,1:2, drop=FALSE], tsum$df, 
+              coefs.satt <- cbind(cl$coefficients[,1:2, drop = FALSE], tsum$df, 
                                   tsum$tvalue, tsum$tpvalue)               
               cl$coefficients <- coefs.satt
               colnames(cl$coefficients)[3:5] <- c("df","t value","Pr(>|t|)")              

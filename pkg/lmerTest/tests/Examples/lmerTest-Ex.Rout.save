@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2015-04-08 r68161) -- "Unsuffered Consequences"
+R version 3.2.0 (2015-04-16) -- "Full of Ingredients"
 Copyright (C) 2015 The R Foundation for Statistical Computing
 Platform: x86_64-w64-mingw32/x64 (64-bit)
 
@@ -20,10 +20,10 @@ Type 'q()' to quit R.
 > pkgname <- "lmerTest"
 > source(file.path(R.home("share"), "R", "examples-header.R"))
 > options(warn = 1)
+> options(pager = "console")
 > library('lmerTest')
 Loading required package: Matrix
 Loading required package: lme4
-Loading required package: Rcpp
 
 Attaching package: 'lmerTest'
 
@@ -441,7 +441,7 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 > # additional p-values calculated based on Satterthwate's approximations
 > summary(fm1)
 Linear mixed model fit by REML t-tests use Satterthwaite approximations to
-  degrees of freedom [merModLmerTest]
+  degrees of freedom [lmerMod]
 Formula: Reaction ~ Days + (Days | Subject)
    Data: sleepstudy
 
@@ -505,7 +505,7 @@ Days -0.138
 > # additional p-values calculated based on Satterthwate's approximations
 > summary(m)
 Linear mixed model fit by REML t-tests use Satterthwaite approximations to
-  degrees of freedom [merModLmerTest]
+  degrees of freedom [lmerMod]
 Formula: Informed.liking ~ Gender + Information + Product + (1 | Consumer)
    Data: ham
 
@@ -697,7 +697,7 @@ Days  1  29442   29442  45.047
 > #additional column of p values for the t test. 
 > summary(m)
 Linear mixed model fit by REML t-tests use Satterthwaite approximations to
-  degrees of freedom [merModLmerTest]
+  degrees of freedom [lmerMod]
 Formula: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject)
    Data: sleepstudy
 
@@ -830,7 +830,7 @@ Fixed Effects:
 > ## will give you an additional column with p values for the t test
 > summary(fm1)
 Linear mixed model fit by REML t-tests use Satterthwaite approximations to
-  degrees of freedom [merModLmerTest]
+  degrees of freedom [lmerMod]
 Formula: Reaction ~ Days + (Days | Subject)
    Data: sleepstudy
 
@@ -866,7 +866,7 @@ Note: method with signature 'sparseMatrix#ANY' chosen for function 'kronecker',
  target signature 'dgCMatrix#ngCMatrix'.
  "ANY#sparseMatrix" would also be valid
 Linear mixed model fit by REML t-tests use Kenward-Roger approximations to
-  degrees of freedom [merModLmerTest]
+  degrees of freedom [lmerMod]
 Formula: Reaction ~ Days + (Days | Subject)
    Data: sleepstudy
 
@@ -896,7 +896,7 @@ Days -0.138
 > 
 > #will give the summary of lme4 package
 > summary(fm1, ddf="lme4")
-Linear mixed model fit by REML ['merModLmerTest']
+Linear mixed model fit by REML ['lmerMod']
 Formula: Reaction ~ Days + (Days | Subject)
    Data: sleepstudy
 
@@ -928,7 +928,7 @@ Days -0.138
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  10.37 0.17 10.7 NA NA 
+Time elapsed:  8.13 0.11 8.39 NA NA 
 > grDevices::dev.off()
 null device 
           1 
