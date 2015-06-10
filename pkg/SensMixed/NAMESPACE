@@ -7,13 +7,17 @@ import(plyr)
 import(lsmeans)
 import(doBy)
 import(xtable)
+import(reshape2)
+import(ggplot2)
 
 export(sensmixed)
 export(consmixed)
 export(saveToDoc)
+export(SensMixedUI)
 #exportClasses(sensmixed)
 #exportClasses(consmixed)
 export(convertToFactors)
+export(plotLSMEANS)
 
 
 S3method(print, sensmixed)

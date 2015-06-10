@@ -9,12 +9,27 @@ plots the least squares means and differences of least squares means
 together with the confidence intervals for the fixed effects
 }
 \usage{
-\method{plot}{consmixed} (x, ...)
+\method{plot}{consmixed} (x, main = NULL, cex = 1.4, 
+                           which.plot = c("LSMEANS", "DIFF of LSMEANS"),
+                           effs = NULL, ...)
 }
 
 \arguments{
   \item{x}{
  object of class consmixed
+}
+\item{main}{
+ string. Title for the plots
+}
+\item{cex}{
+ A numerical value giving the amount by which plotting text and symbols 
+ should be magnified relative to the default
+}
+\item{which.plot}{
+ type of plot to be drawn
+}
+\item{effs}{
+ name of the effext for which to draw the plots
 }
  \item{\dots}{
      other potential arguments.

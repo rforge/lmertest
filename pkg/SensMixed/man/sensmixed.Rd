@@ -13,12 +13,14 @@ for testing fixed terms
 \usage{
 sensmixed(attributes=NULL, Prod_effects, replication = NULL, 
                               individual, data, product_structure = 3, 
-                              error_structure ="No_Rep", MAM = FALSE, 
+                              error_structure ="No_Rep", MAM = FALSE,
+                              mult.scaling = FALSE, oneway_rand = TRUE,
                               MAM_PER = FALSE, adjustedMAM = FALSE, 
                               alpha_conditionalMAM = 1,
-                              calc_post_hoc = TRUE, parallel = TRUE, 
+                              calc_post_hoc = FALSE, parallel = FALSE, 
                               reduce.random=TRUE, alpha.random = 0.1, 
-                              alpha.fixed = 0.05, interact.symbol = ":", ...)
+                              alpha.fixed = 0.05, interact.symbol = ":", 
+                              keep.effs = NULL,  ...)
 }
 \arguments{
   \item{attributes}{
@@ -65,6 +67,14 @@ sensmixed(attributes=NULL, Prod_effects, replication = NULL,
     
     logical. if MAM model should be constructed (scaling correction)
 }
+\item{mult.scaling}{
+    
+    logical. Whether multiple scaling should be used
+}
+\item{oneway_rand}{
+    
+    logical. Whether there should be just prod effect as part of the random part in MAM
+}
 \item{MAM_PER}{
     
     logical. if MAManalysis function should be called (scaling correction)
@@ -107,6 +117,10 @@ sensmixed(attributes=NULL, Prod_effects, replication = NULL,
      symbol for the indication of the interaction between effects. the default 
      one is ":".
 }
+\item{keep.effs}{
+    
+     which effects should be kept in a model.
+}
 
   \item{\dots}{
      other potential arguments.
@@ -139,10 +153,6 @@ res <- sensmixed(c("Coloursaturation", "Colourbalance"),
 Prod_effects = c("TVset", "Picture"), replication="Repeat", 
 individual="Assessor", data=TVbo, MAM=TRUE)
 
-res_paral <- sensmixed(names(TVbo)[5:ncol(TVbo)],
-Prod_effects = c("TVset", "Picture"), replication="Repeat", 
-individual="Assessor", data=TVbo, error_structure="3-WAY")
-
 
 ## run MAManalysis function
 res_MAM <- sensmixed(c("Coloursaturation", "Colourbalance"),
@@ -164,14 +174,26 @@ plot F and Chi square values
 plot(result)
 }
 
-\dontrun{
+
 result <- sensmixed(names(TVbo)[5:ncol(TVbo)],
 Prod_effects=c("TVset", "Picture"),
-replication="Repeat", individual="Assessor", data=TVbo)
+replication="Repeat", individual="Assessor", data=TVbo, 
+calc_post_hoc = TRUE)
 
-plot(result)
+result
+result$fixed
 
+result_MAM <- sensmixed(names(TVbo)[5:ncol(TVbo)],
+Prod_effects=c("TVset", "Picture"),
+replication="Repeat", individual="Assessor", data=TVbo,
+MAM = TRUE)
 
+result_MAM
 
-}
+result_MAM_mult <- sensmixed(names(TVbo)[5:ncol(TVbo)],
+Prod_effects=c("TVset", "Picture"),
+replication="Repeat", individual="Assessor", data=TVbo,
+MAM = TRUE, mult.scaling = TRUE)
+
+result_MAM_mult
 }

@@ -11,7 +11,7 @@ square roots of chi square values for all attributes
 \usage{
 \method{plot}{sensmixed} (x, mult = FALSE, dprime = FALSE, sep = FALSE, 
                              cex = 2,  interact.symbol = ":", isFixed = TRUE, 
-                             isRand = TRUE, ...)
+                             isRand = TRUE, isScaling = TRUE, ...)
 }
 
 \arguments{
@@ -42,6 +42,11 @@ logical. Whether to plot tests of the fixed effects
 \item{isRand}{
 logical. Whether to plot tests of the random effects
 }
+
+\item{isScaling}{
+logical. Whether to plot the scaling factor if present
+}
+
  \item{\dots}{
      other potential arguments.
 }

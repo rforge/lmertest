@@ -218,9 +218,9 @@ texreg <- function(l, file = NA, single.row = FALSE,
                    custom.coef.names = NULL, custom.gof.names = NULL, custom.note = NULL, 
                    digits = 2, leading.zero = TRUE, symbol = "\\cdot", override.coef = 0, 
                    override.se = 0, override.pval = 0, omit.coef = NA, reorder.coef = NULL, 
-                   reorder.gof = NULL, return.string = FALSE, ci.force = FALSE,
+                   reorder.gof = NULL, return.string = TRUE, ci.force = FALSE,
                    ci.force.level = 0.95, ci.test = 0, bold = 0.00, center = TRUE, 
-                   caption = "Statistical models", caption.above = FALSE, 
+                   caption = "Statistical models", caption.above = TRUE, 
                    label = "table:coefficients", booktabs = FALSE, dcolumn = FALSE, 
                    sideways = FALSE, use.packages = TRUE, table = TRUE, no.margin = TRUE, 
                    scriptsize = FALSE, float.pos = "", ...) {
@@ -535,7 +535,7 @@ texreg <- function(l, file = NA, single.row = FALSE,
   }
   
   if (is.na(file)) {
-    cat(string)
+    return(string)
   } else if (!is.character(file)) {
     stop("The 'file' argument must be a character string.")
   } else {
@@ -559,13 +559,13 @@ htmlreg <- function(l, file = NA, single.row = FALSE,
                     reorder.gof = NULL, return.string = FALSE, ci.force = FALSE,
                     ci.force.level = 0.95, ci.test = 0, bold = 0.00, center = TRUE, 
                     caption = "Statistical models", caption.above = FALSE, star.symbol = "*", 
-                    inline.css = TRUE, doctype = TRUE, html.tag = FALSE, head.tag = FALSE, 
+                    inline.css = TRUE, doctype = TRUE, html.tag = TRUE, head.tag = TRUE, 
                     body.tag = FALSE, append = TRUE , ...) {
   
   linit <- l
   captioninit <- caption
   stars <- check.stars(stars)
-  for(ind.table in 1:2){
+  for(ind.table in 1:length(linit)){
     l <- linit[[ind.table]]  
     models <- get.data(l, ...)  #extract relevant coefficients, SEs, GOFs, etc.
     caption <- captioninit[[ind.table]]
@@ -580,7 +580,7 @@ htmlreg <- function(l, file = NA, single.row = FALSE,
                                     "border-bottom: 2px solid black;\"")
       css.td <- " style=\"padding-right: 12px; border: none;\""
       css.caption <- ""
-      css.sup <- " style=\"vertical-align: 4px;\""
+      css.sup <- ""   #" style=\"vertical-align: 4px;\""
     } else {
       css.table <- ""
       css.th <- ""
@@ -689,7 +689,7 @@ htmlreg <- function(l, file = NA, single.row = FALSE,
     } else if (caption != "" && caption.above == TRUE) {
       cap <- paste0(h.ind, b.ind, ind, 
                     "<caption align=\"top\" style=\"margin-bottom:0.3em;", css.caption, 
-                    "\">", caption, "</caption>\n")
+                    "\">", "<b>", caption, "</b>", "</caption>\n")
     } else {
       cap <- ""
     }
@@ -755,8 +755,8 @@ htmlreg <- function(l, file = NA, single.row = FALSE,
     # specify model names (header row)
     for (i in 1:length(models)) {
       string <- paste0(string, 
-                       h.ind, b.ind, ind, ind, "<th", css.th, "><b>", modnames[i], 
-                       "</b></th>\n")
+                       h.ind, b.ind, ind, ind, "<td", css.th, ">", modnames[i], 
+                       "</td>\n")
     }
     string <- paste0(string, h.ind, b.ind, ind, "</tr>\n")
     
@@ -879,7 +879,7 @@ htmlreg <- function(l, file = NA, single.row = FALSE,
   }
   #print(cat(string)) 
   if (is.na(file)) {
-    cat(string)
+    return(cat(string))
   } else if (!is.character(file)) {
     stop("The 'file' argument must be a character string.")
   } else {
