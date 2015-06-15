@@ -63,8 +63,7 @@ checkNumberInteract <- function(data, factors)
     warning.str <- "Number of levels for "
     if(length(factors) > 1)
       warning.str <- c(warning.str," interaction ", sep=" ")
-    #for(i in length(factors))
-    #    warning.str <- paste(warning.str, factors[i],sep=" ")  
+ 
     warning.str <- c(warning.str, paste(factors,collapse=":"), 
                      " is more or equal to the number of observations in data", 
                      sep=" ")    
@@ -132,14 +131,7 @@ fixedOrRandFormula <- function(fmodel, isfixed = TRUE)
              scale(predict(lm(as.formula(paste(ff[2], ff[1], namesProd)), 
                               data=data)), scale=FALSE))
     }
-#     lapply(fixed$Product, function(argument) 
-#       assign(paste("x.scaling.private", argument, sep=""),
-#              scale(predict(lm(as.formula(paste(ff[2], ff[1], argument)), 
-#                               data=data)), scale=FALSE))) 
-#     data[, prods] <- lapply(paste(ff[2], ff[1], fixed$Product), 
-#                             function(formulas)  
-#                               scale(predict(lm(as.formula(formulas), 
-#                                                data=data)), scale=FALSE) )
+
   }
   
   # create x out of predicted values from lm
@@ -185,20 +177,6 @@ fixedOrRandFormula <- function(fmodel, isfixed = TRUE)
  
   fo.anova <- as.formula(paste(fm[2], fm[1], fm[3], sep=""))    
   
-  ## COMMENTED BECAUSE 
-  ## NEW WORK AROUND FOR POST HOC FOR MAM IS FOUND
-  ## for lsmeans
-#   fm.lsm <- paste(mf.final.lsm)
-#   if(is.list(random))
-#     fm.lsm[3] <- paste(fm.lsm[3],  paste(random$individual, 
-#                                          "x.scaling.private", sep=":"),
-#                        "x.scaling.private", sep=" + ")
-#   else
-#     fm.lsm[3] <- paste(fm.lsm[3],  paste(random, "x.scaling.private", sep=":"),
-#                        "x.scaling.private", sep=" + ")
-#   fo.lsm <- as.formula(paste(fm.lsm[2], fm.lsm[1], fm.lsm[3], sep=""))   
-  
-  #return(list(fo.anova = fo.anova, fo.lsm = fo.lsm, data = data))
 return(list(fo.anova = fo.anova, data = data))
 } 
 
@@ -233,68 +211,15 @@ createLMERmodel <- function(structure, data, response, fixed, random, corr,
                                      mult.scaling, data, 
                                      oneway_rand = oneway_rand)
     
-    ## create models for anova and lsmeans
-    ############################################################################
-    
     ## for anova
     modelMAM <- lmerTest::lmer(fo$fo.anova, fo$data)
-    #anova(model.anova, type=1) ## TODO: compare with SAS
-    #st.anova <- step(model.anova, lsmeans.calc=FALSE, difflsmeans.calc=FALSE, 
-    #reduce.fixed=FALSE)
-    
-    ## COMMENTED THE FOLLOWING
-    ## A NEW WORK AROUND IS FOUND
-    ## change contrasts for lsmeans to be contr.sum
-#     if(length(fixed$Product)==1){
-#       mm <- model.matrix(model.anova)
-#       l <- attr(mm, "contrasts")
-#       contr <- l
-#       names.facs <- names(contr)
-#       l <- as.list(rep("contr.sum", length(names.facs)))
-#       names(l) <- names(contr)
-#     }else{
-#       l <- as.list(rep("contr.sum", 2))
-#       if(is.list(random))
-#         names(l) <- c("prod", random$individual) 
-#       else
-#         names(l) <- c("prod", random) 
-#     }   
-#     
-#     ## model for lsmeans
-#     if(calc_post_hoc){
-#       model.lsmeans <- lmerTest::lmer(fo$fo.lsm, data, contrasts = l)
-#       return(list(model.anova = model.anova, model.lsmeans = model.lsmeans))
-#     }
-    return(modelMAM = modelMAM)
-    #summaryBy(Coloursaturation ~ prod , data)
-    #st.lsmeans <- step(model.lsmeans, lsmeans.calc=FALSE, difflsmeans.calc=FALSE, reduce.fixed=FALSE)
-    #newm <- lmerTest::lmer(formula(st.lsmeans$model), data=data, contrasts=l)
-    #lsmeans::lsmeans(object=model.lsmeans,  
-    #                 pairwise ~ prod)
-    #if(length(fixed$Product)==1)
-    #  eval(substitute(lsmeans::lsmeans(object=model.lsmeans,  
-    #                                 pairwise ~ prod), 
-    #                                 list(prod=as.name(fixed$Product))))
-    #else
-      #eval(substitute(lsmeans::lsmeans(object=model.lsmeans,  
-      #                               pairwise ~ prod), 
-      #              list(prod=as.name(paste(fixed$Product, collapse=":")))))
-    
-   #lsmeans::lsmeans(model.lsmeans, pairwise ~ TVset:Picture)
+
+    return(modelMAM = modelMAM)   
   }else{
     model <- lmerTest::lmer(mf.final, data) 
     return(model)
   }
-  
     
-  #model <- as(model,"mer")
-  #model <- update(model)
-  
-  #mf.final <- update.formula(formula(model),formula(model))
-  #model <- eval(substitute(lmer(mf.final, data=data),list(mf.final=mf.final)))
-  #model <- update(model, data=data ,REML=TRUE)
-  
-  #return(model)
 }
 
 
@@ -479,18 +404,7 @@ getPureInter <- function(lsm.table, anova.table, eff){
     
   
   for(eff in rownames(anova.table.noscaleff)){
-    #lsm <- lsmeans::.old.lsmeans( model , pairwise ~ Track:SPL:Car)
-    #dp <- lsm[[2]][, 1]/sigma
     
-    
-    ## for interaction  - 
-    #eff <- attr(terms(model),"term.labels")[3]
-    
-    #lsm <- lsmeans::.old.lsmeans(model,  as.formula(paste("pairwise ~ ", eff)), 
-    #                             lf = TRUE)
-    #fixef()
-    #split.eff  <-  unlist(strsplit(eff,":"))
-    #if( length(split.eff) > 1 ){
       
     pureinter <- getPureInter(lsm.table, anova.table.noscaleff, eff)
     puredifs <- .calcPureDiffs(pureinter) 
@@ -499,14 +413,7 @@ getPureInter <- function(lsm.table, anova.table, eff){
     #all.equal(sum(pure.inter.pairs^2)/(12), sum(puredifs^2)/(12), tol = 1e-4)
     dp <- puredifs / sigma      
     av.dp <- sqrt(sum(dp^2)/(nrow(dp)*(nrow(dp)-1)/2))
-    #}
-    #else{
-     # lsm.eff <- getPureInter(lsm.table, eff)
-      
-      #dp <- dlsm.table[which(rows %in% eff), 1] / sigma
-      #av.dp <- sqrt(sum(dp^2)/length(dp))
-      
-    #}
+   
     anova.table[eff, "dprimeav"] <- av.dp 
   }
   anova.table <- anova.table[, 
@@ -514,27 +421,11 @@ getPureInter <- function(lsm.table, anova.table, eff){
                                "dprimeav", "Pr(>F)")]
   anova.table
   
-  #m.bo <- lme4::lmer(att1 ~ Track*SPL*Car + (1|Assessor) + (1|SPL:Assessor) + 
-  #                     (1|Track:SPL:Assessor) + (1|Car:SPL:Assessor), 
-  #                   data = sound_data_balanced)
-  #lsm <- lsmeans::.old.lsmeans(m.bo,  pairwise ~ Track:SPL:Car, lf = TRUE)
-  #lsm[[1]] %*% fixef(model)
-  #with(sound_data_balanced, tapply(att1, factor(Track:SPL:Car), mean))
+ 
 }
 
 
-## step function for NO MAM
-# .stepAllAttrNoMAM <- function(new.resp.private.sensmixed, 
-#                               model = model,
-#                               reduce.random = reduce.random, 
-#                               alpha.random = alpha.random, 
-#                               alpha.fixed = alpha.fixed, 
-#                               calc_post_hoc = calc_post_hoc){
-#   assign("new.resp.private.sensmixed", new.resp.private.sensmixed, 
-#          envir=environment(formula(model)))
-#   formula(model)
-#   suppressMessages(m <- refit(object=model, newresp = new.resp.private.sensmixed, 
-#              rename.response = TRUE))
+
 .stepAllAttrNoMAM <- function(attr, product_structure, error_structure,
                               data, Prod_effects, random,
                               reduce.random = reduce.random, 
@@ -568,66 +459,6 @@ getPureInter <- function(lsm.table, anova.table, eff){
   st
 }
 
-## UNUSED OLD FUNCTION
-## LSMEANS FOR MAM ARE CALCULATED BASED ON .OLD.LSMEANS FUNCTION
-# ## step function for MAM
-# .stepAllAttrMAM <- function(attr, product_structure, error_structure,
-#                             data, Prod_effects, random,
-#                             reduce.random = reduce.random, 
-#                             alpha.random = alpha.random, 
-#                             alpha.fixed = alpha.fixed, 
-#                             mult.scaling = mult.scaling, 
-#                             calc_post_hoc = calc_post_hoc,
-#                             keep.effs){
-#   model.init <- suppressMessages(createLMERmodel(structure = 
-#                                   list(product_structure = product_structure, 
-#                                        error_structure = error_structure), 
-#                                   data = data, response = attr,
-#                                   fixed = list(Product = Prod_effects, 
-#                                              Consumer=NULL),
-#                                 random = random, corr = FALSE, MAM = TRUE,
-#                                 mult.scaling = mult.scaling, 
-#                                 calc_post_hoc = calc_post_hoc))
-#   model.an <- model.init$model.anova
-#   model.lsm <- model.init$model.lsmeans
-#   
-#   model.an  <- elimZeroVar(model.an , data)
-#   if(!is.null(model.lsm))
-#     model.lsm  <- elimZeroVar(model.lsm , data)
-#    
-#   st <- suppressMessages(step(model.an, fixed.calc = FALSE,
-#                               keep.effs = keep.effs, 
-#                               reduce.random = reduce.random))
-#   rand.table <- st$rand.table
-#   
-#   if(reduce.random){
-#     anova.table <- suppressMessages(anova(as(st$model, "merModLmerTest"), 
-#                                           type = 1))
-#     if(length(which(anova.table[, "Pr(>F)"] == "NaN") > 0))
-#        anova.table <- suppressMessages(anova(as(st$model, "merModLmerTest"), 
-#                                              type = 1, ddf = "Kenward-Roger")) 
-#   }
-#   else{
-#     anova.table <- suppressMessages(anova(model.an, type = 1))
-#     if( ncol(anova.table) == 4 || length(which(anova.table[, "Pr(>F)"] == "NaN") > 0))
-#        anova.table <- suppressMessages(anova(as(model.an, "merModLmerTest"), 
-#                                              type = 1, ddf="Kenward-Roger")) 
-#   }
-#   anova.table <- .renameScalingTerm(anova.table, Prod_effects) 
-#  
-#   if(calc_post_hoc){
-#     if(length(Prod_effects) > 1)
-#       lsmeans.table <- lsmeans::.old.lsmeans( model.lsm, pairwise ~ prod)
-#     else 
-#       lsmeans.table <-  eval(substitute(lsmeans::.old.lsmeans(object=model.lsm, 
-#                                                          pairwise ~ prod), 
-#                                         list(prod = as.name(Prod_effects)))) 
-#     return(list(anova.table = anova.table, rand.table = rand.table,
-#                 lsmeans.table = lsmeans.table)) 
-#   }
-#  
-#   return(list(anova.table = anova.table, rand.table = rand.table)) 
-# }
 
 ## step function for MAM
 .stepAllAttrMAM <- function(attr, product_structure, error_structure,
@@ -715,7 +546,6 @@ getPureInter <- function(lsm.table, anova.table, eff){
                                      sep = " - "))
   return(updateModel(modelMAM, fmodel, getREML(modelMAM), 
               attr(model.matrix(modelMAM),"contrasts")))
-#   return(lmerTest::lmer(update(fmodelMAM, fmodel), 
-#                         data = model.frame(modelMAM)))
+
 } 
 

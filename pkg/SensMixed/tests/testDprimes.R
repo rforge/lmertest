@@ -1,7 +1,7 @@
 require(SensMixed)
 load(system.file("testdata","sensBObalanc.RData",package="SensMixed"))
 load(system.file("testdata","sensBO.RData",package="SensMixed"))
-testBO <- TRUE
+testBO <- FALSE
 ###########################################
 ## check for TVbo without replication
 ###########################################

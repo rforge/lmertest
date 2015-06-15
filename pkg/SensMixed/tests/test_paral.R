@@ -1,5 +1,5 @@
 require(SensMixed)
-checkParallel <- TRUE
+checkParallel <- FALSE
 
 if(checkParallel){
   result_nopar <- sensmixed(names(TVbo)[5:(ncol(TVbo)-1)], 

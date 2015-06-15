@@ -1,14 +1,14 @@
 \name{sensmixed}
 \alias{sensmixed}
 
-\title{Automated model selection process for each attribute of sensory data}
+\title{Analysis of sensory data within a mixed effects model framework}
 
 \description{
-Constructs the biggest possible models for the selected attributes and reduces 
-them to the best by principle of parsimony models. First elimination of random 
-effects is performed following by elimination of fixed effects.
-The LRT test is used for testing random terms, F-type hypothesis test is used 
-for testing fixed terms
+Constructs a mixed effects model for each of the selected by user attributes 
+according to the specified by the user structure arguments. If required, then
+the random structures are reduced by eliminating NS random effects.
+The likelihood ratio test (LRT) is used for testing random terms, F-type 
+hypothesis test is used for testing fixed terms
 }
 \usage{
 sensmixed(attributes=NULL, Prod_effects, replication = NULL, 
@@ -94,7 +94,7 @@ sensmixed(attributes=NULL, Prod_effects, replication = NULL,
     models for all the attributes
 }
 \item{parallel}{
-    logical. Should the computation be done in parallel. the default is TRUE   
+    logical. Should the computation be done in parallel. the default is FALSE   
 }
 
 \item{reduce.random}{

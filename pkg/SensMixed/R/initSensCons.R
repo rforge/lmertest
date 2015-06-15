@@ -1,10 +1,12 @@
+###### Here all the general functions and the functiona that are exported 
+###### are defined 
 
 sensmixed <- function(attributes=NULL, Prod_effects, replication = NULL,
                       individual, data, product_structure = 3,
                       error_structure = "No_Rep", MAM = FALSE, 
                       mult.scaling = FALSE, oneway_rand = TRUE, MAM_PER = FALSE, 
                       adjustedMAM = FALSE, alpha_conditionalMAM = 1, 
-                      calc_post_hoc = FALSE, parallel = TRUE,
+                      calc_post_hoc = FALSE, parallel = FALSE,
                       reduce.random = TRUE, alpha.random = 0.1,
                       alpha.fixed = 0.05, interact.symbol = ":", 
                       keep.effs = NULL, ...)
@@ -71,7 +73,7 @@ saveToDoc <- function(x, file = NA, bold = FALSE, append = TRUE, type = "html",
                              type = type, typeEffs = typeEffs))
   }
   if(class(x) == "consmixed"){ 
-   .createDocOutputConsmixed(x, file = file, bold = bold, append = append)
+   return(.createDocOutputConsmixed(x, file = file, bold = bold, append = append))
   }
 }  
 
