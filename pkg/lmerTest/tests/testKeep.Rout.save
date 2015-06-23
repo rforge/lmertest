@@ -19,7 +19,6 @@ Type 'q()' to quit R.
 Loading required package: lmerTest
 Loading required package: Matrix
 Loading required package: lme4
-Loading required package: Rcpp
 
 Attaching package: 'lmerTest'
 
@@ -341,8 +340,8 @@ Assessor        48.47      1     kept  <1e-07
 Fixed effects:
                 Sum Sq Mean Sq NumDF DenDF F.value elim.num Pr(>F)
 TVset          29.2454 14.6227     2   173  4.5838     kept 0.0115
-Picture       244.0612 81.3537     3   173 25.5020     kept <1e-07
-TVset:Picture  22.4487  3.7415     6   173  1.1728     kept 0.3230
+Picture       244.0613 81.3538     3   173 25.5020     kept <1e-07
+TVset:Picture  22.4488  3.7415     6   173  1.1728     kept 0.3230
 
 Least squares means:
                      TVset Picture Estimate Standard Error   DF t-value
@@ -551,4 +550,4 @@ lme4::lmer(formula = Dimglasseffect ~ TVset + Picture + (1 |
 > 
 > proc.time()
    user  system elapsed 
-  34.64    0.45   35.58 
+  37.34    0.34   37.70 
