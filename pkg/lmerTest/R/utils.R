@@ -170,7 +170,7 @@ calcFpvalueSS <- function(term, Lc, fullCoefs, X.design, model, rho, ddf,
    
   if( ddf=="Kenward-Roger" )
   {
-    if (!requireNamespace("pbkrtest", quitly = TRUE)) 
+    if (!requireNamespace("pbkrtest", quietly = TRUE)) 
       stop("pbkrtest package required for Kenward-Roger's approximations")
     if(is.vector(Lc))
       res.KR <- pbkrtest::KRmodcomp( model, t(as.matrix(Lc)) )

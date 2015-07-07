@@ -8,11 +8,6 @@ devfun5 <- function (fm,  reml = TRUE)
 {
   stopifnot(is(fm, "merMod"))
   
-  #vlist <- sapply(fm@cnms, length)
-  
-  #pp <- fm@pp$copy()
-  
-  #resp <- fm@resp$copy()
   np <- length(fm@pp$theta)
   nf <- length(fixef(fm)) 
   if (!isGLMM(fm)) 
@@ -58,12 +53,6 @@ vcovJSStheta2 <- function(fm)
 {
   stopifnot(is(fm, "merMod"))
   
-  #vlist <- sapply(fm@cnms, length)
-  
-  #pp <- fm@pp$copy()
-  
-  
-  #resp <- fm@resp$copy()
   np <- length(fm@pp$theta)
   nf <- length(fixef(fm))
   if (!isGLMM(fm)) 

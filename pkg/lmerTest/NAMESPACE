@@ -6,10 +6,13 @@ import(Matrix)
 import(methods)
 importFrom(MASS, ginv)
 import(Hmisc)
-#importFrom(gplots, barplot2)
 import(ggplot2)
-#import(pbkrtest)
-#importFrom(stats, step)
+importFrom("stats", "terms", "as.formula", "complete.cases", "delete.response", 
+           "drop1", "formula", "lm", "logLik", "model.frame", "model.matrix", 
+           "pchisq", "pf", "printCoefmat", "pt", "qt", "setNames", 
+           "update.formula", "vcov")
+importFrom("utils", "as.roman", "combn", "data")
+importFrom("lme4", "sigma")
 
 
 exportClasses(merModLmerTest)
@@ -27,8 +30,6 @@ export(lmer)
 
 exportMethods("anova", "summary")
 
-#S3method(step, merModLmerTest)
-#export(step.merModLmerTest)
 S3method(print, step)
 S3method(plot, step)
 S3method(print, rand)
